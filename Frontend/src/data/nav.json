@@ -57,8 +57,8 @@
       "label": "Login",
       "type": "dropdown",
       "items": [
-        { "label": "Corporate", "href": "http://localhost:8080/corporate" },
-        { "label": "Franchise", "href": "http://localhost:8080/medicine" }
+        { "label": "Corporate", "href": "/corporate" },
+        { "label": "Franchise", "href": "/medicine" }
       ]
     },
     {
