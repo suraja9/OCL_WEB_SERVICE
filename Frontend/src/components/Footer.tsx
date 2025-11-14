@@ -31,13 +31,13 @@ const Footer = () => {
           {/* About / Brand Summary Column */}
           <div className="space-y-5">
             <h3 
-              className="text-2xl md:text-3xl font-bold mb-4"
+              className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-4"
               style={{ color: '#FFC043', fontFamily: 'Poppins, ui-sans-serif' }}
             >
               {navData.logo.text}
             </h3>
             <p 
-              className="text-[#F8F8F8] text-sm md:text-base leading-relaxed"
+              className="text-[#F8F8F8] text-xs sm:text-sm md:text-base leading-relaxed"
               style={{ lineHeight: '1.8' }}
             >
               {navData.logo.tagline} Your trusted logistics partner delivering fast, secure, and reliable courier solutions India.
@@ -47,23 +47,23 @@ const Footer = () => {
             <div className="space-y-3 pt-2">
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-[#FFC043] flex-shrink-0 mt-0.5" />
-                <span className="text-[#D4D9DE] text-sm"> House No. 22, Piyali Phukan Road, Rehabari,
+                <span className="text-[#D4D9DE] text-xs sm:text-sm"> House No. 22, Piyali Phukan Road, Rehabari,
                 Guwahati, 781008</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="w-5 h-5 text-[#FFC043] flex-shrink-0" />
-                <span className="text-[#D4D9DE] text-sm">+91 76360 96733</span>
+                <span className="text-[#D4D9DE] text-xs sm:text-sm">+91 76360 96733</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-[#FFC043] flex-shrink-0" />
-                <span className="text-[#D4D9DE] text-sm">info@oclservices.com</span>
+                <span className="text-[#D4D9DE] text-xs sm:text-sm">info@oclservices.com</span>
               </div>
             </div>
 
             {/* View More Link */}
             <a 
               href="/about" 
-              className="inline-flex items-center text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-sm font-medium mt-4 group"
+              className="inline-flex items-center text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-xs sm:text-sm font-medium mt-4 group"
             >
               View More
               <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
@@ -73,7 +73,7 @@ const Footer = () => {
           {/* Services Column */}
           <div className="space-y-5">
             <h4 
-              className="text-xl md:text-2xl font-bold mb-4"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-4"
               style={{ color: '#FFC043', fontFamily: 'Poppins, ui-sans-serif' }}
             >
               Services
@@ -83,7 +83,7 @@ const Footer = () => {
                 <li key={item.label}>
                   <a 
                     href={item.href} 
-                    className="text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-sm md:text-base block"
+                    className="text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-xs sm:text-sm md:text-base block"
                   >
                     {item.label}
                   </a>
@@ -95,7 +95,7 @@ const Footer = () => {
           {/* Company Column */}
           <div className="space-y-5">
             <h4 
-              className="text-xl md:text-2xl font-bold mb-4"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-4"
               style={{ color: '#FFC043', fontFamily: 'Poppins, ui-sans-serif' }}
             >
               Company
@@ -105,7 +105,7 @@ const Footer = () => {
                 <li key={item.label}>
                   <a 
                     href={item.href} 
-                    className="text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-sm md:text-base block"
+                    className="text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-xs sm:text-sm md:text-base block"
                   >
                     {item.label}
                   </a>
@@ -117,12 +117,12 @@ const Footer = () => {
           {/* Newsletter + Social Links Column */}
           <div className="space-y-6">
             <h4 
-              className="text-xl md:text-2xl font-bold mb-4"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-4"
               style={{ color: '#FFC043', fontFamily: 'Poppins, ui-sans-serif' }}
             >
               Stay Updated
             </h4>
-            <p className="text-[#D4D9DE] text-sm md:text-base">
+            <p className="text-[#D4D9DE] text-xs sm:text-sm md:text-base">
               Subscribe to our newsletter for the latest updates and shipping tips.
             </p>
             
@@ -152,7 +152,7 @@ const Footer = () => {
 
             {/* Social Media Links */}
             <div className="pt-4">
-              <p className="text-[#D4D9DE] text-sm mb-4 font-medium text-center md:text-left">Follow Us</p>
+              <p className="text-[#D4D9DE] text-xs sm:text-sm mb-4 font-medium text-center md:text-left">Follow Us</p>
               <div className="flex space-x-4 justify-center md:justify-start">
                 <a 
                   href="https://www.linkedin.com/company/our-courier-and-logistics/" 
@@ -200,10 +200,10 @@ const Footer = () => {
       <div className="bg-[#FFA019] border-t border-black/20">
         <div className="ocl-container px-4 py-3">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
-            <p className="text-black text-xs md:text-sm text-center md:text-left">
+            <p className="text-black text-[10px] sm:text-xs md:text-sm text-center md:text-left">
               © {currentYear} OCL Services. All rights reserved.
             </p>
-            <p className="text-black text-xs md:text-sm text-center md:text-right">
+            <p className="text-black text-[10px] sm:text-xs md:text-sm text-center md:text-right">
               Powered by OCL Services.
             </p>
           </div>

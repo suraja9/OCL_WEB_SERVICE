@@ -288,20 +288,20 @@ const medicineBookingSchema = new mongoose.Schema({
 
   // Billing Details
   billing: {
-    gst: {
-      type: String,
-      enum: ['Yes', 'No'],
-      required: true
-    },
     partyType: {
       type: String,
       enum: ['sender', 'recipient'],
       required: true
     },
+    gst: {
+      type: String,
+      enum: ['Yes', 'No'],
+      required: false
+    },
     billType: {
       type: String,
       enum: ['normal', 'rcm'],
-      default: 'normal'
+      required: false
     }
   },
 
@@ -395,8 +395,8 @@ const medicineBookingSchema = new mongoose.Schema({
   // Booking Status
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'in_transit', 'arrived', 'delivered', 'cancelled'],
-    default: 'pending'
+    enum: ['Booked', 'pending', 'confirmed', 'in_transit', 'arrived', 'Arrived at Hub', 'Ready to Dispatch', 'delivered', 'cancelled'],
+    default: 'Booked'
   },
 
   // Consignment Number (Assigned from consignment assignment)
@@ -444,6 +444,11 @@ const medicineBookingSchema = new mongoose.Schema({
 }, {
   timestamps: true,
   collection: 'medicinebookings'
+});
+
+// Add post-save hook for debugging
+medicineBookingSchema.post('save', function(doc) {
+  console.log('Post-save hook - Booking status:', doc.status, 'ID:', doc._id);
 });
 
 // Note: bookingReference is now set from consignmentNumber in the booking route

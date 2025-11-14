@@ -1,21 +1,41 @@
 import mongoose from "mongoose";
 
-const locationRateSchema = new mongoose.Schema({
-  assam: { type: Number, default: 0, min: [0, "Price cannot be negative"] },
-  neBySurface: { type: Number, default: 0, min: [0, "Price cannot be negative"] },
-  neByAirAgtImp: { type: Number, default: 0, min: [0, "Price cannot be negative"] },
-  restOfIndia: { type: Number, default: 0, min: [0, "Price cannot be negative"] }
+// Route-based pricing schema (Assam → NE, Assam → ROI)
+const routeRateSchema = new mongoose.Schema({
+  assamToNe: { type: Number, default: 0, min: [0, "Price cannot be negative"] },
+  assamToRoi: { type: Number, default: 0, min: [0, "Price cannot be negative"] }
 }, { _id: false });
 
-const doxPricingSchema = new mongoose.Schema({
-  "01gm-250gm": { type: locationRateSchema, default: () => ({}) },
-  "251gm-500gm": { type: locationRateSchema, default: () => ({}) },
-  add500gm: { type: locationRateSchema, default: () => ({}) }
+// Standard DOX weight slabs schema
+const standardDoxWeightSlabSchema = new mongoose.Schema({
+  "01gm-250gm": { type: routeRateSchema, default: () => ({}) },
+  "251gm-500gm": { type: routeRateSchema, default: () => ({}) },
+  add500gm: { type: routeRateSchema, default: () => ({}) }
 }, { _id: false });
 
+// Standard DOX modes schema (Air, Road, Train)
+const standardDoxModesSchema = new mongoose.Schema({
+  air: { type: standardDoxWeightSlabSchema, default: () => ({}) },
+  road: { type: standardDoxWeightSlabSchema, default: () => ({}) },
+  train: { type: routeRateSchema, default: () => ({}) } // Train uses per-kg only
+}, { _id: false });
+
+// Standard NON DOX weight slabs schema
+const standardNonDoxWeightSlabSchema = new mongoose.Schema({
+  "1kg-5kg": { type: routeRateSchema, default: () => ({}) }, // Per kg
+  "5kg-100kg": { type: routeRateSchema, default: () => ({}) } // Per kg
+}, { _id: false });
+
+// Standard NON DOX modes schema (Air, Road, Train)
+const standardNonDoxModesSchema = new mongoose.Schema({
+  air: { type: standardNonDoxWeightSlabSchema, default: () => ({}) },
+  road: { type: standardNonDoxWeightSlabSchema, default: () => ({}) },
+  train: { type: routeRateSchema, default: () => ({}) } // Train uses per-kg only
+}, { _id: false });
+
+// Priority unified pricing schema (no modes, no DOX/NON DOX separation, single price per 500gm)
 const priorityPricingSchema = new mongoose.Schema({
-  "01gm-500gm": { type: locationRateSchema, default: () => ({}) },
-  add500gm: { type: locationRateSchema, default: () => ({}) }
+  base500gm: { type: Number, default: 0, min: [0, "Price cannot be negative"] }
 }, { _id: false });
 
 const reverseDeliverySchema = new mongoose.Schema({
@@ -41,16 +61,12 @@ const customerPricingSchema = new mongoose.Schema({
     unique: true,
     default: "default"
   },
-  doxPricing: {
-    type: doxPricingSchema,
+  standardDox: {
+    type: standardDoxModesSchema,
     default: () => ({})
   },
-  nonDoxSurfacePricing: {
-    type: locationRateSchema,
-    default: () => ({})
-  },
-  nonDoxAirPricing: {
-    type: locationRateSchema,
+  standardNonDox: {
+    type: standardNonDoxModesSchema,
     default: () => ({})
   },
   priorityPricing: {

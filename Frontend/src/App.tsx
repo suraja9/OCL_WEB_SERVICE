@@ -57,7 +57,9 @@ import MedicineManifest from "./pages/medicine/MedicineManifest";
 import MedicineColoader from "./pages/medicine/MedicineColoader";
 import MedicineViewManifest from "./pages/medicine/MedicineViewManifest";
 import MedicineViewSettlement from "./pages/medicine/MedicineViewSettlement";
+import MedicineColoaderRegistration from "./pages/medicine/MedicineColoaderRegistration";
 import UserDashboard from "./pages/user/UserDashboard";
+import MedicineReceivedScan from "./pages/medicine/MedicineReceivedScan";
 
 const queryClient = new QueryClient();
 
@@ -204,6 +206,15 @@ const App = () => {
           />
 
           <Route 
+            path="/medicine/coloader-registration" 
+            element={
+              <MedicineProtectedRoute>
+                <MedicineColoaderRegistration />
+              </MedicineProtectedRoute>
+            } 
+          />
+
+          <Route 
             path="/medicine/manifest" 
             element={
               <MedicineProtectedRoute>
@@ -229,6 +240,16 @@ const App = () => {
               </MedicineProtectedRoute>
             } 
           />
+
+          <Route 
+            path="/medicine/received-scan" 
+            element={
+              <MedicineProtectedRoute>
+                <MedicineReceivedScan />
+              </MedicineProtectedRoute>
+            } 
+          />
+
 
           {/* Remove the separate route for settlement since we'll integrate it into the dashboard */}
           {/* 

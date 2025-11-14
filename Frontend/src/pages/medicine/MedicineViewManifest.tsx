@@ -52,6 +52,7 @@ interface ManifestConsignment {
     package?: {
       totalPackages?: string;
     };
+    createdAt: string;
   };
   consignmentNumber: number;
 }
@@ -78,6 +79,9 @@ const MedicineViewManifest: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [showDateFilter, setShowDateFilter] = useState<boolean>(false);
   const navigate = useNavigate();
   const financialYearMonths = [
     { value: 4, label: 'April' },
@@ -175,9 +179,16 @@ const MedicineViewManifest: React.FC = () => {
     }
   }, [selectedMonth]);
 
+  // Auto-apply date filter when both dates are set
+  useEffect(() => {
+    if (startDate && endDate && selectedYear) {
+      fetchManifestsWithDateFilter();
+    }
+  }, [startDate, endDate, selectedYear]);
+
   // Fetch manifests when year changes
   useEffect(() => {
-    if (selectedYear) {
+    if (selectedYear && !startDate && !endDate) {
       fetchManifests();
     }
   }, [selectedYear]);
@@ -226,6 +237,81 @@ const MedicineViewManifest: React.FC = () => {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
+    });
+  };
+
+  // Get the earliest booking date from a manifest
+  const getEarliestBookingDate = (manifest: Manifest): string => {
+    if (!manifest.consignments || manifest.consignments.length === 0) return '';
+    const dates = manifest.consignments
+      .map(c => c.bookingId?.createdAt)
+      .filter((date): date is string => date !== undefined && date !== null);
+    if (dates.length === 0) return '';
+    
+    return dates.reduce((earliest, current) => {
+      const earliestDate = new Date(earliest);
+      const currentDate = new Date(current);
+      return currentDate < earliestDate ? current : earliest;
+    });
+  };
+
+  // Apply date filter
+  const applyDateFilter = () => {
+    if (startDate && endDate) {
+      fetchManifestsWithDateFilter();
+    }
+  };
+
+  // Clear date filter
+  const clearDateFilter = () => {
+    setStartDate('');
+    setEndDate('');
+    // Refresh with current year/month filters
+    if (selectedYear) {
+      fetchManifests();
+    }
+  };
+
+  // Fetch manifests with date filter
+  const fetchManifestsWithDateFilter = async () => {
+    if (!selectedYear || !startDate || !endDate) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const token = localStorage.getItem('medicineToken');
+      const monthParam = selectedMonth ? `&month=${selectedMonth}` : '';
+      const response = await axios.get(
+        `${API_BASE}/api/medicine/manifests/all?year=${selectedYear}${monthParam}&startDate=${startDate}&endDate=${endDate}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setManifests(response.data.data || []);
+      } else {
+        setError('Failed to fetch manifests');
+      }
+    } catch (error: any) {
+      console.error('Error fetching manifests:', error);
+      setError(error.response?.data?.message || 'Failed to fetch manifests');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Filter manifests by date range (client-side filtering as backup)
+  const filterManifestsByDate = (manifests: Manifest[], start: string, end: string): Manifest[] => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    endDate.setHours(23, 59, 59, 999); // Set to end of day
+    
+    return manifests.filter(manifest => {
+      const manifestDate = new Date(manifest.createdAt);
+      return manifestDate >= startDate && manifestDate <= endDate;
     });
   };
 
@@ -300,43 +386,94 @@ const MedicineViewManifest: React.FC = () => {
               <h1 className="text-2xl font-semibold text-gray-900">View Manifests</h1>
               <p className="text-sm text-gray-500 mt-1">View all manifests with status and coloader information</p>
             </div>
-            {/* Year & Month Selectors */}
-            <div className="flex items-center gap-3">
-              <label htmlFor="yearSelect" className="text-sm font-medium text-gray-700">
-                Financial Year:
-              </label>
-              <select
-                id="yearSelect"
-                value={selectedYear || ''}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* Date Range Filter Toggle */}
+              <button
+                onClick={() => setShowDateFilter(!showDateFilter)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
-                {availableYears.map((year) => (
-                  <option key={year} value={year}>
-                    {year} - {year + 1} (Apr - Mar)
-                  </option>
-                ))}
-              </select>
+                <Calendar className="h-4 w-4" />
+                {showDateFilter ? 'Hide Date Filter' : 'Date Filter'}
+              </button>
+              
+              {/* Year & Month Selectors */}
+              <div className="flex items-center gap-3">
+                <label htmlFor="yearSelect" className="text-sm font-medium text-gray-700">
+                  Financial Year:
+                </label>
+                <select
+                  id="yearSelect"
+                  value={selectedYear || ''}
+                  onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                >
+                  {availableYears.map((year) => (
+                    <option key={year} value={year}>
+                      {year} - {year + 1} (Apr - Mar)
+                    </option>
+                  ))}
+                </select>
 
-              <label htmlFor="monthSelect" className="text-sm font-medium text-gray-700">
-                Month:
-              </label>
-              <select
-                id="monthSelect"
-                value={selectedMonth ?? ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setSelectedMonth(val ? parseInt(val) : null);
-                }}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
-              >
-                <option value="">All months</option>
-                {financialYearMonths.map((m) => (
-                  <option key={m.value} value={m.value}>{m.label}</option>
-                ))}
-              </select>
+                <label htmlFor="monthSelect" className="text-sm font-medium text-gray-700">
+                  Month:
+                </label>
+                <select
+                  id="monthSelect"
+                  value={selectedMonth ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSelectedMonth(val ? parseInt(val) : null);
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                >
+                  <option value="">All months</option>
+                  {financialYearMonths.map((m) => (
+                    <option key={m.value} value={m.value}>{m.label}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
+          
+          {/* Date Range Filter */}
+          {showDateFilter && (
+            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex items-end gap-2">
+                  <button
+                    onClick={applyDateFilter}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    Apply Filter
+                  </button>
+                  <button
+                    onClick={clearDateFilter}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Error Message */}
           {error && (
@@ -463,6 +600,13 @@ const MedicineViewManifest: React.FC = () => {
                                     <Calendar className="h-4 w-4 text-gray-400" />
                                     <span>Created: {formatDate(manifest.createdAt)}</span>
                                   </div>
+                                  {/* Show earliest booking date if available */}
+                                  {manifest.consignments && manifest.consignments.length > 0 && getEarliestBookingDate(manifest) && (
+                                    <div className="flex items-center gap-1">
+                                      <Calendar className="h-4 w-4 text-gray-400" />
+                                      <span>Booking: {formatDate(getEarliestBookingDate(manifest))}</span>
+                                    </div>
+                                  )}
                                   {manifest.status === 'dispatched' && manifest.updatedAt && (
                                     <div className="flex items-center gap-1">
                                       <Truck className="h-4 w-4 text-gray-400" />
@@ -529,7 +673,7 @@ const MedicineViewManifest: React.FC = () => {
                                         </Badge>
                                       </td>
                                       <td className="px-4 py-3 border-b border-gray-100 text-gray-700 text-right font-medium">
-                                        {weight ? weight.toFixed(2) : '-'}
+                                        {weight ? `${weight.toFixed(2)} kg` : '-'}
                                       </td>
                                     </tr>
                                   );

@@ -185,10 +185,10 @@ const Serviceability = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl font-bold text-foreground mb-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4">
             Pin Code Serviceability
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
             Check if we deliver to your location and discover available services in your area.
           </p>
         </motion.div>
@@ -330,7 +330,7 @@ const Serviceability = () => {
               className="space-y-4"
             >
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-bold text-foreground">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">
                   Serviceability Results ({results.length})
                 </h3>
                 <Button
@@ -362,7 +362,7 @@ const Serviceability = () => {
                                 ) : (
                                   <XCircle className="w-5 h-5 text-destructive" />
                                 )}
-                                <span className="font-semibold text-lg">
+                                <span className="font-semibold text-sm sm:text-base md:text-lg">
                                   {result.pincode}
                                 </span>
                               </div>

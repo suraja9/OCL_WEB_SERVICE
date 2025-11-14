@@ -151,91 +151,119 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ isDarkMode }) => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="name"
-                    className={cn(
-                      isDarkMode ? "text-slate-200" : "text-slate-700"
-                    )}
-                  >
-                    Full Name *
-                  </Label>
+                <div className="relative">
                   <Input
                     id="name"
-                    placeholder="John Doe"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
                     required
                     className={cn(
+                      "peer pt-6",
                       isDarkMode
-                        ? "border-slate-700 bg-slate-800 text-white placeholder:text-slate-400"
+                        ? "border-slate-700 bg-slate-800 text-white"
                         : "border-slate-200 bg-white"
                     )}
                   />
-                </div>
-                <div className="space-y-2">
                   <Label
-                    htmlFor="email"
+                    htmlFor="name"
                     className={cn(
-                      isDarkMode ? "text-slate-200" : "text-slate-700"
+                      "absolute left-3 top-1/2 -translate-y-1/2 text-sm transition-all duration-200 pointer-events-none",
+                      "peer-focus:top-0 peer-focus:text-xs peer-focus:-translate-y-1/2 peer-focus:px-1",
+                      formData.name ? "top-0 text-xs -translate-y-1/2 px-1" : "",
+                      isDarkMode
+                        ? "peer-focus:text-blue-200 peer-focus:bg-slate-900/70"
+                        : "peer-focus:text-blue-600 peer-focus:bg-white",
+                      isDarkMode
+                        ? formData.name
+                          ? "text-blue-200 bg-slate-900/70"
+                          : "text-slate-400"
+                        : formData.name
+                          ? "text-blue-600 bg-white"
+                          : "text-slate-500"
                     )}
                   >
-                    Email Address *
+                    Full Name <span className="text-red-500">*</span>
                   </Label>
+                </div>
+                <div className="relative">
                   <Input
                     id="email"
                     type="email"
-                    placeholder="john@example.com"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
                     required
                     className={cn(
+                      "peer pt-6",
                       isDarkMode
-                        ? "border-slate-700 bg-slate-800 text-white placeholder:text-slate-400"
+                        ? "border-slate-700 bg-slate-800 text-white"
                         : "border-slate-200 bg-white"
                     )}
                   />
+                  <Label
+                    htmlFor="email"
+                    className={cn(
+                      "absolute left-3 top-1/2 -translate-y-1/2 text-sm transition-all duration-200 pointer-events-none",
+                      "peer-focus:top-0 peer-focus:text-xs peer-focus:-translate-y-1/2 peer-focus:px-1",
+                      formData.email ? "top-0 text-xs -translate-y-1/2 px-1" : "",
+                      isDarkMode
+                        ? "peer-focus:text-blue-200 peer-focus:bg-slate-900/70"
+                        : "peer-focus:text-blue-600 peer-focus:bg-white",
+                      isDarkMode
+                        ? formData.email
+                          ? "text-blue-200 bg-slate-900/70"
+                          : "text-slate-400"
+                        : formData.email
+                          ? "text-blue-600 bg-white"
+                          : "text-slate-500"
+                    )}
+                  >
+                    Email Address <span className="text-red-500">*</span>
+                  </Label>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="phone"
-                    className={cn(
-                      isDarkMode ? "text-slate-200" : "text-slate-700"
-                    )}
-                  >
-                    Phone Number
-                  </Label>
+                <div className="relative">
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+91 98765 43210"
                     value={formData.phone}
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
                     className={cn(
+                      "peer pt-6",
                       isDarkMode
-                        ? "border-slate-700 bg-slate-800 text-white placeholder:text-slate-400"
+                        ? "border-slate-700 bg-slate-800 text-white"
                         : "border-slate-200 bg-white"
                     )}
                   />
-                </div>
-                <div className="space-y-2">
                   <Label
-                    htmlFor="category"
+                    htmlFor="phone"
                     className={cn(
-                      isDarkMode ? "text-slate-200" : "text-slate-700"
+                      "absolute left-3 top-1/2 -translate-y-1/2 text-sm transition-all duration-200 pointer-events-none",
+                      "peer-focus:top-0 peer-focus:text-xs peer-focus:-translate-y-1/2 peer-focus:px-1",
+                      formData.phone ? "top-0 text-xs -translate-y-1/2 px-1" : "",
+                      isDarkMode
+                        ? "peer-focus:text-blue-200 peer-focus:bg-slate-900/70"
+                        : "peer-focus:text-blue-600 peer-focus:bg-white",
+                      isDarkMode
+                        ? formData.phone
+                          ? "text-blue-200 bg-slate-900/70"
+                          : "text-slate-400"
+                        : formData.phone
+                          ? "text-blue-600 bg-white"
+                          : "text-slate-500"
                     )}
                   >
-                    Category *
+                    Phone Number
                   </Label>
+                </div>
+                <div>
                   <Select
                     value={formData.category}
                     onValueChange={(value) =>
@@ -245,12 +273,13 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ isDarkMode }) => {
                   >
                     <SelectTrigger
                       className={cn(
+                        "h-10",
                         isDarkMode
                           ? "border-slate-700 bg-slate-800 text-white"
                           : "border-slate-200 bg-white"
                       )}
                     >
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder="Category *" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
@@ -263,43 +292,46 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ isDarkMode }) => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label
-                  htmlFor="subject"
-                  className={cn(
-                    isDarkMode ? "text-slate-200" : "text-slate-700"
-                  )}
-                >
-                  Subject *
-                </Label>
+              <div className="relative">
                 <Input
                   id="subject"
-                  placeholder="Brief description of your inquiry"
                   value={formData.subject}
                   onChange={(e) =>
                     setFormData({ ...formData, subject: e.target.value })
                   }
                   required
                   className={cn(
+                    "peer pt-6",
                     isDarkMode
-                      ? "border-slate-700 bg-slate-800 text-white placeholder:text-slate-400"
+                      ? "border-slate-700 bg-slate-800 text-white"
                       : "border-slate-200 bg-white"
                   )}
                 />
-              </div>
-
-              <div className="space-y-2">
                 <Label
-                  htmlFor="message"
+                  htmlFor="subject"
                   className={cn(
-                    isDarkMode ? "text-slate-200" : "text-slate-700"
+                    "absolute left-3 top-1/2 -translate-y-1/2 text-sm transition-all duration-200 pointer-events-none",
+                    "peer-focus:top-0 peer-focus:text-xs peer-focus:-translate-y-1/2 peer-focus:px-1",
+                    formData.subject ? "top-0 text-xs -translate-y-1/2 px-1" : "",
+                    isDarkMode
+                      ? "peer-focus:text-blue-200 peer-focus:bg-slate-900/70"
+                      : "peer-focus:text-blue-600 peer-focus:bg-white",
+                    isDarkMode
+                      ? formData.subject
+                        ? "text-blue-200 bg-slate-900/70"
+                        : "text-slate-400"
+                      : formData.subject
+                        ? "text-blue-600 bg-white"
+                        : "text-slate-500"
                   )}
                 >
-                  Message *
+                  Subject <span className="text-red-500">*</span>
                 </Label>
+              </div>
+
+              <div className="relative">
                 <Textarea
                   id="message"
-                  placeholder="Please provide details about your inquiry..."
                   value={formData.message}
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
@@ -307,11 +339,32 @@ const ContactSupport: React.FC<ContactSupportProps> = ({ isDarkMode }) => {
                   required
                   rows={5}
                   className={cn(
+                    "peer pt-6 resize-none",
                     isDarkMode
-                      ? "border-slate-700 bg-slate-800 text-white placeholder:text-slate-400"
+                      ? "border-slate-700 bg-slate-800 text-white"
                       : "border-slate-200 bg-white"
                   )}
                 />
+                <Label
+                  htmlFor="message"
+                  className={cn(
+                    "absolute left-3 top-4 text-sm transition-all duration-200 pointer-events-none",
+                    "peer-focus:top-0 peer-focus:text-xs peer-focus:-translate-y-1/2 peer-focus:px-1",
+                    formData.message ? "top-0 text-xs -translate-y-1/2 px-1" : "",
+                    isDarkMode
+                      ? "peer-focus:text-blue-200 peer-focus:bg-slate-900/70"
+                      : "peer-focus:text-blue-600 peer-focus:bg-white",
+                    isDarkMode
+                      ? formData.message
+                        ? "text-blue-200 bg-slate-900/70"
+                        : "text-slate-400"
+                      : formData.message
+                        ? "text-blue-600 bg-white"
+                        : "text-slate-500"
+                  )}
+                >
+                  Message <span className="text-red-500">*</span>
+                </Label>
               </div>
 
               <Button

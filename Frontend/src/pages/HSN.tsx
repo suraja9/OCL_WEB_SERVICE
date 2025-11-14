@@ -29,10 +29,10 @@ const HSN = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-brand-red bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-brand-red bg-clip-text text-transparent">
             HSN/SAC Numbers
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto">
             Service Accounting Codes (SAC) for logistics and transportation services
           </p>
         </motion.div>
@@ -56,7 +56,7 @@ const HSN = () => {
 
         <Card className="border-2 border-brand-red bg-success-light/10 mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">Service Codes</CardTitle>
+            <CardTitle className="text-lg sm:text-xl md:text-2xl text-center">Service Codes</CardTitle>
             <div className="flex justify-center">
               <Button variant="outline" className="border-brand-red/20">
                 <Download className="w-4 h-4 mr-2" />
@@ -77,16 +77,16 @@ const HSN = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div>
                       <div className="flex items-center space-x-3 mb-2">
-                        <h3 className="text-lg font-semibold">{code.sac_code}</h3>
+                        <h3 className="text-sm sm:text-base md:text-lg font-semibold">{code.sac_code}</h3>
                         <Badge variant="outline" className="bg-primary/10">{code.gst_rate}</Badge>
                         <Badge variant="secondary">{code.category}</Badge>
                       </div>
-                      <p className="text-muted-foreground mb-3">{code.description}</p>
+                      <p className="text-xs sm:text-sm md:text-base text-muted-foreground mb-3">{code.description}</p>
                     </div>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium mb-2">Applicable Services:</h4>
+                    <h4 className="text-sm sm:text-base font-medium mb-2">Applicable Services:</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                       {code.applicable_services.map((service, idx) => (
                         <div key={idx} className="flex items-center space-x-2 text-sm">

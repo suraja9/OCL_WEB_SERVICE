@@ -163,11 +163,6 @@ const AdminLogin = () => {
               </CardFooter>
             </form>
             
-            <div className="px-6 pb-6 bg-white/50">
-              <div className="text-xs text-center text-gray-500">
-                Default credentials: admin@ocl.com / admin123
-              </div>
-            </div>
           </Card>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Menu, X, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import navData from "@/data/nav.json";
@@ -8,6 +8,13 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Reset activeDropdown when mobile menu closes
+  useEffect(() => {
+    if (!isOpen) {
+      setActiveDropdown(null);
+    }
+  }, [isOpen]);
 
   const handleMouseEnter = (label: string) => {
     if (timeoutRef.current) {
@@ -182,9 +189,9 @@ const Navbar = () => {
       {isOpen && (
         <div className="lg:hidden w-[96%] flex justify-end mt-2 pointer-events-auto animate-menu-slide-down">
           <div 
-            className="w-1/2 border border-white/20 rounded-3xl px-3 py-2.5 space-y-1.5 animate-menu-fade-in"
+            className="w-[50%] border border-white/20 rounded-3xl px-3 py-2.5 space-y-0 animate-menu-fade-in"
             style={{
-              background: "rgba(255, 255, 255, 0.3)",
+              background: "rgba(255, 255, 255, 0.4)",
               backdropFilter: "blur(8px)",
               WebkitBackdropFilter: "blur(8px)",
               boxShadow: "rgba(136, 165, 191, 0.48) 6px 2px 16px 0px, rgba(255, 255, 255, 0.8) -6px -2px 16px 0px",

@@ -163,7 +163,7 @@ const SchedulePickup = () => {
                 style={{ background: "#FE9F19" }}
               />
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10 items-stretch">
                 {steps.map((s, idx) => (
                   <motion.div
                     key={s.step}
@@ -171,16 +171,16 @@ const SchedulePickup = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.8, delay: 0.15 * idx, ease: [0.19, 1, 0.22, 1] }}
-                    className="relative text-center"
+                    className="relative text-center flex flex-col h-full md:h-auto"
                   >
                     <div className="mx-auto mb-3 flex items-center justify-center">
                       <div className="flex h-12 w-12 items-center justify-center rounded-full text-white font-semibold" style={{ background: "#FE9F19" }}>
                         {s.step}
                       </div>
                     </div>
-                    <div className="rounded-xl border border-white/60 bg-white p-4" style={{ boxShadow: "rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px" }}>
+                    <div className="rounded-xl border border-white/60 bg-white p-4 flex-1 flex flex-col md:flex-none" style={{ boxShadow: "rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px" }}>
                       <h3 className="font-semibold text-[#1a1a1a] mb-1">{s.title}</h3>
-                      <p className="text-sm text-[#6b6b6b]">{s.description}</p>
+                      <p className="text-sm text-[#6b6b6b] flex-1">{s.description}</p>
                     </div>
                   </motion.div>
                 ))}

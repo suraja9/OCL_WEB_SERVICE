@@ -26,10 +26,10 @@ const Clients = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-brand-red bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-brand-red bg-clip-text text-transparent">
             Our Valued Clients
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto">
             Trusted by industry leaders across various sectors
           </p>
         </motion.div>
@@ -69,34 +69,34 @@ const Clients = () => {
                       <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-brand-red/20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Building className="w-8 h-8 text-primary" />
                       </div>
-                      <h3 className="font-semibold text-lg mb-2">{client.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{client.industry}</p>
-                      <p className="text-xs text-primary">Partner since {client.partnership_since}</p>
+                      <h3 className="font-semibold text-sm sm:text-base md:text-lg mb-2">{client.name}</h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground mb-3">{client.industry}</p>
+                      <p className="text-[10px] sm:text-xs text-primary">Partner since {client.partnership_since}</p>
                     </CardContent>
                   </Card>
                 </DialogTrigger>
                 <DialogContent className="border-2 border-brand-red bg-success-light/10 max-w-lg">
                   <DialogHeader>
-                    <DialogTitle className="text-2xl">{client.name}</DialogTitle>
+                    <DialogTitle className="text-lg sm:text-xl md:text-2xl">{client.name}</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="p-4 border-2 border-brand-red/20 rounded-lg bg-success-light/5">
                       <Quote className="w-6 h-6 text-primary mb-2" />
-                      <p className="text-sm italic leading-relaxed">{client.testimonial}</p>
+                      <p className="text-xs sm:text-sm italic leading-relaxed">{client.testimonial}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="text-center p-3 border border-brand-red/20 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Industry</p>
-                        <p className="font-medium">{client.industry}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Industry</p>
+                        <p className="text-xs sm:text-sm font-medium">{client.industry}</p>
                       </div>
                       <div className="text-center p-3 border border-brand-red/20 rounded-lg">
-                        <p className="text-sm text-muted-foreground">Partnership</p>
-                        <p className="font-medium">Since {client.partnership_since}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">Partnership</p>
+                        <p className="text-xs sm:text-sm font-medium">Since {client.partnership_since}</p>
                       </div>
                     </div>
                     <div className="text-center p-3 border border-brand-red/20 rounded-lg">
-                      <p className="text-sm text-muted-foreground">Monthly Volume</p>
-                      <p className="font-medium">{client.volume}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Monthly Volume</p>
+                      <p className="text-xs sm:text-sm font-medium">{client.volume}</p>
                     </div>
                   </div>
                 </DialogContent>

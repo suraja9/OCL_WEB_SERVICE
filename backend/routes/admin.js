@@ -269,51 +269,32 @@ router.post('/medicine/ocl-charge', authenticateAdmin, async (req, res) => {
 // ==================== CUSTOMER PRICING MANAGEMENT ROUTES ====================
 
 const CUSTOMER_PRICING_TEMPLATE = Object.freeze({
-  doxPricing: {
-    '01gm-250gm': {
-      assam: 0,
-      neBySurface: 0,
-      neByAirAgtImp: 0,
-      restOfIndia: 0
+  standardDox: {
+    air: {
+      '01gm-250gm': { assamToNe: 0, assamToRoi: 0 },
+      '251gm-500gm': { assamToNe: 0, assamToRoi: 0 },
+      add500gm: { assamToNe: 0, assamToRoi: 0 }
     },
-    '251gm-500gm': {
-      assam: 0,
-      neBySurface: 0,
-      neByAirAgtImp: 0,
-      restOfIndia: 0
+    road: {
+      '01gm-250gm': { assamToNe: 0, assamToRoi: 0 },
+      '251gm-500gm': { assamToNe: 0, assamToRoi: 0 },
+      add500gm: { assamToNe: 0, assamToRoi: 0 }
     },
-    add500gm: {
-      assam: 0,
-      neBySurface: 0,
-      neByAirAgtImp: 0,
-      restOfIndia: 0
-    }
+    train: { assamToNe: 0, assamToRoi: 0 } // Per kg only
   },
-  nonDoxSurfacePricing: {
-    assam: 0,
-    neBySurface: 0,
-    neByAirAgtImp: 0,
-    restOfIndia: 0
-  },
-  nonDoxAirPricing: {
-    assam: 0,
-    neBySurface: 0,
-    neByAirAgtImp: 0,
-    restOfIndia: 0
+  standardNonDox: {
+    air: {
+      '1kg-5kg': { assamToNe: 0, assamToRoi: 0 },
+      '5kg-100kg': { assamToNe: 0, assamToRoi: 0 }
+    },
+    road: {
+      '1kg-5kg': { assamToNe: 0, assamToRoi: 0 },
+      '5kg-100kg': { assamToNe: 0, assamToRoi: 0 }
+    },
+    train: { assamToNe: 0, assamToRoi: 0 } // Per kg only
   },
   priorityPricing: {
-    '01gm-500gm': {
-      assam: 0,
-      neBySurface: 0,
-      neByAirAgtImp: 0,
-      restOfIndia: 0
-    },
-    add500gm: {
-      assam: 0,
-      neBySurface: 0,
-      neByAirAgtImp: 0,
-      restOfIndia: 0
-    }
+    base500gm: 0
   },
   reversePricing: {
     toAssam: {
@@ -364,9 +345,8 @@ const applyTemplateToPayload = (template, payloadSection) => {
 };
 
 const normalizeCustomerPricingPayload = (payload = {}) => ({
-  doxPricing: applyTemplateToPayload(CUSTOMER_PRICING_TEMPLATE.doxPricing, payload.doxPricing || {}),
-  nonDoxSurfacePricing: applyTemplateToPayload(CUSTOMER_PRICING_TEMPLATE.nonDoxSurfacePricing, payload.nonDoxSurfacePricing || {}),
-  nonDoxAirPricing: applyTemplateToPayload(CUSTOMER_PRICING_TEMPLATE.nonDoxAirPricing, payload.nonDoxAirPricing || {}),
+  standardDox: applyTemplateToPayload(CUSTOMER_PRICING_TEMPLATE.standardDox, payload.standardDox || {}),
+  standardNonDox: applyTemplateToPayload(CUSTOMER_PRICING_TEMPLATE.standardNonDox, payload.standardNonDox || {}),
   priorityPricing: applyTemplateToPayload(CUSTOMER_PRICING_TEMPLATE.priorityPricing, payload.priorityPricing || {}),
   reversePricing: applyTemplateToPayload(CUSTOMER_PRICING_TEMPLATE.reversePricing, payload.reversePricing || {})
 });

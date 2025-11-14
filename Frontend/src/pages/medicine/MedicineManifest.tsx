@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
 
@@ -35,7 +36,14 @@ interface Coloader {
   _id: string;
   phoneNumber: string;
   busNumber: string;
+  name?: string;
   isActive: boolean;
+}
+
+// Add this interface for file upload
+interface UploadedFile {
+  name: string;
+  url: string;
 }
 
 interface ManifestConsignment {
@@ -57,6 +65,7 @@ interface ManifestConsignment {
     package?: {
       totalPackages?: string;
     };
+    createdAt: string;
   };
   consignmentNumber: number;
 }
@@ -83,14 +92,17 @@ const MedicineManifest: React.FC = () => {
   const [showDispatchForm, setShowDispatchForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddColoader, setShowAddColoader] = useState(false);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   const [dispatchFormData, setDispatchFormData] = useState({
     contentDescription: '',
     coloaderId: '',
     coloaderDocketNo: ''
   });
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]); // Add this state for uploaded files
   const [newColoaderData, setNewColoaderData] = useState({
     phoneNumber: '',
-    busNumber: ''
+    busNumber: '',
+    name: ''
   });
   const [formError, setFormError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -248,20 +260,22 @@ const MedicineManifest: React.FC = () => {
       const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.data.success)).length;
 
       if (successful > 0) {
-        toast({
-          title: 'Dispatch Successful',
-          description: `Successfully dispatched ${successful} manifest${successful > 1 ? 's' : ''}${failed > 0 ? ` (${failed} failed)` : ''}`
-        });
+        // Show success animation
+        setShowSuccessAnimation(true);
         
-        setShowDispatchForm(false);
-        setDispatchFormData({
-          contentDescription: '',
-          coloaderId: '',
-          coloaderDocketNo: ''
-        });
-        
-        // Refresh manifests
-        await fetchManifests();
+        // Close the form after a delay
+        setTimeout(() => {
+          setShowDispatchForm(false);
+          setShowSuccessAnimation(false);
+          setDispatchFormData({
+            contentDescription: '',
+            coloaderId: '',
+            coloaderDocketNo: ''
+          });
+          
+          // Refresh manifests
+          fetchManifests();
+        }, 2000);
       } else {
         const firstError = results.find(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.data.success));
         const errorMessage = firstError?.status === 'rejected' 
@@ -291,8 +305,8 @@ const MedicineManifest: React.FC = () => {
 
   // Handle add new coloader
   const handleAddColoader = async () => {
-    if (!newColoaderData.phoneNumber.trim() || !newColoaderData.busNumber.trim()) {
-      setFormError('Phone number and bus number are required');
+    if (!newColoaderData.phoneNumber.trim() || !newColoaderData.busNumber.trim() || !newColoaderData.name.trim()) {
+      setFormError('Name, phone number and bus number are required');
       return;
     }
 
@@ -307,7 +321,8 @@ const MedicineManifest: React.FC = () => {
         `${API_BASE}/api/medicine/coloaders`,
         {
           phoneNumber: newColoaderData.phoneNumber.trim(),
-          busNumber: newColoaderData.busNumber.trim()
+          busNumber: newColoaderData.busNumber.trim(),
+          name: newColoaderData.name.trim()
         },
         {
           headers: {
@@ -319,7 +334,8 @@ const MedicineManifest: React.FC = () => {
 
       if (response.data.success) {
         // Add to coloaders list
-        setColoaders([...coloaders, response.data.data]);
+        // Refresh the coloaders list to ensure all data is properly populated
+        fetchColoaders();
         // Select the new coloader
         setDispatchFormData(prev => ({
           ...prev,
@@ -327,7 +343,7 @@ const MedicineManifest: React.FC = () => {
         }));
         // Close add coloader form
         setShowAddColoader(false);
-        setNewColoaderData({ phoneNumber: '', busNumber: '' });
+        setNewColoaderData({ phoneNumber: '', busNumber: '', name: '' });
         setFormError(null);
         
         toast({
@@ -350,13 +366,28 @@ const MedicineManifest: React.FC = () => {
       coloaderDocketNo: ''
     });
     setShowAddColoader(false);
-    setNewColoaderData({ phoneNumber: '', busNumber: '' });
+    setNewColoaderData({ phoneNumber: '', busNumber: '', name: '' });
     setFormError(null);
   };
 
   // Calculate total consignments across all manifests
   const getTotalConsignments = () => {
     return manifests.reduce((total, manifest) => total + manifest.totalCount, 0);
+  };
+
+  // Get the earliest booking date from a manifest
+  const getEarliestBookingDate = (manifest: Manifest): string => {
+    if (!manifest.consignments || manifest.consignments.length === 0) return '';
+    const dates = manifest.consignments
+      .map(c => c.bookingId?.createdAt)
+      .filter((date): date is string => date !== undefined && date !== null);
+    if (dates.length === 0) return '';
+    
+    return dates.reduce((earliest, current) => {
+      const earliestDate = new Date(earliest);
+      const currentDate = new Date(current);
+      return currentDate < earliestDate ? current : earliest;
+    });
   };
 
   const handleLogout = () => {
@@ -408,7 +439,7 @@ const MedicineManifest: React.FC = () => {
                       </div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">No Manifests Found</h3>
                       <p className="text-gray-500 max-w-md mx-auto">
-                        No submitted manifests found. Submit manifests from the "Dispatch Consignment" section.
+                        No submitted manifests found. Submit manifests from the "Scan Consignment" section.
                       </p>
                     </div>
                   </CardContent>
@@ -432,6 +463,12 @@ const MedicineManifest: React.FC = () => {
                                 <p className="text-sm text-gray-600 mt-1">
                                   {manifest.path} • Created: {formatDate(manifest.createdAt)}
                                 </p>
+                                {/* Show earliest booking date if available */}
+                                {manifest.consignments && manifest.consignments.length > 0 && getEarliestBookingDate(manifest) && (
+                                  <p className="text-sm text-gray-600">
+                                    Booking Date: {formatDate(getEarliestBookingDate(manifest))}
+                                  </p>
+                                )}
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -478,7 +515,7 @@ const MedicineManifest: React.FC = () => {
                                         </Badge>
                                       </td>
                                       <td className="px-4 py-3 border-b border-gray-100 text-gray-700 text-right font-medium">
-                                        {weight ? weight.toFixed(2) : '-'}
+                                        {weight ? `${weight.toFixed(2)} kg` : '-'}
                                       </td>
                                     </tr>
                                   );
@@ -520,7 +557,7 @@ const MedicineManifest: React.FC = () => {
                     size="lg"
                   >
                     <Send className="h-5 w-5" />
-                    Dispatch All ({getTotalConsignments()} consignments)
+                    Dispatch
                   </Button>
                 </div>
               )}
@@ -533,11 +570,15 @@ const MedicineManifest: React.FC = () => {
       {showDispatchForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+            {showSuccessAnimation ? (
+              <ForwardSuccessAnimation />
+            ) : (
+                <>
             <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 bg-white">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Dispatch All Manifests</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Forward Manifests</h3>
                 <p className="text-sm text-gray-500 mt-1">
-                  Dispatching {manifests.length} manifest{manifests.length > 1 ? 's' : ''} with {getTotalConsignments()} total consignment{getTotalConsignments() > 1 ? 's' : ''}
+                  Forwarding {manifests.length} manifest{manifests.length > 1 ? 's' : ''} with {getTotalConsignments()} total consignment{getTotalConsignments() > 1 ? 's' : ''}
                 </p>
               </div>
               <button 
@@ -556,37 +597,77 @@ const MedicineManifest: React.FC = () => {
                   <p className="text-red-700 text-sm">{formError}</p>
                 </div>
               )}
-
+              
               <div>
-                <label htmlFor="contentDescription" className="block text-sm font-medium text-gray-700 mb-1">
-                  Content Description
-                </label>
-                <Textarea
+                <FloatingLabelTextarea
                   id="contentDescription"
-                  name="contentDescription"
                   value={dispatchFormData.contentDescription}
-                  onChange={(e) => setDispatchFormData(prev => ({ ...prev, contentDescription: e.target.value }))}
-                  placeholder="Enter content description"
+                  onChange={(value) => setDispatchFormData(prev => ({ ...prev, contentDescription: value }))}
+                  placeholder="Content Description"
                   rows={3}
                   className="w-full"
-                  disabled={isSubmitting}
+                  required
                 />
               </div>
 
               <div>
-                <label htmlFor="coloaderDocketNo" className="block text-sm font-medium text-gray-700 mb-1">
-                  Co-Loader Docket No.
-                </label>
-                <Input
+                <FloatingLabelInput
                   id="coloaderDocketNo"
-                  name="coloaderDocketNo"
                   value={dispatchFormData.coloaderDocketNo}
-                  onChange={(e) => setDispatchFormData(prev => ({ ...prev, coloaderDocketNo: e.target.value }))}
-                  placeholder="Enter co-loader docket number (optional)"
+                  onChange={(value) => setDispatchFormData(prev => ({ ...prev, coloaderDocketNo: value }))}
+                  placeholder="Co-Loader Docket No."
                   className="w-full"
                   disabled={isSubmitting}
                 />
               </div>
+              
+              {/* Upload Document Field - Only show when coloaderDocketNo is entered */}
+              {dispatchFormData.coloaderDocketNo && (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Upload Document
+                  </label>
+                  <Input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        // In a real implementation, you would upload the file to a server
+                        // For now, we'll just store the file name as a placeholder
+                        const newFile: UploadedFile = {
+                          name: file.name,
+                          url: URL.createObjectURL(file)
+                        };
+                        setUploadedFiles(prev => [...prev, newFile]);
+                        // Reset the file input
+                        e.target.value = '';
+                      }
+                    }}
+                    className="w-full"
+                    disabled={isSubmitting}
+                  />
+                  {/* Display uploaded files */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                      <p className="text-xs text-gray-500">Uploaded files:</p>
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
+                          <span className="text-sm text-gray-700 truncate">{file.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setUploadedFiles(prev => prev.filter((_, i) => i !== index))}
+                            className="text-red-500 hover:text-red-700"
+                            disabled={isSubmitting}
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div>
                 <label htmlFor="coloaderId" className="block text-sm font-medium text-gray-700 mb-1">
@@ -606,7 +687,7 @@ const MedicineManifest: React.FC = () => {
                     <option value="">Select Coloader</option>
                     {coloaders.map((coloader) => (
                       <option key={coloader._id} value={coloader._id}>
-                        {coloader.busNumber} ({coloader.phoneNumber})
+                        {coloader.name ? coloader.name : 'Coloader'} - {coloader.busNumber} - {coloader.phoneNumber}
                       </option>
                     ))}
                   </select>
@@ -629,12 +710,25 @@ const MedicineManifest: React.FC = () => {
                           type="button"
                           onClick={() => {
                             setShowAddColoader(false);
-                            setNewColoaderData({ phoneNumber: '', busNumber: '' });
+                            setNewColoaderData({ phoneNumber: '', busNumber: '', name: '' });
                           }}
                           className="text-gray-400 hover:text-gray-600"
                         >
                           <X className="h-4 w-4" />
                         </button>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                          Name <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                          type="text"
+                          value={newColoaderData.name}
+                          onChange={(e) => setNewColoaderData(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="Enter coloader name"
+                          className="w-full"
+                          disabled={isSubmitting}
+                        />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -670,7 +764,7 @@ const MedicineManifest: React.FC = () => {
                         type="button"
                         onClick={handleAddColoader}
                         className="w-full bg-blue-600 hover:bg-blue-700"
-                        disabled={isSubmitting || !newColoaderData.phoneNumber || !newColoaderData.busNumber}
+                        disabled={isSubmitting || !newColoaderData.phoneNumber || !newColoaderData.busNumber || !newColoaderData.name}
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add Coloader
@@ -696,17 +790,19 @@ const MedicineManifest: React.FC = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Dispatching...
+                      Forwarding...
                     </>
                   ) : (
                     <>
                       <Send className="mr-2 h-4 w-4" />
-                      Dispatch All ({manifests.length} manifest{manifests.length > 1 ? 's' : ''})
+                      Forward ({manifests.length} manifest{manifests.length > 1 ? 's' : ''})
                     </>
                   )}
                 </Button>
               </div>
             </div>
+                </>
+              )}
           </div>
         </div>
       )}
@@ -715,3 +811,133 @@ const MedicineManifest: React.FC = () => {
 };
 
 export default MedicineManifest;
+
+// Floating Label Textarea Component
+interface FloatingLabelTextareaProps {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  className?: string;
+  required?: boolean;
+  rows?: number;
+}
+
+const FloatingLabelTextarea: React.FC<FloatingLabelTextareaProps> = ({
+  id,
+  value,
+  onChange,
+  placeholder,
+  className = "",
+  required = false,
+  rows = 3
+}) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const hasValue = value.length > 0;
+  const isFloating = isFocused || hasValue;
+
+  return (
+    <div className="relative">
+      <Textarea
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        rows={rows}
+        className={`${className} text-sm text-gray-700`}
+        placeholder=""
+      />
+      <Label
+        htmlFor={id}
+        className={`absolute left-3 transition-all duration-200 ease-in-out pointer-events-none ${
+          isFloating
+            ? 'left-3 -top-2 text-xs bg-white px-1 text-blue-600 font-medium'
+            : 'left-3 top-3 text-gray-500 text-sm'
+        }`}
+      >
+        {placeholder} {required && <span className="text-red-500">*</span>}
+      </Label>
+    </div>
+  );
+};
+
+// Floating Label Input Component
+interface FloatingLabelInputProps {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  className?: string;
+  required?: boolean;
+  disabled?: boolean;
+}
+
+const FloatingLabelInput: React.FC<FloatingLabelInputProps> = ({
+  id,
+  value,
+  onChange,
+  placeholder,
+  className = "",
+  required = false,
+  disabled = false
+}) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const hasValue = value.length > 0;
+  const isFloating = isFocused || hasValue;
+
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        className={`${className} text-sm text-gray-700`}
+        placeholder=""
+        disabled={disabled}
+      />
+      <Label
+        htmlFor={id}
+        className={`absolute left-3 transition-all duration-200 ease-in-out pointer-events-none ${
+          isFloating
+            ? 'left-3 -top-2 text-xs bg-white px-1 text-blue-600 font-medium'
+            : 'left-3 top-3 text-gray-500 text-sm'
+        }`}
+      >
+        {placeholder} {required && <span className="text-red-500">*</span>}
+      </Label>
+    </div>
+  );
+};
+
+const ForwardSuccessAnimation: React.FC = () => {
+  return (
+    <div className="success-animation-overlay">
+      <div className="success-animation-wrapper">
+        <div className="success-animation-circle">
+          <div className="success-animation-ring" />
+          <svg
+            className="success-animation-check"
+            viewBox="0 0 52 52"
+            aria-hidden="true"
+          >
+            <circle className="success-animation-check-circle" cx="26" cy="26" r="25" />
+            <path
+              className="success-animation-check-mark"
+              fill="none"
+              d="M16 26.5 22.5 33l13-13"
+            />
+          </svg>
+        </div>
+        <div className="success-animation-text">
+          <p className="success-animation-heading">Successfully Forwarded</p>
+          <p className="success-animation-subtext">
+            Manifests have been forwarded successfully
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};

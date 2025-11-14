@@ -134,43 +134,43 @@ const Courier = () => {
       
         {/* Hero Section */}
       <section 
-        className="relative -mt-20 pt-24 pb-32"
+        className="relative -mt-20 pt-20 md:pt-24 pb-16 md:pb-32"
         style={{
           backgroundImage: `url(${tataImg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
-          backgroundAttachment: 'fixed'
+          backgroundAttachment: windowWidth >= 768 ? 'fixed' : 'scroll'
         }}
       >
           {/* Overlay for text readability */}
           <div className="absolute inset-0 bg-white/40"></div>
-          <div className="container mx-auto px-4 relative z-10">
+          <div className="container mx-auto px-4 sm:px-6 relative z-10">
             <motion.div
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6 }}
               className="text-center"
             >
-              <div className="flex justify-center mb-6">
-                <div className="w-20 h-20 bg-brand-red/10 rounded-full flex items-center justify-center">
-                  <Truck className="w-10 h-10 text-brand-red" />
+              <div className="flex justify-center mb-4 md:mb-6">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-brand-red/10 rounded-full flex items-center justify-center">
+                  <Truck className="w-8 h-8 md:w-10 md:h-10 text-brand-red" />
                 </div>
               </div>
               
-              <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-4 md:mb-6 px-2">
                 Courier Services
               </h1>
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-14">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto mb-8 md:mb-14 px-2">
                 Fast, reliable, and secure courier services for all your delivery needs. 
                 From documents to packages, we ensure your items reach their destination safely and on time.
               </p>
               
-              <div className="flex flex-wrap justify-center gap-4">
-                  <Link to="/schedule-pickup">
+              <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 px-2">
+                  <Link to="/schedule-pickup" className="w-full sm:w-auto">
                   <button
                     role="button"
-                    className="button-17"
+                    className="button-17 w-full sm:w-auto"
                     style={{
                       alignItems: 'center',
                       appearance: 'none',
@@ -184,15 +184,15 @@ const Courier = () => {
                       display: 'inline-flex',
                       fill: 'currentcolor',
                       fontFamily: '"Google Sans", Roboto, Arial, sans-serif',
-                      fontSize: '14px',
+                      fontSize: windowWidth < 640 ? '13px' : '14px',
                       fontWeight: '500',
-                      height: '48px',
+                      height: windowWidth < 640 ? '44px' : '48px',
                       justifyContent: 'center',
                       letterSpacing: '.25px',
                       lineHeight: 'normal',
                       maxWidth: '100%',
                       overflow: 'visible',
-                      padding: '2px 24px',
+                      padding: windowWidth < 640 ? '2px 20px' : '2px 24px',
                       position: 'relative',
                       textAlign: 'center',
                       textTransform: 'none',
@@ -200,7 +200,7 @@ const Courier = () => {
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
                       touchAction: 'manipulation',
-                      width: 'auto',
+                      width: windowWidth < 640 ? '100%' : 'auto',
                       willChange: 'transform, opacity',
                       zIndex: 0,
                       outline: 'none'
@@ -234,10 +234,10 @@ const Courier = () => {
                   </button>
                   </Link>
                 
-                  <Link to="/rates">
+                  <Link to="/rates" className="w-full sm:w-auto">
                   <button
                     role="button"
-                    className="button-17"
+                    className="button-17 w-full sm:w-auto"
                     style={{
                       alignItems: 'center',
                       appearance: 'none',
@@ -251,15 +251,15 @@ const Courier = () => {
                       display: 'inline-flex',
                       fill: 'currentcolor',
                       fontFamily: '"Google Sans", Roboto, Arial, sans-serif',
-                      fontSize: '14px',
+                      fontSize: windowWidth < 640 ? '13px' : '14px',
                       fontWeight: '500',
-                      height: '48px',
+                      height: windowWidth < 640 ? '44px' : '48px',
                       justifyContent: 'center',
                       letterSpacing: '.25px',
                       lineHeight: 'normal',
                       maxWidth: '100%',
                       overflow: 'visible',
-                      padding: '2px 24px',
+                      padding: windowWidth < 640 ? '2px 20px' : '2px 24px',
                       position: 'relative',
                       textAlign: 'center',
                       textTransform: 'none',
@@ -267,7 +267,7 @@ const Courier = () => {
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
                       touchAction: 'manipulation',
-                      width: 'auto',
+                      width: windowWidth < 640 ? '100%' : 'auto',
                       willChange: 'transform, opacity',
                       zIndex: 0,
                       outline: 'none'
@@ -307,23 +307,23 @@ const Courier = () => {
 
       <main className="flex-1">
         {/* Services Section */}
-        <section className="py-10">
-          <div className="container mx-auto px-4">
+        <section className="py-8 md:py-10">
+          <div className="container mx-auto px-4 sm:px-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-center mb-9"
+              className="text-center mb-6 md:mb-9"
             >
-              <h2 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#424530' }}>
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 px-2" style={{ color: '#424530' }}>
                 Our Services
               </h2>
-              <p className="max-w-2xl mx-auto" style={{ color: '#424530' }}>
+              <p className="text-sm sm:text-base max-w-2xl mx-auto px-2" style={{ color: '#424530' }}>
                 Choose from our range of services designed to meet your specific delivery requirements
               </p>
             </motion.div>
 
-            <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-7xl mx-auto">
               {services.map((service, index) => (
                 <motion.div
                   key={index}
@@ -334,9 +334,11 @@ const Courier = () => {
                     ease: "easeOut",
                     delay: 0.3 + index * 0.15 
                   }}
-                  className="relative h-[500px] cursor-pointer"
-                  onMouseEnter={() => setHoveredCard(index)}
+                  className="relative h-[350px] sm:h-[400px] md:h-[450px] lg:h-[500px] cursor-pointer"
+                  onMouseEnter={() => windowWidth >= 768 && setHoveredCard(index)}
                   onMouseLeave={() => setHoveredCard(null)}
+                  onTouchStart={() => setHoveredCard(index)}
+                  onTouchEnd={() => setTimeout(() => setHoveredCard(null), 2000)}
                 >
                   {/* Card Container */}
                   <motion.div 
@@ -392,14 +394,14 @@ const Courier = () => {
                       }}
                     >
                       <div
-                        className="w-[200px] h-[200px] rounded-[15px] flex flex-col justify-center items-center p-6"
+                        className="w-[180px] sm:w-[200px] h-auto min-h-[180px] sm:min-h-[200px] rounded-[15px] flex flex-col justify-center items-center p-4 sm:p-6"
                         style={{
                           backgroundColor: 'rgba(255, 255, 255, 0.95)',
                           backdropFilter: 'blur(10px)',
                           boxShadow: 'rgba(0, 0, 0, 0.15) 0px 8px 24px, rgba(0, 0, 0, 0.1) 0px 4px 8px'
                         }}
                       >
-                        <div className="space-y-3.5">
+                        <div className="space-y-2.5 sm:space-y-3.5">
                           {service.features.map((feature, featureIndex) => (
                             <motion.div
                               key={featureIndex}
@@ -412,11 +414,11 @@ const Courier = () => {
                                 duration: 0.3,
                                 delay: hoveredCard === index ? 0.1 + featureIndex * 0.05 : 0
                               }}
-                              className="flex items-center gap-3"
+                              className="flex items-center gap-2 sm:gap-3"
                             >
                               {getFeatureIcon(feature)}
                               <span
-                                className="text-[#424530] text-sm font-medium"
+                                className="text-[#424530] text-xs sm:text-sm font-medium"
                               >
                                 {feature}
                               </span>
@@ -427,14 +429,14 @@ const Courier = () => {
                     </motion.div>
 
                     {/* Bottom Left Text (always visible, fades on hover) */}
-                    <div className="absolute bottom-0 left-0 p-6 pointer-events-none z-20">
+                    <div className="absolute bottom-0 left-0 p-4 sm:p-6 pointer-events-none z-20">
                       <motion.h3 
                         variants={{
                           initial: { opacity: 1 },
-                          hover: { opacity: 0 }
+                          hover: { opacity: hoveredCard === index ? 0 : 1 }
                         }}
                         transition={{ duration: 0.4 }}
-                        className="text-white font-bold text-2xl mb-2 uppercase tracking-wide"
+                        className="text-white font-bold text-lg sm:text-xl md:text-2xl mb-1 sm:mb-2 uppercase tracking-wide"
                         style={{ textShadow: '0 2px 10px rgba(0,0,0,0.7)' }}
                       >
                         {service.title}
@@ -442,10 +444,10 @@ const Courier = () => {
                       <motion.p 
                         variants={{
                           initial: { opacity: 0.7 },
-                          hover: { opacity: 0 }
+                          hover: { opacity: hoveredCard === index ? 0 : 0.7 }
                         }}
                         transition={{ duration: 0.4 }}
-                        className="text-white text-sm"
+                        className="text-white text-xs sm:text-sm"
                         style={{ 
                           textShadow: '0 2px 8px rgba(0,0,0,0.7)'
                         }}
@@ -461,18 +463,18 @@ const Courier = () => {
         </section>
 
         {/* Benefits Section - Carousel */}
-        <section className="py-16" style={{ background: 'linear-gradient(to bottom, #F49A2E 0%, #FFFFFF 100%)' }}>
-          <div className="container mx-auto px-4">
+        <section className="py-12 md:py-16" style={{ background: 'linear-gradient(to bottom, #F49A2E 0%, #FFFFFF 100%)' }}>
+          <div className="container mx-auto px-4 sm:px-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="text-center mb-12"
+              className="text-center mb-8 md:mb-12"
             >
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 md:mb-4 px-2">
                 Why Choose OCL?
               </h2>
-              <p className="text-white/90 max-w-2xl mx-auto">
+              <p className="text-sm sm:text-base text-white/90 max-w-2xl mx-auto px-2">
                 Experience the difference with our professional courier services
               </p>
             </motion.div>
@@ -503,12 +505,13 @@ const Courier = () => {
                   }
                 }}
               >
-                <div className="flex items-center justify-center gap-6 lg:gap-8">
+                <div className="flex items-center justify-center gap-4 sm:gap-6 lg:gap-8 overflow-x-auto pb-4 scrollbar-hide">
                   {benefits.map((benefit, index) => {
                     const isCenter = index === currentIndex;
                     const offset = index - currentIndex;
                     const absOffset = Math.abs(offset);
                     const isDesktop = windowWidth >= 1024;
+                    const isMobile = windowWidth < 640;
                     
                     // Calculate position and scale - keep all cards visible
                     let translateX = 0;
@@ -530,17 +533,31 @@ const Courier = () => {
                         scale = 0.85; // Smaller side cards for more contrast
                         blurValue = 1.5; // Slight blur for non-active cards
                       }
-                    } else {
-                      // Mobile: all cards visible with spacing
+                    } else if (isMobile) {
+                      // Mobile: show only center card clearly, others are hidden or very small
                       if (absOffset === 0) {
-                        scale = 1.15; // Larger center card on mobile too
+                        scale = 1.0; // Full size center card on mobile
+                        blurValue = 0;
+                        zIndex = 10;
+                        translateX = 0;
+                        opacity = 1;
+                      } else {
+                        // Hide side cards on very small screens
+                        opacity = 0;
+                        scale = 0.7;
+                        blurValue = 3;
+                      }
+                    } else {
+                      // Tablet: all cards visible with spacing
+                      if (absOffset === 0) {
+                        scale = 1.1; // Larger center card on tablet
                         blurValue = 0;
                         zIndex = 10;
                         translateX = 0;
                       } else {
-                        translateX = 0; // Let flex gap handle spacing on mobile too
+                        translateX = 0; // Let flex gap handle spacing
                         scale = 0.8; // Smaller side cards
-                        blurValue = 2; // More blur on mobile for side cards
+                        blurValue = 2; // More blur for side cards
                       }
                     }
 
@@ -549,8 +566,9 @@ const Courier = () => {
                   key={index}
                         className="flex-shrink-0"
                         style={{
-                          width: isDesktop ? '360px' : 'calc(100vw - 64px)',
-                          maxWidth: '360px',
+                          width: isMobile ? 'calc(100vw - 48px)' : isDesktop ? '360px' : 'calc(100vw - 80px)',
+                          maxWidth: isMobile ? '100%' : '360px',
+                          minWidth: isMobile ? 'calc(100vw - 48px)' : '280px',
                           zIndex,
                         }}
                         initial={false}
@@ -570,23 +588,23 @@ const Courier = () => {
                       >
                         <Card 
                           className={`border h-full text-center
-                                   rounded-[30px] shadow-lg transition-all duration-300
+                                   rounded-[20px] sm:rounded-[30px] shadow-lg transition-all duration-300
                                    ${isCenter ? 'border-gray-300 shadow-2xl' : 'border-gray-200 shadow-md'}`}
                           style={{
                             background: 'linear-gradient(to bottom, white 40%, #485342 40%)'
                           }}
                         >
-                          <CardContent className="p-8">
-                            <div className={`w-16 h-16 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-6
+                          <CardContent className="p-6 sm:p-8">
+                            <div className={`w-14 h-14 sm:w-16 sm:h-16 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6
                                          transition-colors duration-300 backdrop-blur-sm ${isCenter ? 'bg-white/40' : ''}`}>
-                              <div className="text-gray-800">
+                              <div className="text-gray-800 w-8 h-8 sm:w-10 sm:h-10">
                           {benefit.icon}
                         </div>
                       </div>
-                            <h3 className={`font-bold text-lg text-white mb-3 ${isCenter ? 'text-xl' : ''}`}>
+                            <h3 className={`font-bold text-base sm:text-lg text-white mb-2 sm:mb-3 ${isCenter ? 'sm:text-xl' : ''}`}>
                               {benefit.title}
                             </h3>
-                            <p className="text-sm leading-relaxed text-white">
+                            <p className="text-xs sm:text-sm leading-relaxed text-white px-1">
                               {benefit.description}
                             </p>
                     </CardContent>
@@ -617,25 +635,25 @@ const Courier = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="pt-10 pb-8 bg-white">
-          <div className="container mx-auto px-4 text-center">
+        <section className="pt-8 md:pt-10 pb-6 md:pb-8 bg-white">
+          <div className="container mx-auto px-4 sm:px-6 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.6 }}
             >
-              <h2 className="text-3xl font-bold mb-4" style={{ color: '#424530' }}>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-3 md:mb-4 px-2" style={{ color: '#424530' }}>
                 Ready to Ship?
               </h2>
-              <p className="mb-8 max-w-2xl mx-auto" style={{ color: '#424530' }}>
+              <p className="text-sm sm:text-base mb-6 md:mb-8 max-w-2xl mx-auto px-2" style={{ color: '#424530' }}>
                 Get started with OCL courier services today. Fast, reliable, and affordable delivery solutions.
               </p>
               
-              <div className="flex flex-wrap justify-center gap-4">
-                  <Link to="/schedule-pickup">
+              <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4 px-2">
+                  <Link to="/schedule-pickup" className="w-full sm:w-auto">
                   <button
                     role="button"
-                    className="button-17"
+                    className="button-17 w-full sm:w-auto"
                     style={{
                       alignItems: 'center',
                       appearance: 'none',
@@ -649,15 +667,15 @@ const Courier = () => {
                       display: 'inline-flex',
                       fill: 'currentcolor',
                       fontFamily: '"Google Sans", Roboto, Arial, sans-serif',
-                      fontSize: '14px',
+                      fontSize: windowWidth < 640 ? '13px' : '14px',
                       fontWeight: '500',
-                      height: '48px',
+                      height: windowWidth < 640 ? '44px' : '48px',
                       justifyContent: 'center',
                       letterSpacing: '.25px',
                       lineHeight: 'normal',
                       maxWidth: '100%',
                       overflow: 'visible',
-                      padding: '2px 24px',
+                      padding: windowWidth < 640 ? '2px 20px' : '2px 24px',
                       position: 'relative',
                       textAlign: 'center',
                       textTransform: 'none',
@@ -665,7 +683,7 @@ const Courier = () => {
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
                       touchAction: 'manipulation',
-                      width: 'auto',
+                      width: windowWidth < 640 ? '100%' : 'auto',
                       willChange: 'transform, opacity',
                       zIndex: 0,
                       outline: 'none'
@@ -699,10 +717,10 @@ const Courier = () => {
                   </button>
                   </Link>
                 
-                  <Link to="/track">
+                  <Link to="/track" className="w-full sm:w-auto">
                   <button
                     role="button"
-                    className="button-17"
+                    className="button-17 w-full sm:w-auto"
                     style={{
                       alignItems: 'center',
                       appearance: 'none',
@@ -716,15 +734,15 @@ const Courier = () => {
                       display: 'inline-flex',
                       fill: 'currentcolor',
                       fontFamily: '"Google Sans", Roboto, Arial, sans-serif',
-                      fontSize: '14px',
+                      fontSize: windowWidth < 640 ? '13px' : '14px',
                       fontWeight: '500',
-                      height: '48px',
+                      height: windowWidth < 640 ? '44px' : '48px',
                       justifyContent: 'center',
                       letterSpacing: '.25px',
                       lineHeight: 'normal',
                       maxWidth: '100%',
                       overflow: 'visible',
-                      padding: '2px 24px',
+                      padding: windowWidth < 640 ? '2px 20px' : '2px 24px',
                       position: 'relative',
                       textAlign: 'center',
                       textTransform: 'none',
@@ -732,7 +750,7 @@ const Courier = () => {
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
                       touchAction: 'manipulation',
-                      width: 'auto',
+                      width: windowWidth < 640 ? '100%' : 'auto',
                       willChange: 'transform, opacity',
                       zIndex: 0,
                       outline: 'none'

@@ -57,7 +57,7 @@ const RestrictedItems = () => {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.h1 
-            className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-red-600"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 text-red-600"
             style={{ fontFamily: "'Playfair Display', serif" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -66,7 +66,7 @@ const RestrictedItems = () => {
             Restricted & Banned Items
           </motion.h1>
           <motion.p 
-            className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto font-inter"
+            className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto font-inter"
             style={{ fontFamily: "'Inter', sans-serif" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -166,13 +166,13 @@ const RestrictedItems = () => {
               </motion.div>
               <div className="flex-1">
                 <h3 
-                  className="text-lg font-bold mb-1 text-[#0C1B33]"
+                  className="text-sm sm:text-base md:text-lg font-bold mb-1 text-[#0C1B33]"
                   style={{ fontFamily: "'Playfair Display', serif" }}
                 >
                   :: Important Notice ::
                 </h3>
                 <p 
-                  className="text-sm text-gray-600 leading-relaxed"
+                  className="text-xs sm:text-sm text-gray-600 leading-relaxed"
                   style={{ fontFamily: "'Inter', sans-serif" }}
                 >
                   Attempting to ship restricted items may result in shipment rejection, delays, or legal consequences. 
@@ -223,13 +223,13 @@ const RestrictedItems = () => {
                         </div>
                         <div className="text-left flex-1">
                           <h3 
-                            className="text-xl font-semibold text-white mb-1 group-data-[state=open]:text-[#0C1B33]"
+                            className="text-base sm:text-lg md:text-xl font-semibold text-white mb-1 group-data-[state=open]:text-[#0C1B33]"
                             style={{ fontFamily: "'Playfair Display', serif" }}
                           >
                             {category.name}
                           </h3>
                           <p 
-                            className="text-sm text-white/90 font-inter group-data-[state=open]:text-gray-500"
+                            className="text-xs sm:text-sm text-white/90 font-inter group-data-[state=open]:text-gray-500"
                             style={{ fontFamily: "'Inter', sans-serif" }}
                           >
                             {category.items.length} restricted items
@@ -256,7 +256,7 @@ const RestrictedItems = () => {
                               className="w-2 h-2 bg-[#F5A623]"
                             />
                             <span 
-                              className="text-sm text-black font-inter"
+                              className="text-xs sm:text-sm text-black font-inter"
                               style={{ fontFamily: "'Inter', sans-serif" }}
                             >
                               {item}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { LogOut, LayoutGrid, Package, BarChart3, X, Menu, History, Truck, ClipboardList, Send, CheckCircle, Warehouse, FileText, Calculator } from "lucide-react";
+import { LogOut, LayoutGrid, Package, BarChart3, X, Menu, History, Truck, ClipboardList, Send, CheckCircle, Warehouse, FileText, Calculator, UserPlus } from "lucide-react";
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +46,7 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
             )}
           </button>
         </div>
-
+        
         {/* Medicine logo and text section */}
         <div className={`flex items-center ${isSidebarCollapsed ? 'justify-center mb-4' : 'gap-3 mb-6'}`}>
           <div className="p-3 rounded-xl bg-white shadow-inner">
@@ -60,7 +60,7 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
           )}
         </div>
       </div>
-
+      
       {/* Navigation Section - Scrollable */}
       <div 
         className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden" 
@@ -82,7 +82,7 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
             <BarChart3 className="h-5 w-5" />
             {!isSidebarCollapsed && <span className="font-medium text-sm">Dashboard</span>}
           </button>
-
+          
           <button
             onClick={() => navigate('/medicine/booking')}
             className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
@@ -95,7 +95,7 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
             <Package className="h-5 w-5" />
             {!isSidebarCollapsed && <span className="font-medium text-sm">Booking</span>}
           </button>
-
+          
           <button
             onClick={() => navigate('/medicine/history')}
             className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
@@ -108,7 +108,21 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
             <History className="h-5 w-5" />
             {!isSidebarCollapsed && <span className="font-medium text-sm">History</span>}
           </button>
-
+          
+          {/* Arrived at Hub Scan */}
+          <button
+            onClick={() => navigate('/medicine/received-scan')}
+            className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
+              isActive('/medicine/received-scan')
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+            title={isSidebarCollapsed ? "Arrived at Hub Scan" : ""}
+          >
+            <CheckCircle className="h-5 w-5" />
+            {!isSidebarCollapsed && <span className="font-medium text-sm">Arrived at Hub Scan</span>}
+          </button>
+          
           <button
             onClick={() => navigate('/medicine/consignment')}
             className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
@@ -121,7 +135,7 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
             <ClipboardList className="h-5 w-5" />
             {!isSidebarCollapsed && <span className="font-medium text-sm">Consignment</span>}
           </button>
-
+          
           <button
             onClick={() => navigate('/medicine/dispatch-consignment')}
             className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
@@ -129,12 +143,12 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
                 ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
                 : 'text-gray-700 hover:bg-gray-50'
             }`}
-            title={isSidebarCollapsed ? "Dispatch Consignment" : ""}
+            title={isSidebarCollapsed ? "Scan For Dispatch" : ""}
           >
             <Send className="h-5 w-5" />
-            {!isSidebarCollapsed && <span className="font-medium text-sm">Dispatch Consignment</span>}
+            {!isSidebarCollapsed && <span className="font-medium text-sm">Scan For Dispatch</span>}
           </button>
-
+          
           <button
             onClick={() => navigate('/medicine/manifest')}
             className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
@@ -147,7 +161,7 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
             <ClipboardList className="h-5 w-5" />
             {!isSidebarCollapsed && <span className="font-medium text-sm">Ready to Dispatch</span>}
           </button>
-
+          
           <button
             onClick={() => navigate('/medicine/coloader')}
             className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
@@ -160,7 +174,20 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
             <Warehouse className="h-5 w-5" />
             {!isSidebarCollapsed && <span className="font-medium text-sm">Coloader</span>}
           </button>
-
+          
+          <button
+            onClick={() => navigate('/medicine/coloader-registration')}
+            className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
+              isActive('/medicine/coloader-registration')
+                ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+            title={isSidebarCollapsed ? "Coloader Registration" : ""}
+          >
+            <UserPlus className="h-5 w-5" />
+            {!isSidebarCollapsed && <span className="font-medium text-sm">Coloader Registration</span>}
+          </button>
+          
           <button
             onClick={() => navigate('/medicine/view-manifest')}
             className={`w-full ${isSidebarCollapsed ? 'flex justify-center p-2' : 'text-left flex items-center gap-3 px-3 py-2'} rounded-xl transition ${
@@ -173,7 +200,7 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
             <FileText className="h-5 w-5" />
             {!isSidebarCollapsed && <span className="font-medium text-sm">View Manifest</span>}
           </button>
-
+          
           {/* Settlement */}
           <button
             onClick={() => navigate('/medicine/view-settlement')}
@@ -189,7 +216,7 @@ const MedicineSidebar: React.FC<MedicineSidebarProps> = ({
           </button>
         </nav>
       </div>
-
+      
       {/* Footer Section - Fixed at Bottom */}
       <div className={`${isSidebarCollapsed ? 'p-2' : 'p-5'} border-t border-gray-100 bg-gray-50 rounded-b-2xl flex-shrink-0`}>
         {!isSidebarCollapsed ? (

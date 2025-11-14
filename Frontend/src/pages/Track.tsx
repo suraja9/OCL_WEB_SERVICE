@@ -113,10 +113,10 @@ const Track = () => {
         <section className="py-12 bg-gradient-to-br from-background to-background-soft">
           <div className="container mx-auto px-4 text-center">
             <div ref={titleAnimation.ref} className={`transition-all duration-700 ${titleAnimation.className}`}>
-              <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-4">
                 Track & Trace
               </h1>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
                 Enter your consignment number below to track your package in real-time. 
                 Get detailed updates on your shipment's journey from pickup to delivery.
               </p>
@@ -143,7 +143,7 @@ const Track = () => {
                 className="flex flex-col items-center justify-center space-y-4"
               >
                 <Loader2 className="w-12 h-12 animate-spin text-brand-red" />
-                <p className="text-lg text-muted-foreground">
+                <p className="text-sm sm:text-base md:text-lg text-muted-foreground">
                   Tracking your packages...
                 </p>
               </motion.div>
@@ -162,7 +162,7 @@ const Track = () => {
                     <motion.h2
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
-                      className="text-2xl font-bold text-foreground mb-6"
+                      className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mb-6"
                     >
                       Tracking Results ({results.length} found)
                     </motion.h2>
@@ -190,7 +190,7 @@ const Track = () => {
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
                           <AlertCircle className="w-6 h-6 text-warning" />
-                          <h3 className="text-lg font-semibold">
+                          <h3 className="text-base sm:text-lg font-semibold">
                             Consignment Numbers Not Found
                           </h3>
                         </div>
@@ -235,8 +235,8 @@ const Track = () => {
                     <Card className="border-2 border-brand-red bg-card-light max-w-md mx-auto">
                       <CardContent className="p-8">
                         <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold mb-2">No Results Found</h3>
-                        <p className="text-muted-foreground">
+                        <h3 className="text-base sm:text-lg font-semibold mb-2">No Results Found</h3>
+                        <p className="text-sm sm:text-base text-muted-foreground">
                           Please check your consignment number and try again.
                         </p>
                       </CardContent>

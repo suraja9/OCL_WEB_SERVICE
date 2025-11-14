@@ -24,9 +24,9 @@
       "items": [
         { "label": "Business Info", "href": "/business-info" },
         { "label": "Schedule Pickup", "href": "/schedule-pickup" },
-        { "label": "View Bills Online", "href": "/bills" },
-        { "label": "Apply for Credit Account", "href": "/credit-account" },
-        { "label": "My Shipments / Tracking", "href": "/my-shipments" }
+        { "label": "View Bills", "href": "/bills" },
+        { "label": "Apply Credit A/c.", "href": "/credit-account" },
+        { "label": "Tracking", "href": "/my-shipments" }
       ]
     },
     {
@@ -42,7 +42,7 @@
       "label": "Resources",
       "type": "dropdown",
       "items": [
-        { "label": "Restricted Items", "href": "/restricted" }
+        { "label": "Banned Items", "href": "/restricted" }
       ]
     },
     {
@@ -51,6 +51,14 @@
       "items": [
         { "label": "Contact OCL", "href": "/support/contact" },
         { "label": "Need Help?", "href": "/need-help" }
+      ]
+    },
+    {
+      "label": "Login",
+      "type": "dropdown",
+      "items": [
+        { "label": "Corporate", "href": "http://localhost:8080/corporate" },
+        { "label": "Franchise", "href": "http://localhost:8080/medicine" }
       ]
     },
     {

@@ -29,9 +29,11 @@ interface MedicineUserInfo {
 interface DashboardSummary {
   bookings: {
     total: number;
+    booked: number;
     pending: number;
     readyToDispatch: number;
     inTransit: number;
+    arrivedAtHub: number;
     delivered: number;
     cancelled: number;
   };
@@ -293,7 +295,7 @@ const MedicineDashboard: React.FC = () => {
                   {/* Booking Summary - First Row */}
                   <div>
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Booking Summary {useDateFilter ? '(Filtered)' : ''}</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 xl:grid-cols-7 gap-3">
                       <div className="flex flex-col items-center">
                         <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.bookings.total))} rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center mb-2`}>
                           <span className={`text-blue-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.bookings.total))}`}>{formatNumber(dashboardSummary.bookings.total)}</span>
@@ -303,27 +305,37 @@ const MedicineDashboard: React.FC = () => {
                       </div>
                       
                       <div className="flex flex-col items-center">
-                        <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.bookings.pending))} rounded-full bg-yellow-100 border border-yellow-200 flex items-center justify-center mb-2`}>
-                          <span className={`text-yellow-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.bookings.pending))}`}>{formatNumber(dashboardSummary.bookings.pending)}</span>
+                        <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.bookings.booked))} rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center mb-2`}>
+                          <span className={`text-blue-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.bookings.booked))}`}>{formatNumber(dashboardSummary.bookings.booked)}</span>
                         </div>
-                        <Clock className="h-6 w-6 text-yellow-600 mb-1" />
-                        <p className="text-sm text-center text-gray-600">Pending</p>
+                        <CheckCircle className="h-6 w-6 text-blue-600 mb-1" />
+                        <p className="text-sm text-center text-gray-600">Booked</p>
                       </div>
                       
-                      <div className="flex flex-col items-center">
-                        <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.bookings.readyToDispatch))} rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-2`}>
-                          <span className={`text-indigo-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.bookings.readyToDispatch))}`}>{formatNumber(dashboardSummary.bookings.readyToDispatch)}</span>
-                        </div>
-                        <CheckCircle className="h-6 w-6 text-indigo-600 mb-1" />
-                        <p className="text-sm text-center text-gray-600">Ready</p>
-                      </div>
+
                       
                       <div className="flex flex-col items-center">
                         <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.bookings.inTransit))} rounded-full bg-purple-100 border border-purple-200 flex items-center justify-center mb-2`}>
                           <span className={`text-purple-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.bookings.inTransit))}`}>{formatNumber(dashboardSummary.bookings.inTransit)}</span>
                         </div>
                         <Truck className="h-6 w-6 text-purple-600 mb-1" />
-                        <p className="text-sm text-center text-gray-600">Transit</p>
+                        <p className="text-sm text-center text-gray-600">In Transit</p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center">
+                        <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.bookings.arrivedAtHub))} rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center mb-2`}>
+                          <span className={`text-indigo-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.bookings.arrivedAtHub))}`}>{formatNumber(dashboardSummary.bookings.arrivedAtHub)}</span>
+                        </div>
+                        <Package className="h-6 w-6 text-indigo-600 mb-1" />
+                        <p className="text-sm text-center text-gray-600">Arrived at Hub</p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center">
+                        <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.bookings.readyToDispatch))} rounded-full bg-yellow-100 border border-yellow-200 flex items-center justify-center mb-2`}>
+                          <span className={`text-yellow-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.bookings.readyToDispatch))}`}>{formatNumber(dashboardSummary.bookings.readyToDispatch)}</span>
+                        </div>
+                        <Clock className="h-6 w-6 text-yellow-600 mb-1" />
+                        <p className="text-sm text-center text-gray-600">Ready to Dispatch</p>
                       </div>
                       
                       <div className="flex flex-col items-center">
@@ -347,7 +359,7 @@ const MedicineDashboard: React.FC = () => {
                   {/* Manifest Summary - Second Row */}
                   <div>
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Manifest Summary {useDateFilter ? '(Filtered)' : ''}</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div className="flex flex-col items-center">
                         <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.manifests.total))} rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center mb-2`}>
                           <span className={`text-blue-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.manifests.total))}`}>{formatNumber(dashboardSummary.manifests.total)}</span>
@@ -385,7 +397,7 @@ const MedicineDashboard: React.FC = () => {
                   {/* Settlement Summary - Third Row */}
                   <div>
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Settlement Summary {useDateFilter ? '(Filtered)' : ''}</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
                       <div className="flex flex-col items-center">
                         <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.settlements.totalTransactions))} rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center mb-2`}>
                           <span className={`text-blue-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.settlements.totalTransactions))}`}>{formatNumber(dashboardSummary.settlements.totalTransactions)}</span>
@@ -423,7 +435,7 @@ const MedicineDashboard: React.FC = () => {
                   {/* Payment Summary - Fourth Row (Last) */}
                   <div>
                     <h2 className="text-lg font-semibold text-gray-800 mb-4">Payment Summary</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="flex flex-col items-center">
                         <div className={`${getCircleSizeClass(formatNumber(dashboardSummary.payments.paid))} rounded-full bg-green-100 border border-green-200 flex items-center justify-center mb-2`}>
                           <span className={`text-green-900 font-bold ${getTextSizeClass(formatNumber(dashboardSummary.payments.paid))}`}>{formatNumber(dashboardSummary.payments.paid)}</span>
@@ -446,6 +458,28 @@ const MedicineDashboard: React.FC = () => {
                         </div>
                         <AlertCircle className="h-6 w-6 text-gray-600 mb-1" />
                         <p className="text-sm text-center text-gray-600">Not Paid</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* POD Summary - Fifth Row */}
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-800 mb-4">POD Summary</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="w-24 h-24 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center mb-2">
+                          <span className="text-blue-900 font-bold text-xl">0</span>
+                        </div>
+                        <CheckCircle className="h-6 w-6 text-blue-600 mb-1" />
+                        <p className="text-sm text-center text-gray-600">Total Pod</p>
+                      </div>
+                      
+                      <div className="flex flex-col items-center">
+                        <div className="w-24 h-24 rounded-full bg-green-100 border border-green-200 flex items-center justify-center mb-2">
+                          <span className="text-green-900 font-bold text-xl">0</span>
+                        </div>
+                        <CheckCircle className="h-6 w-6 text-green-600 mb-1" />
+                        <p className="text-sm text-center text-gray-600">Received Pod</p>
                       </div>
                     </div>
                   </div>

@@ -234,7 +234,7 @@ const TrackingTabs = () => {
 
       {/* Input + Action */}
       <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-        {/* Floating label input for Mobile/AWB/Ref with black text */}
+        {/* Input for Mobile/AWB/Ref */}
         <div className="relative flex-1">
           {miniTab === 'mobile' ? (
             <>
@@ -271,20 +271,13 @@ const TrackingTabs = () => {
                   }
                 }}
                 maxLength={10}
-                placeholder=" "
-                className="peer w-full rounded-xl border border-gray-300 pl-16 md:pl-20 pr-3 md:pr-4 py-2 md:py-2 text-base md:text-base outline-none focus:ring-2 focus:ring-[#5a1e1e]/30"
+                placeholder="Enter your mobile number"
+                className="w-full rounded-xl border border-gray-300 pl-16 md:pl-20 pr-3 md:pr-4 py-2 md:py-2 text-base md:text-base outline-none focus:ring-2 focus:ring-[#5a1e1e]/30"
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.65)',
                   color: '#1E1E1E'
                 }}
               />
-              <label className="pointer-events-none absolute left-16 md:left-20 top-1/2 -translate-y-1/2 transition-all duration-200 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base md:peer-placeholder-shown:text-base peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:bg-white/90 peer-[&:not(:placeholder-shown)]:-top-2 peer-[&:not(:placeholder-shown)]:translate-y-0 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:bg-white/90 px-1 rounded text-sm md:text-sm"
-                style={{
-                  color: '#6C757D'
-                }}
-              >
-                Enter your mobile number
-              </label>
             </>
           ) : (
             <>
@@ -298,20 +291,13 @@ const TrackingTabs = () => {
                     setRefNumber(e.target.value);
                   }
                 }}
-                placeholder=" "
-                className="peer w-full rounded-xl border border-gray-300 px-3 md:px-4 py-2 md:py-2 text-base md:text-base outline-none focus:ring-2 focus:ring-[#5a1e1e]/30"
+                placeholder={miniTab === 'awb' ? 'Enter AWB number' : 'Enter Ref No'}
+                className="w-full rounded-xl border border-gray-300 px-3 md:px-4 py-2 md:py-2 text-base md:text-base outline-none focus:ring-2 focus:ring-[#5a1e1e]/30"
                 style={{
                   backgroundColor: 'rgba(255, 255, 255, 0.65)',
                   color: '#1E1E1E'
                 }}
               />
-              <label className="pointer-events-none absolute left-3 md:left-4 top-1/2 -translate-y-1/2 transition-all duration-200 peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-base md:peer-placeholder-shown:text-base peer-placeholder-shown:bg-transparent peer-focus:-top-2 peer-focus:translate-y-0 peer-focus:text-sm peer-focus:bg-white/90 peer-[&:not(:placeholder-shown)]:-top-2 peer-[&:not(:placeholder-shown)]:translate-y-0 peer-[&:not(:placeholder-shown)]:text-sm peer-[&:not(:placeholder-shown)]:bg-white/90 px-1 rounded text-sm md:text-sm"
-                style={{
-                  color: '#6C757D'
-                }}
-              >
-                {miniTab === 'awb' ? 'Enter AWB number' : 'Enter Ref No'}
-              </label>
             </>
           )}
         </div>

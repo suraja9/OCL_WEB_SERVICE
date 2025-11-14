@@ -32,10 +32,10 @@ const GST = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-brand-red bg-clip-text text-transparent">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-brand-red bg-clip-text text-transparent">
             GST Information
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto">
             Complete GST details, compliance information, and tax structure for DaakBox Logistics
           </p>
         </motion.div>
@@ -54,7 +54,7 @@ const GST = () => {
                   <Building className="w-8 h-8 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-2xl text-center">Company GST Details</CardTitle>
+              <CardTitle className="text-lg sm:text-xl md:text-2xl text-center">Company GST Details</CardTitle>
               <div className="flex justify-center">
                 <Badge variant="secondary" className="bg-success/20 text-success-foreground">
                   <CheckCircle className="w-4 h-4 mr-1" />
@@ -68,8 +68,8 @@ const GST = () => {
                   <div className="p-4 border-2 border-brand-red/20 rounded-lg bg-success-light/5">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h4 className="font-semibold mb-1">GSTIN</h4>
-                        <p className="text-lg font-mono">{gstData.company_details.gstin}</p>
+                        <h4 className="text-sm sm:text-base font-semibold mb-1">GSTIN</h4>
+                        <p className="text-sm sm:text-base md:text-lg font-mono">{gstData.company_details.gstin}</p>
                       </div>
                       <Button
                         variant="outline"
@@ -84,8 +84,8 @@ const GST = () => {
                   <div className="p-4 border-2 border-brand-red/20 rounded-lg bg-success-light/5">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h4 className="font-semibold mb-1">PAN Number</h4>
-                        <p className="text-lg font-mono">{gstData.company_details.pan}</p>
+                        <h4 className="text-sm sm:text-base font-semibold mb-1">PAN Number</h4>
+                        <p className="text-sm sm:text-base md:text-lg font-mono">{gstData.company_details.pan}</p>
                       </div>
                       <Button
                         variant="outline"
@@ -98,8 +98,8 @@ const GST = () => {
                   </div>
 
                   <div className="p-4 border-2 border-brand-red/20 rounded-lg bg-success-light/5">
-                    <h4 className="font-semibold mb-1">Legal Name</h4>
-                    <p className="text-sm">{gstData.company_details.legal_name}</p>
+                    <h4 className="text-sm sm:text-base font-semibold mb-1">Legal Name</h4>
+                    <p className="text-xs sm:text-sm">{gstData.company_details.legal_name}</p>
                   </div>
                 </div>
 
@@ -107,8 +107,8 @@ const GST = () => {
                   <div className="p-4 border-2 border-brand-red/20 rounded-lg bg-success-light/5">
                     <div className="flex justify-between items-center">
                       <div>
-                        <h4 className="font-semibold mb-1">CIN</h4>
-                        <p className="text-lg font-mono">{gstData.company_details.cin}</p>
+                        <h4 className="text-sm sm:text-base font-semibold mb-1">CIN</h4>
+                        <p className="text-sm sm:text-base md:text-lg font-mono">{gstData.company_details.cin}</p>
                       </div>
                       <Button
                         variant="outline"
@@ -121,13 +121,13 @@ const GST = () => {
                   </div>
 
                   <div className="p-4 border-2 border-brand-red/20 rounded-lg bg-success-light/5">
-                    <h4 className="font-semibold mb-1">Registration Date</h4>
-                    <p className="text-sm">{new Date(gstData.company_details.registration_date).toLocaleDateString()}</p>
+                    <h4 className="text-sm sm:text-base font-semibold mb-1">Registration Date</h4>
+                    <p className="text-xs sm:text-sm">{new Date(gstData.company_details.registration_date).toLocaleDateString()}</p>
                   </div>
 
                   <div className="p-4 border-2 border-brand-red/20 rounded-lg bg-success-light/5">
-                    <h4 className="font-semibold mb-1">Constitution</h4>
-                    <p className="text-sm">{gstData.company_details.constitution}</p>
+                    <h4 className="text-sm sm:text-base font-semibold mb-1">Constitution</h4>
+                    <p className="text-xs sm:text-sm">{gstData.company_details.constitution}</p>
                   </div>
                 </div>
               </div>
@@ -144,25 +144,25 @@ const GST = () => {
         >
           <Card className="border-2 border-brand-red bg-success-light/10">
             <CardHeader>
-              <CardTitle className="text-2xl text-center">Registered Addresses</CardTitle>
+              <CardTitle className="text-lg sm:text-xl md:text-2xl text-center">Registered Addresses</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 <div className="p-6 border-2 border-primary/20 rounded-lg bg-primary/5">
                   <div className="flex items-center mb-3">
                     <Badge variant="default" className="mr-3">Principal</Badge>
-                    <span className="text-sm text-muted-foreground">State Code: {gstData.addresses.principal.state_code}</span>
+                    <span className="text-xs sm:text-sm text-muted-foreground">State Code: {gstData.addresses.principal.state_code}</span>
                   </div>
-                  <p className="text-sm leading-relaxed">{gstData.addresses.principal.address}</p>
+                  <p className="text-xs sm:text-sm leading-relaxed">{gstData.addresses.principal.address}</p>
                 </div>
 
                 {gstData.addresses.additional.map((address, index) => (
                   <div key={index} className="p-6 border-2 border-brand-red/20 rounded-lg bg-success-light/5">
                     <div className="flex items-center mb-3">
                       <Badge variant="secondary" className="mr-3">{address.type}</Badge>
-                      <span className="text-sm text-muted-foreground">State Code: {address.state_code}</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">State Code: {address.state_code}</span>
                     </div>
-                    <p className="text-sm leading-relaxed">{address.address}</p>
+                    <p className="text-xs sm:text-sm leading-relaxed">{address.address}</p>
                   </div>
                 ))}
               </div>
@@ -184,7 +184,7 @@ const GST = () => {
                   <CreditCard className="w-8 h-8 text-brand-red" />
                 </div>
               </div>
-              <CardTitle className="text-2xl text-center">Service Tax Structure</CardTitle>
+              <CardTitle className="text-lg sm:text-xl md:text-2xl text-center">Service Tax Structure</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -199,15 +199,15 @@ const GST = () => {
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center mb-2">
-                          <h4 className="font-semibold text-lg mr-3">{service.service}</h4>
+                          <h4 className="font-semibold text-sm sm:text-base md:text-lg mr-3">{service.service}</h4>
                           <Badge variant="outline" className="bg-primary/10">
                             {service.gst_rate}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                           HSN/SAC: {service.hsn_sac}
                         </p>
-                        <p className="text-sm leading-relaxed">{service.description}</p>
+                        <p className="text-xs sm:text-sm leading-relaxed">{service.description}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -231,25 +231,25 @@ const GST = () => {
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
               </div>
-              <CardTitle className="text-2xl text-center">Compliance Status</CardTitle>
+              <CardTitle className="text-lg sm:text-xl md:text-2xl text-center">Compliance Status</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div className="p-4 border-2 border-success/20 rounded-lg bg-success/5">
-                    <h4 className="font-semibold mb-1">Filing Frequency</h4>
-                    <p className="text-sm">{gstData.compliance.filing_frequency}</p>
+                    <h4 className="text-sm sm:text-base font-semibold mb-1">Filing Frequency</h4>
+                    <p className="text-xs sm:text-sm">{gstData.compliance.filing_frequency}</p>
                   </div>
                   
                   <div className="p-4 border-2 border-success/20 rounded-lg bg-success/5">
-                    <h4 className="font-semibold mb-1">Last Return Filed</h4>
-                    <p className="text-sm">{gstData.compliance.last_return_filed}</p>
+                    <h4 className="text-sm sm:text-base font-semibold mb-1">Last Return Filed</h4>
+                    <p className="text-xs sm:text-sm">{gstData.compliance.last_return_filed}</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="p-4 border-2 border-success/20 rounded-lg bg-success/5">
-                    <h4 className="font-semibold mb-1">Compliance Rating</h4>
+                    <h4 className="text-sm sm:text-base font-semibold mb-1">Compliance Rating</h4>
                     <div className="flex items-center">
                       <Badge variant="secondary" className="bg-success/20 text-success-foreground">
                         {gstData.compliance.compliance_rating}
@@ -258,8 +258,8 @@ const GST = () => {
                   </div>
                   
                   <div className="p-4 border-2 border-success/20 rounded-lg bg-success/5">
-                    <h4 className="font-semibold mb-1">Penalties</h4>
-                    <p className="text-sm text-success">{gstData.compliance.penalties}</p>
+                    <h4 className="text-sm sm:text-base font-semibold mb-1">Penalties</h4>
+                    <p className="text-xs sm:text-sm text-success">{gstData.compliance.penalties}</p>
                   </div>
                 </div>
               </div>
@@ -280,7 +280,7 @@ const GST = () => {
                   <FileText className="w-8 h-8 text-warning" />
                 </div>
               </div>
-              <CardTitle className="text-2xl text-center">Certificates & Documents</CardTitle>
+              <CardTitle className="text-lg sm:text-xl md:text-2xl text-center">Certificates & Documents</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -294,8 +294,8 @@ const GST = () => {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h4 className="font-semibold mb-2">{cert.name}</h4>
-                        <div className="space-y-1 text-sm text-muted-foreground">
+                        <h4 className="text-sm sm:text-base font-semibold mb-2">{cert.name}</h4>
+                        <div className="space-y-1 text-xs sm:text-sm text-muted-foreground">
                           <p>Issue Date: {new Date(cert.issue_date).toLocaleDateString()}</p>
                           <p>Validity: {cert.validity}</p>
                           {cert.number && <p>Number: {cert.number}</p>}

@@ -24,6 +24,7 @@ interface MedicineUserInfo {
 
 interface Coloader {
   _id: string;
+  name?: string;
   phoneNumber: string;
   busNumber: string;
   isActive: boolean;
@@ -44,6 +45,7 @@ const MedicineColoader: React.FC = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
+    name: '',
     phoneNumber: '',
     busNumber: ''
   });
@@ -102,13 +104,13 @@ const MedicineColoader: React.FC = () => {
 
   const handleAddClick = () => {
     setShowAddDialog(true);
-    setFormData({ phoneNumber: '', busNumber: '' });
+    setFormData({ name: '', phoneNumber: '', busNumber: '' });
     setFormError(null);
   };
 
   const handleCloseDialog = () => {
     setShowAddDialog(false);
-    setFormData({ phoneNumber: '', busNumber: '' });
+    setFormData({ name: '', phoneNumber: '', busNumber: '' });
     setFormError(null);
   };
 
@@ -144,6 +146,7 @@ const MedicineColoader: React.FC = () => {
       const response = await axios.post(
         `${API_BASE}/api/medicine/coloaders`,
         {
+          name: formData.name.trim(),
           phoneNumber: formData.phoneNumber.trim(),
           busNumber: formData.busNumber.trim()
         },
@@ -252,6 +255,9 @@ const MedicineColoader: React.FC = () => {
                           S.No
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                          Name
+                        </th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                           Phone Number
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
@@ -270,6 +276,9 @@ const MedicineColoader: React.FC = () => {
                         <tr key={coloader._id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
                             {index + 1}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700">
+                            {coloader.name || 'N/A'}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap">
                             <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -334,6 +343,22 @@ const MedicineColoader: React.FC = () => {
                   <p className="text-red-700 text-sm">{formError}</p>
                 </div>
               )}
+
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter coloader name"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  disabled={isSubmitting}
+                />
+              </div>
 
               <div>
                 <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">

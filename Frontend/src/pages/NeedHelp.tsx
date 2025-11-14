@@ -16,7 +16,7 @@ const NeedHelp = () => {
       <div className="relative z-[100]">
         {/* Header Section with Background - Full Width */}
         <motion.div 
-          className="mb-16 relative w-full min-h-[700px] flex flex-col items-start justify-center py-32 pl-40 md:pl-56 lg:pl-64"
+          className="mb-8 md:mb-16 relative w-full min-h-[400px] md:min-h-[500px] lg:min-h-[700px] flex flex-col items-start justify-center py-16 md:py-24 lg:py-32 px-4 sm:px-6 md:px-12 lg:pl-40 xl:pl-56 2xl:pl-64"
           style={{
             backgroundImage: `url(${needImage})`,
             backgroundSize: 'cover',
@@ -29,7 +29,7 @@ const NeedHelp = () => {
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.h1 
-            className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-black text-left"
+            className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 md:mb-6 text-black text-left"
             style={{ fontFamily: "'Playfair Display', serif" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -38,18 +38,18 @@ const NeedHelp = () => {
             Need Help ?
           </motion.h1>
           <motion.p 
-            className="text-lg md:text-xl text-gray-600 max-w-xl text-left font-inter"
+            className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 max-w-xl text-left font-inter"
             style={{ fontFamily: "'Inter', sans-serif" }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
-            Get assistance for Booking Shipments - Speacial Rates - Complaints.
+            Get assistance for Booking Shipments - Special Rates - Complaints.
           </motion.p>
           
           {/* Soft Divider Line */}
           <motion.div 
-            className="mt-8 w-64 md:w-80 lg:w-96 h-0.5 bg-gradient-to-r from-transparent via-[#E5E8EC] to-transparent"
+            className="mt-4 md:mt-6 lg:mt-8 w-48 sm:w-56 md:w-64 lg:w-80 xl:w-96 h-0.5 bg-gradient-to-r from-transparent via-[#E5E8EC] to-transparent"
             initial={{ opacity: 0, scaleX: 0 }}
             animate={{ opacity: 1, scaleX: 1 }}
             transition={{ duration: 0.8, delay: 0.5 }}
@@ -57,15 +57,15 @@ const NeedHelp = () => {
         </motion.div>
       </div>
 
-      <div className="relative z-[100] container mx-auto px-4 pb-20">
+      <div className="relative z-[100] container mx-auto px-4 sm:px-6 md:px-8 pb-12 md:pb-20">
         {/* Help Cards Section */}
         <motion.div
-          className="max-w-6xl mx-auto mt-8"
+          className="max-w-6xl mx-auto mt-4 md:mt-8"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.6 }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 lg:gap-10 max-w-6xl mx-auto">
             {[
               {
                 icon: Phone,
@@ -97,39 +97,38 @@ const NeedHelp = () => {
             ].map((helpItem, index) => (
               <div
                 key={index}
-                className={`relative border border-[#E5E8EC] rounded-2xl transition-all duration-300 overflow-hidden group ${
-                  index === 1 ? 'px-6 py-2' : 'px-6 py-1'
-                } ${
+                className={`relative border-2 border-[#E5E8EC] rounded-2xl transition-all duration-300 overflow-hidden group hover:shadow-xl ${
                   index === 0 
-                    ? 'bg-gradient-to-br from-blue-50 to-blue-100/30' 
+                    ? 'bg-gradient-to-br from-blue-50 to-blue-100/30 hover:from-blue-100 hover:to-blue-200/40' 
                     : index === 1
-                    ? 'bg-gradient-to-br from-amber-50 to-amber-100/30'
-                    : 'bg-gradient-to-br from-red-50 to-red-100/30'
+                    ? 'bg-gradient-to-br from-amber-50 to-amber-100/30 hover:from-amber-100 hover:to-amber-200/40'
+                    : 'bg-gradient-to-br from-red-50 to-red-100/30 hover:from-red-100 hover:to-red-200/40'
                 }`}
                 style={{
-                  boxShadow: "rgba(0, 0, 0, 0.3) 0px 19px 38px, rgba(0, 0, 0, 0.22) 0px 15px 12px"
+                  boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px"
                 }}
               >
                 {/* Inner shadow effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />
                 
-                <div className="relative z-10 text-center flex flex-col items-center justify-center gap-0 h-full">
+                <div className="relative z-10 flex flex-col p-5 sm:p-6 md:p-7">
                   {index === 1 ? (
                     <>
-                      <img
-                        src={confuseIcon}
-                        alt="Confused icon"
-                        className="w-24 h-24 mx-auto mb-0"
-                      />
-                      <div className="flex justify-center mt-0">
+                      <div className="flex flex-col items-center justify-center mb-6">
+                        <img
+                          src={confuseIcon}
+                          alt="Confused icon"
+                          className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 mx-auto"
+                        />
+                      </div>
+                      <div>
                         <Button
-                          className="text-sm font-medium px-4 py-1.5 rounded-lg transition-colors bg-white hover:bg-[#F5A623] hover:text-white text-[#0C1B33] border border-[#E5E8EC]"
+                          className="w-full text-base sm:text-lg font-semibold px-6 py-3 rounded-lg transition-all duration-300 bg-white hover:bg-[#F5A623] hover:text-white text-[#0C1B33] border-2 border-[#E5E8EC] shadow-md hover:shadow-lg hover:scale-105"
                           onClick={() => {
                             window.dispatchEvent(new CustomEvent('openEnquiry'));
                           }}
                           style={{ 
-                            fontFamily: "'Inter', sans-serif",
-                            boxShadow: "rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px"
+                            fontFamily: "'Inter', sans-serif"
                           }}
                         >
                           <span>Write to us</span>
@@ -138,36 +137,39 @@ const NeedHelp = () => {
                     </>
                   ) : (
                     <>
-                      <div className="w-full">
+                      <div className="mb-5">
                         <h4 
-                          className={`text-sm font-semibold mb-0 text-[#0C1B33] leading-none ${index === 0 || index === 2 ? 'underline' : ''}`}
+                          className={`text-base sm:text-lg md:text-xl font-bold text-[#0C1B33] mb-3 ${index === 0 || index === 2 ? 'underline decoration-2 underline-offset-2' : ''}`}
                           style={{ fontFamily: "'Playfair Display', serif" }}
                         >
                           {helpItem.title}
                         </h4>
                         <p 
-                          className="text-sm text-gray-500 mb-0 font-inter leading-none font-normal"
+                          className="text-sm sm:text-base md:text-lg text-gray-700 font-inter font-normal leading-relaxed"
                           style={{ fontFamily: "'Inter', sans-serif" }}
                         >
                           {helpItem.description}
                         </p>
                       </div>
-                      <div className="flex justify-center mt-0">
+                      <div className="mt-auto">
                         <Button
-                          className="text-sm font-medium px-4 py-1.5 rounded-lg transition-colors bg-green-600 hover:bg-green-700 text-white"
+                          className="w-full text-sm sm:text-base md:text-lg font-semibold px-6 py-3 rounded-lg transition-all duration-300 bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg hover:scale-105"
                           onClick={() => {
-                            window.location.href = `tel:+918453994809`;
+                            if (index === 0 || index === 2) {
+                              window.location.href = `tel:+918453994809`;
+                            } else {
+                              window.location.href = `mailto:${helpItem.contact}`;
+                            }
                           }}
                           style={{ 
-                            fontFamily: "'Inter', sans-serif",
-                            boxShadow: "rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px"
+                            fontFamily: "'Inter', sans-serif"
                           }}
                         >
                           <div className="flex items-center justify-center gap-2">
                             <img
                               src={helpItem.contactIcon}
-                              alt="Call"
-                              className="w-4 h-4"
+                              alt="Contact"
+                              className="w-4 h-4 sm:w-5 sm:h-5"
                             />
                             <span>{helpItem.contact}</span>
                           </div>

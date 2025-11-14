@@ -12,9 +12,15 @@ import {
   Sparkles,
   Sun,
   Headphones,
+  Menu,
 } from "lucide-react";
 import BookNow from "@/components/user/BookNow";
 import ContactSupport from "@/components/user/ContactSupport";
+import {
+  Sheet,
+  SheetContent,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type SidebarItem = {
   id: "home" | "booknow" | "contactsupport";
@@ -42,6 +48,8 @@ const UserDashboard: React.FC = () => {
 
   const [activeItem, setActiveItem] = useState<SidebarItem["id"]>("home");
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const pageBackground = isDarkMode
     ? "bg-slate-950 text-slate-50"
@@ -56,6 +64,113 @@ const UserDashboard: React.FC = () => {
     ? "bg-slate-900/80 border-slate-800/60"
     : "bg-white/90 border-slate-200/60";
   const sidebarTextMuted = isDarkMode ? "text-slate-300/80" : "text-slate-500";
+
+  const handleItemClick = (itemId: SidebarItem["id"]) => {
+    setActiveItem(itemId);
+    if (isMobile) {
+      setIsMobileMenuOpen(false);
+    }
+  };
+
+  // Reusable Sidebar Content Component
+  const SidebarContent = () => (
+    <div className="flex h-full flex-col gap-8 p-6">
+      <div className="flex flex-col gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-inherit">
+            Ship Consignments :
+          </h1>
+        </div>
+      </div>
+
+      <nav className="space-y-2">
+        {sidebarItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => handleItemClick(item.id)}
+            className={cn(
+              "group w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+              isDarkMode
+                ? "border-transparent hover:border-blue-500/20 hover:bg-blue-500/5"
+                : "border-transparent hover:border-blue-400/25 hover:bg-blue-400/10",
+              activeItem === item.id
+                ? isDarkMode
+                  ? "border-blue-500/40 bg-blue-500/15 text-white shadow-[0_12px_35px_rgba(37,99,235,0.18)]"
+                  : "border-blue-400/40 bg-blue-400/15 text-blue-800 shadow-[0_18px_45px_rgba(59,130,246,0.18)]"
+                : isDarkMode
+                ? "text-slate-300"
+                : "text-slate-600"
+            )}
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-lg transition",
+                  isDarkMode
+                    ? "bg-slate-800/60 text-slate-200 group-hover:bg-blue-500/20"
+                    : "bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600"
+                )}
+              >
+                {item.id === "home" ? (
+                  <LayoutDashboard size={18} />
+                ) : item.id === "booknow" ? (
+                  <CalendarDays size={18} />
+                ) : item.id === "contactsupport" ? (
+                  <Headphones size={18} />
+                ) : (
+                  <LayoutDashboard size={18} />
+                )}
+              </span>
+              <span className="block text-sm font-medium text-inherit">
+                {item.label}
+              </span>
+            </div>
+          </button>
+        ))}
+      </nav>
+
+      <div
+        className={cn(
+          "mt-auto rounded-2xl border p-5 transition",
+          isDarkMode
+            ? "border-slate-800/50 bg-slate-900/80"
+            : "border-slate-200/70 bg-white/60"
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-full",
+              isDarkMode
+                ? "bg-blue-500/20 text-blue-200"
+                : "bg-blue-100 text-blue-600"
+            )}
+          >
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-inherit">
+              Need something specific?
+            </p>
+            <p className={cn("text-xs", sidebarTextMuted)}>
+              Tell us the features you want to see next.
+            </p>
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          className={cn(
+            "mt-4 w-full text-sm transition",
+            isDarkMode
+              ? "border-blue-500/40 bg-transparent text-blue-100 hover:bg-blue-500/10"
+              : "border-blue-500/40 bg-blue-500/10 text-blue-700 hover:bg-blue-500/20"
+          )}
+        >
+          Share Feedback
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -80,127 +195,74 @@ const UserDashboard: React.FC = () => {
       </div>
 
       <div className="relative z-10 flex min-h-screen flex-col lg:flex-row">
+        {/* Desktop Sidebar - Hidden on mobile */}
         <aside
           className={cn(
-            "w-full max-w-full border-b backdrop-blur-xl transition-all duration-500 lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-[24rem] lg:max-w-[24rem] lg:border-b-0 lg:border-r",
+            "hidden lg:fixed lg:left-0 lg:top-0 lg:flex lg:h-screen lg:w-[24rem] lg:max-w-[24rem] lg:border-r backdrop-blur-xl transition-all duration-500",
             sidebarBackground
           )}
         >
-          <div className="flex h-full flex-col gap-8 p-6">
-            <div className="flex flex-col gap-3">
-              <Badge
-                variant="secondary"
+          <SidebarContent />
+        </aside>
+
+        {/* Mobile Sidebar - Sheet Drawer */}
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetContent
+            side="left"
+            className={cn(
+              "w-[85vw] max-w-sm p-0 backdrop-blur-xl",
+              sidebarBackground
+            )}
+          >
+            <SidebarContent />
+          </SheetContent>
+        </Sheet>
+
+        <main className="flex-1 overflow-x-hidden lg:ml-[24rem]">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10">
+            {/* Mobile Header with Hamburger Menu */}
+            <div className="flex items-center justify-between gap-4 lg:hidden">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsMobileMenuOpen(true)}
                 className={cn(
-                  "w-fit border text-xs font-medium",
+                  "h-10 w-10 rounded-xl border transition",
                   isDarkMode
-                    ? "border-blue-500/30 bg-blue-500/10 text-blue-200"
-                    : "border-blue-500/30 bg-blue-500/10 text-blue-700"
+                    ? "border-slate-700 bg-slate-900/80 text-slate-200 hover:bg-slate-800/70"
+                    : "border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-100"
                 )}
               >
-                New Experience
-              </Badge>
-              <div>
-                <h1 className="text-2xl font-semibold text-inherit">
+                <Menu size={20} />
+                <span className="sr-only">Open menu</span>
+              </Button>
+              <div className="flex-1">
+                <h1 className="text-xl font-semibold text-inherit">
                   OCL User Panel
                 </h1>
-                <p className={cn("mt-1 text-sm", sidebarTextMuted)}>
-                  Seamlessly manage your courier needs from one elegant hub.
-                </p>
-              </div>
-            </div>
-
-            <nav className="space-y-2">
-              {sidebarItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveItem(item.id)}
-                  className={cn(
-                    "group w-full rounded-xl border px-4 py-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-                    isDarkMode
-                      ? "border-transparent hover:border-blue-500/20 hover:bg-blue-500/5"
-                      : "border-transparent hover:border-blue-400/25 hover:bg-blue-400/10",
-                    activeItem === item.id
-                      ? isDarkMode
-                        ? "border-blue-500/40 bg-blue-500/15 text-white shadow-[0_12px_35px_rgba(37,99,235,0.18)]"
-                        : "border-blue-400/40 bg-blue-400/15 text-blue-800 shadow-[0_18px_45px_rgba(59,130,246,0.18)]"
-                      : isDarkMode
-                      ? "text-slate-300"
-                      : "text-slate-600"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        "flex h-9 w-9 items-center justify-center rounded-lg transition",
-                        isDarkMode
-                          ? "bg-slate-800/60 text-slate-200 group-hover:bg-blue-500/20"
-                          : "bg-slate-100 text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-600"
-                      )}
-                    >
-                      {item.id === "home" ? (
-                        <LayoutDashboard size={18} />
-                      ) : item.id === "booknow" ? (
-                        <CalendarDays size={18} />
-                      ) : item.id === "contactsupport" ? (
-                        <Headphones size={18} />
-                      ) : (
-                        <LayoutDashboard size={18} />
-                      )}
-                    </span>
-                    <span className="block text-sm font-medium text-inherit">
-                      {item.label}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </nav>
-
-            <div
-              className={cn(
-                "mt-auto rounded-2xl border p-5 transition",
-                isDarkMode
-                  ? "border-slate-800/50 bg-slate-900/80"
-                  : "border-slate-200/70 bg-white/60"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-full",
-                    isDarkMode
-                      ? "bg-blue-500/20 text-blue-200"
-                      : "bg-blue-100 text-blue-600"
-                  )}
-                >
-                  <Sparkles size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-inherit">
-                    Need something specific?
-                  </p>
-                  <p className={cn("text-xs", sidebarTextMuted)}>
-                    Tell us the features you want to see next.
-                  </p>
-                </div>
               </div>
               <Button
                 variant="outline"
+                size="icon"
+                onClick={() => setIsDarkMode((prev) => !prev)}
                 className={cn(
-                  "mt-4 w-full text-sm transition",
+                  "h-10 w-10 rounded-xl border transition",
                   isDarkMode
-                    ? "border-blue-500/40 bg-transparent text-blue-100 hover:bg-blue-500/10"
-                    : "border-blue-500/40 bg-blue-500/10 text-blue-700 hover:bg-blue-500/20"
+                    ? "border-slate-700 bg-slate-900/80 text-slate-200 hover:bg-slate-800/70"
+                    : "border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-100"
                 )}
               >
-                Share Feedback
+                {isDarkMode ? (
+                  <Sun size={18} />
+                ) : (
+                  <MoonStar size={18} />
+                )}
+                <span className="sr-only">Toggle theme</span>
               </Button>
             </div>
-          </div>
-        </aside>
 
-        <main className="flex-1 overflow-x-hidden lg:ml-[24rem]">
-          <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
-            <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            {/* Desktop Header */}
+            <div className="hidden flex-col items-start justify-between gap-4 sm:flex-row sm:items-center lg:flex">
               <div>
                 <p
                   className={cn(
@@ -208,11 +270,8 @@ const UserDashboard: React.FC = () => {
                     isDarkMode ? "text-slate-400" : "text-slate-500"
                   )}
                 >
-                  Dashboard Overview
+                  
                 </p>
-                <h2 className="mt-1 text-2xl font-semibold text-inherit">
-                  Welcome back, here's what's happening today.
-                </h2>
               </div>
               <Button
                 variant="outline"
@@ -241,7 +300,7 @@ const UserDashboard: React.FC = () => {
               <>
                 <section
                   className={cn(
-                    "relative overflow-hidden rounded-3xl border p-8 shadow-[0_25px_80px_rgba(15,23,42,0.15)] transition",
+                    "relative overflow-hidden rounded-2xl border p-4 shadow-[0_25px_80px_rgba(15,23,42,0.15)] transition sm:rounded-3xl sm:p-6 lg:p-8",
                     isDarkMode
                       ? "border-slate-800/60 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90"
                       : "border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-blue-50/20"
@@ -263,47 +322,30 @@ const UserDashboard: React.FC = () => {
                         : "bg-purple-400/15"
                     )}
                   />
-                  <div className="relative z-10 flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="max-w-xl space-y-4">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-2 rounded-full border px-4 py-1 text-xs font-medium uppercase tracking-widest",
-                          isDarkMode
-                            ? "border-blue-500/40 bg-blue-500/10 text-blue-100"
-                            : "border-blue-400/40 bg-blue-400/10 text-blue-700"
-                        )}
-                      >
-                        <Sparkles size={14} />
-                        Fresh Arrival
-                      </span>
+                  <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+                    <div className="max-w-xl space-y-3 sm:space-y-4">
+                      
                       <h2
                         className={cn(
-                          "text-3xl font-semibold leading-tight md:text-4xl",
+                          "text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl",
                           isDarkMode ? "text-white" : "text-slate-900"
                         )}
                       >
-                        Welcome to your personalised logistics control centre.
+                        Welcome to Your personalised Booking centre.
                       </h2>
-                      <p
-                        className={cn(
-                          "text-base md:text-lg",
-                          isDarkMode ? "text-slate-300/80" : "text-slate-600"
-                        )}
-                      >
-                        Track shipments, schedule pickups, and stay ahead with
-                        proactive insights crafted for modern businesses.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
+                      
+                      <div className="flex flex-wrap gap-2 sm:gap-3">
                         <Button 
-                          onClick={() => setActiveItem("booknow")}
-                          className="rounded-full bg-blue-500 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-600"
+                          onClick={() => handleItemClick("booknow")}
+                          className="rounded-full bg-blue-500 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-600 sm:px-6 sm:text-sm"
                         >
                           Create Booking
                         </Button>
                         <Button
                           variant="outline"
+                          onClick={() => window.location.href = "/services/logistics"}
                           className={cn(
-                            "rounded-full px-6 py-2 text-sm font-semibold transition",
+                            "rounded-full px-4 py-2 text-xs font-semibold transition sm:px-6 sm:text-sm",
                             isDarkMode
                               ? "border-slate-700 bg-transparent text-slate-200 hover:border-blue-500/40 hover:bg-blue-500/10"
                               : "border-blue-200 bg-white text-blue-700 hover:border-blue-400 hover:bg-blue-50"
@@ -315,7 +357,7 @@ const UserDashboard: React.FC = () => {
                     </div>
                     <div
                       className={cn(
-                        "flex w-full max-w-sm flex-col gap-4 rounded-2xl border p-6 transition",
+                        "flex w-full flex-col gap-4 rounded-2xl border p-4 transition sm:p-6 lg:max-w-sm",
                         isDarkMode
                           ? "border-blue-500/20 bg-slate-900/70"
                           : "border-blue-200/60 bg-white/80 shadow-lg"
@@ -323,13 +365,13 @@ const UserDashboard: React.FC = () => {
                     >
                       <p
                         className={cn(
-                          "text-sm",
+                          "text-xs sm:text-sm",
                           isDarkMode ? "text-slate-300" : "text-slate-600"
                         )}
                       >
                         Your next move is just a click away.
                       </p>
-                      <div className="space-y-3">
+                      <div className="space-y-2 sm:space-y-3">
                         {[
                           {
                             icon: <CalendarDays size={18} />,
@@ -358,16 +400,16 @@ const UserDashboard: React.FC = () => {
                           >
                             <span
                               className={cn(
-                                "mt-1",
+                                "mt-1 flex-shrink-0",
                                 isDarkMode ? "text-blue-200" : "text-blue-600"
                               )}
                             >
                               {item.icon}
                             </span>
-                            <div>
+                            <div className="min-w-0 flex-1">
                               <p
                                 className={cn(
-                                  "text-sm font-medium",
+                                  "text-xs font-medium sm:text-sm",
                                   isDarkMode ? "text-white" : "text-slate-800"
                                 )}
                               >
@@ -389,7 +431,7 @@ const UserDashboard: React.FC = () => {
                   </div>
                 </section>
 
-                <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                <section className="grid gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
                   {[
                     {
                       title: "Active Shipments",
@@ -416,7 +458,7 @@ const UserDashboard: React.FC = () => {
                     <div
                       key={card.title}
                       className={cn(
-                        "relative overflow-hidden rounded-3xl border p-6 transition duration-300 hover:-translate-y-1",
+                        "relative overflow-hidden rounded-2xl border p-4 transition duration-300 hover:-translate-y-1 sm:rounded-3xl sm:p-6",
                         isDarkMode
                           ? "border-slate-800/50 bg-slate-900/70 hover:border-blue-500/40 hover:shadow-[0_20px_45px_rgba(37,99,235,0.18)]"
                           : "border-slate-200/80 bg-white hover:border-blue-300/50 hover:shadow-[0_22px_55px_rgba(59,130,246,0.15)]"
@@ -428,10 +470,10 @@ const UserDashboard: React.FC = () => {
                           isDarkMode ? card.accent : card.accent.replace("/20", "/25")
                         )}
                       />
-                      <div className="relative z-10 space-y-4">
+                      <div className="relative z-10 space-y-3 sm:space-y-4">
                         <span
                           className={cn(
-                            "inline-flex h-12 w-12 items-center justify-center rounded-2xl shadow-inner",
+                            "inline-flex h-10 w-10 items-center justify-center rounded-xl shadow-inner sm:h-12 sm:w-12 sm:rounded-2xl",
                             isDarkMode
                               ? "bg-slate-900/70 text-white shadow-slate-950/40"
                               : "bg-blue-50 text-blue-600 shadow-blue-200/60"
@@ -442,7 +484,7 @@ const UserDashboard: React.FC = () => {
                         <div>
                           <p
                             className={cn(
-                              "text-sm uppercase tracking-[0.2em]",
+                              "text-xs uppercase tracking-[0.2em] sm:text-sm",
                               isDarkMode ? "text-slate-400" : "text-slate-500"
                             )}
                           >
@@ -450,7 +492,7 @@ const UserDashboard: React.FC = () => {
                           </p>
                           <h3
                             className={cn(
-                              "mt-2 text-3xl font-semibold",
+                              "mt-1 text-2xl font-semibold sm:mt-2 sm:text-3xl",
                               isDarkMode ? "text-white" : "text-slate-900"
                             )}
                           >
@@ -470,10 +512,10 @@ const UserDashboard: React.FC = () => {
                   ))}
                 </section>
 
-                <section className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+                <section className="grid gap-4 sm:gap-6 lg:grid-cols-[2fr_1fr]">
                   <div
                     className={cn(
-                      "rounded-3xl border p-6 transition",
+                      "rounded-2xl border p-4 transition sm:rounded-3xl sm:p-6",
                       isDarkMode
                         ? "border-slate-800/60 bg-slate-900/60"
                         : "border-slate-200 bg-white"
@@ -482,7 +524,7 @@ const UserDashboard: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <h3
                         className={cn(
-                          "text-lg font-semibold",
+                          "text-base font-semibold sm:text-lg",
                           isDarkMode ? "text-white" : "text-slate-900"
                         )}
                       >
@@ -499,7 +541,7 @@ const UserDashboard: React.FC = () => {
                         Live
                       </Badge>
                     </div>
-                    <div className="mt-6 space-y-5">
+                    <div className="mt-4 space-y-3 sm:mt-6 sm:space-y-5">
                       {[
                         {
                           title: "Shipment OCL-8421 was dispatched",
@@ -520,7 +562,7 @@ const UserDashboard: React.FC = () => {
                         <div
                           key={item.title}
                           className={cn(
-                            "relative rounded-2xl border p-4 transition",
+                            "relative rounded-xl border p-3 transition sm:rounded-2xl sm:p-4",
                             isDarkMode
                               ? "border-transparent bg-slate-800/40 hover:border-blue-500/30 hover:bg-blue-500/10"
                               : "border-transparent bg-blue-50/70 hover:border-blue-400/40 hover:bg-blue-100/60"
@@ -528,16 +570,16 @@ const UserDashboard: React.FC = () => {
                         >
                           <span
                             className={cn(
-                              "absolute left-0 top-4 h-4 w-1 rounded-full bg-gradient-to-b",
+                              "absolute left-0 top-3 h-3 w-1 rounded-full bg-gradient-to-b sm:top-4 sm:h-4",
                               isDarkMode
                                 ? "from-blue-400 to-blue-600"
                                 : "from-blue-400 to-blue-500"
                             )}
                           />
-                          <div className="pl-4">
+                          <div className="pl-3 sm:pl-4">
                             <p
                               className={cn(
-                                "text-sm font-medium",
+                                "text-xs font-medium sm:text-sm",
                                 isDarkMode ? "text-white" : "text-slate-800"
                               )}
                             >
@@ -545,7 +587,7 @@ const UserDashboard: React.FC = () => {
                             </p>
                             <p
                               className={cn(
-                                "text-xs",
+                                "mt-1 text-xs",
                                 isDarkMode ? "text-slate-400" : "text-slate-500"
                               )}
                             >
@@ -553,7 +595,7 @@ const UserDashboard: React.FC = () => {
                             </p>
                             <p
                               className={cn(
-                                "mt-2 text-sm",
+                                "mt-1 text-xs sm:mt-2 sm:text-sm",
                                 isDarkMode
                                   ? "text-slate-300/80"
                                   : "text-slate-600"
@@ -568,7 +610,7 @@ const UserDashboard: React.FC = () => {
                   </div>
                   <div
                     className={cn(
-                      "flex flex-col gap-4 rounded-3xl border p-6 transition",
+                      "flex flex-col gap-4 rounded-2xl border p-4 transition sm:rounded-3xl sm:p-6",
                       isDarkMode
                         ? "border-slate-800/60 bg-slate-900/60"
                         : "border-slate-200 bg-white"
@@ -576,13 +618,13 @@ const UserDashboard: React.FC = () => {
                   >
                     <h3
                       className={cn(
-                        "text-lg font-semibold",
+                        "text-base font-semibold sm:text-lg",
                         isDarkMode ? "text-white" : "text-slate-900"
                       )}
                     >
                       Quick actions
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {[
                         "Download latest reports",
                         "Invite your team",
@@ -592,7 +634,7 @@ const UserDashboard: React.FC = () => {
                           key={action}
                           variant="outline"
                           className={cn(
-                            "w-full justify-start gap-3 border text-sm transition",
+                            "w-full justify-start gap-2 border text-xs transition sm:gap-3 sm:text-sm",
                             isDarkMode
                               ? "border-slate-800 bg-transparent text-slate-200 hover:border-blue-500/40 hover:bg-blue-500/10"
                               : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50"
@@ -600,15 +642,15 @@ const UserDashboard: React.FC = () => {
                         >
                           <span
                             className={cn(
-                              "flex h-8 w-8 items-center justify-center rounded-full",
+                              "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full sm:h-8 sm:w-8",
                               isDarkMode
                                 ? "bg-slate-800/70 text-blue-200"
                                 : "bg-blue-50 text-blue-600"
                             )}
                           >
-                            <Sparkles size={16} />
+                            <Sparkles size={14} className="sm:w-4 sm:h-4" />
                           </span>
-                          {action}
+                          <span className="truncate">{action}</span>
                         </Button>
                       ))}
                     </div>
@@ -619,7 +661,7 @@ const UserDashboard: React.FC = () => {
             {activeItem === "booknow" && (
               <section
                 className={cn(
-                  "relative overflow-hidden rounded-3xl border p-8 shadow-[0_25px_80px_rgba(15,23,42,0.15)] transition",
+                  "relative overflow-hidden rounded-2xl border p-4 shadow-[0_25px_80px_rgba(15,23,42,0.15)] transition sm:rounded-3xl sm:p-6 lg:p-8",
                   isDarkMode
                     ? "border-slate-800/60 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90"
                     : "border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-blue-50/20"
@@ -631,7 +673,7 @@ const UserDashboard: React.FC = () => {
             {activeItem === "contactsupport" && (
               <section
                 className={cn(
-                  "relative overflow-hidden rounded-3xl border p-8 shadow-[0_25px_80px_rgba(15,23,42,0.15)] transition",
+                  "relative overflow-hidden rounded-2xl border p-4 shadow-[0_25px_80px_rgba(15,23,42,0.15)] transition sm:rounded-3xl sm:p-6 lg:p-8",
                   isDarkMode
                     ? "border-slate-800/60 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90"
                     : "border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-blue-50/20"

@@ -674,7 +674,7 @@ const MedicineBookingPanel: React.FC = () => {
     natureOfConsignment: 'NON-DOX',
     services: 'Standard',
     mode: 'Surface',
-    insurance: 'Without insurance',
+    insurance: 'Consignor not insured the shipment',
     riskCoverage: 'Owner',
     dimensions: [{ length: '', breadth: '', height: '', unit: 'cm' }],
     actualWeight: '',
@@ -702,9 +702,7 @@ const MedicineBookingPanel: React.FC = () => {
 
   // State for bill data
   const [billData, setBillData] = useState({
-    gst: 'No', // Yes or No
-    partyType: 'sender', // Only sender and recipient
-    billType: 'normal' // normal or rcm
+    partyType: 'sender' // Only sender and recipient
   });
 
   // State for details data
@@ -835,18 +833,10 @@ const MedicineBookingPanel: React.FC = () => {
         break;
       
       case 4: // Billing Information
-        if (!billData.gst) {
+        if (!billData.partyType) {
           isValid = false;
-          errorMessage = 'Please select GST option';
-        } else if (!billData.partyType) {
-          isValid = false;
-          errorMessage = 'Please select Party Type';
-        } else if (billData.gst === 'Yes' && !billData.billType) {
-          isValid = false;
-          errorMessage = 'Please select Bill Type';
+          errorMessage = 'Please select Paid By';
         }
-        // If GST is No, allow moving to preview
-        // If GST is Yes, validation happens in the charges section
         break;
       
       case 5: // Preview - no validation needed, user can submit
@@ -1049,22 +1039,6 @@ const MedicineBookingPanel: React.FC = () => {
   // Handle bill input changes
   const handleBillChange = (field: string, value: string) => {
     setBillData(prev => ({ ...prev, [field]: value }));
-    
-    // When GST selection changes, recalculate charges
-    if (field === 'gst') {
-      const freightChargeValue = parseFloat(detailsData.freightCharge) || 0;
-      
-      if (value === 'No') {
-        // If GST is set to "No", grand total equals freight charge
-        const grandTotal = freightChargeValue.toFixed(2);
-        setDetailsData(prev => ({ ...prev, gstAmount: '0.00', grandTotal }));
-      } else {
-        // If GST is set to "Yes", grand total equals freight charge + 18% GST
-        const gstAmount = (freightChargeValue * 0.18).toFixed(2);
-        const grandTotal = (freightChargeValue + parseFloat(gstAmount)).toFixed(2);
-        setDetailsData(prev => ({ ...prev, gstAmount, grandTotal }));
-      }
-    }
   };
 
   // Format price to 2 decimal places
@@ -1075,21 +1049,6 @@ const MedicineBookingPanel: React.FC = () => {
     return numValue.toFixed(2);
   }
 
-  // Auto-calculate GST (18% of freight charge) whenever freight charge changes
-  useEffect(() => {
-    const freightChargeValue = parseFloat(detailsData.freightCharge) || 0;
-    
-    // If GST is "No", grand total equals freight charge
-    // If GST is "Yes", grand total equals freight charge + 18% GST
-    if (billData.gst === 'No') {
-      const grandTotal = freightChargeValue.toFixed(2);
-      setDetailsData(prev => ({ ...prev, gstAmount: '0.00', grandTotal }));
-    } else {
-      const gstAmount = (freightChargeValue * 0.18).toFixed(2);
-      const grandTotal = (freightChargeValue + parseFloat(gstAmount)).toFixed(2);
-      setDetailsData(prev => ({ ...prev, gstAmount, grandTotal }));
-    }
-  }, [detailsData.freightCharge, billData.gst]);
 
   // Handle details input changes
   const handleDetailsChange = (field: string, value: string) => {
@@ -1437,17 +1396,17 @@ const MedicineBookingPanel: React.FC = () => {
     }));
   }, [shipmentData.dimensions, shipmentData.actualWeight]);
 
-  // Update freight charge when chargeable weight or per kg rate changes
+  // Update freight charge when actual weight or per kg rate changes
   useEffect(() => {
-    const chargeableWeight = parseFloat(shipmentData.chargeableWeight.toString()) || 0;
+    const actualWeight = parseFloat(shipmentData.actualWeight) || 0;
     const perKgRate = parseFloat(shipmentData.perKgWeight) || 0;
-    const freightCharge = (chargeableWeight * perKgRate).toFixed(2);
+    const freightCharge = (actualWeight * perKgRate).toFixed(2);
     
     setDetailsData(prev => ({
       ...prev,
       freightCharge
     }));
-  }, [shipmentData.chargeableWeight, shipmentData.perKgWeight]);
+  }, [shipmentData.actualWeight, shipmentData.perKgWeight]);
 
   // Check consignment availability on component mount
   useEffect(() => {
@@ -1581,10 +1540,8 @@ const MedicineBookingPanel: React.FC = () => {
           acceptTerms: invoiceData.acceptTerms || false
         },
         billing: billData,
-        // Modified charges data based on GST selection
-        charges: billData.gst === 'Yes' ? detailsData : {
-          freightCharge: detailsData.freightCharge,
-          grandTotal: detailsData.grandTotal
+        charges: {
+          freightCharge: detailsData.freightCharge || '0.00'
         },
         payment: paymentData
       };
@@ -1652,12 +1609,6 @@ const MedicineBookingPanel: React.FC = () => {
       case 0: // Origin Details
         return (
           <div className="border border-blue-200 rounded-xl p-6 bg-blue-50">
-            <div className="flex items-center mb-6">
-              <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                <MapPin className="h-6 w-6 text-blue-600" />
-              </div>
-              <h2 className="text-xl font-bold text-blue-800">Origin Details</h2>
-            </div>
             
             {/* Phone Number Input Section */}
             {!showOriginSummaryCard && !showOriginManualForm && (
@@ -1971,12 +1922,6 @@ const MedicineBookingPanel: React.FC = () => {
       case 1: // Destination Details
         return (
           <div className="border border-green-200 rounded-xl p-6 bg-green-50">
-            <div className="flex items-center mb-6">
-              <div className="p-2 bg-green-100 rounded-lg mr-3">
-                <MapPin className="h-6 w-6 text-green-600" />
-              </div>
-              <h2 className="text-xl font-bold text-green-800">Destination Details</h2>
-            </div>
             
             {/* Phone Number Input Section */}
             {!showDestinationSummaryCard && !showDestinationManualForm && (
@@ -2345,8 +2290,8 @@ const MedicineBookingPanel: React.FC = () => {
                 value={shipmentData.insurance}
                 onChange={(value) => handleShipmentChange('insurance', value)}
                 options={[
-                  { value: 'Without insurance', label: 'Without insurance' },
-                  { value: 'With insurance', label: 'With insurance' }
+                  { value: 'Consignor not insured the shipment', label: 'Consignor not insured the shipment' },
+                  { value: 'Consignor has insured the shipment', label: 'Consignor has insured the shipment' }
                 ]}
                 required
                 icon={<Shield className="h-4 w-4" />}
@@ -2502,18 +2447,6 @@ const MedicineBookingPanel: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <CustomRadioGroup
-                label="GST Applicable"
-                name="gst"
-                value={billData.gst}
-                onChange={(value) => handleBillChange('gst', value)}
-                options={[
-                  { value: 'Yes', label: 'Yes' },
-                  { value: 'No', label: 'No' }
-                ]}
-                required
-              />
-              
-              <CustomRadioGroup
                 label="Paid By"
                 name="partyType"
                 value={billData.partyType}
@@ -2524,33 +2457,6 @@ const MedicineBookingPanel: React.FC = () => {
                 ]}
                 required
               />
-              
-              {billData.gst === 'Yes' && (
-                <CustomRadioGroup
-                  label="Bill Type"
-                  name="billType"
-                  value={billData.billType}
-                  onChange={(value) => handleBillChange('billType', value)}
-                  options={[
-                    { value: 'normal', label: 'Normal' },
-                    { value: 'rcm', label: 'RCM (Reverse Charge Mechanism)' }
-                  ]}
-                  required
-                />
-              )}
-              
-              {billData.gst === 'No' && (
-                <div className="md:col-span-2">
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-center">
-                      <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
-                      <p className="text-yellow-700">
-                        GST is not applicable. Click "Next" to review your booking details before confirmation.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         );
@@ -2613,11 +2519,19 @@ const MedicineBookingPanel: React.FC = () => {
                   <div><span className="font-semibold">Insurance:</span> {shipmentData.insurance}</div>
                   <div><span className="font-semibold">Risk Coverage:</span> {shipmentData.riskCoverage}</div>
                   <div><span className="font-semibold">Actual Weight:</span> {shipmentData.actualWeight} kg</div>
+                  <div><span className="font-semibold">Per Kg Rate:</span> ₹{shipmentData.perKgWeight ? parseFloat(shipmentData.perKgWeight).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}</div>
                   <div><span className="font-semibold">Volumetric Weight:</span> {shipmentData.volumetricWeight} kg</div>
                   <div><span className="font-semibold">Chargeable Weight:</span> {shipmentData.chargeableWeight} kg</div>
                   <div><span className="font-semibold">Total Packages:</span> {packageData.totalPackages}</div>
                   <div><span className="font-semibold">Materials:</span> {packageData.materials}</div>
                   <div className="md:col-span-2"><span className="font-semibold">Content Description:</span> {packageData.contentDescription}</div>
+                  {shipmentData.actualWeight && shipmentData.perKgWeight && (
+                    <div className="md:col-span-2 mt-2 pt-2 border-t border-orange-200">
+                      <div className="text-sm">
+                        <span className="font-semibold">Freight Charge Calculation:</span> {shipmentData.actualWeight} kg × ₹{parseFloat(shipmentData.perKgWeight).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} = ₹{detailsData.freightCharge ? parseFloat(detailsData.freightCharge).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+                      </div>
+                    </div>
+                  )}
                   {packageData.packageImages.length > 0 && (
                     <div className="md:col-span-2"><span className="font-semibold">Package Images:</span> {packageData.packageImages.length} file(s) uploaded</div>
                   )}
@@ -2647,15 +2561,9 @@ const MedicineBookingPanel: React.FC = () => {
                   Billing Details
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div><span className="font-semibold">GST Applicable:</span> {billData.gst}</div>
                   <div><span className="font-semibold">Paid By:</span> {billData.partyType === 'sender' ? 'Sender' : 'Recipient'}</div>
-                  {billData.gst === 'Yes' && <div><span className="font-semibold">Bill Type:</span> {billData.billType === 'normal' ? 'Normal' : 'RCM'}</div>}
-                  {billData.gst === 'Yes' && detailsData.grandTotal !== '0.00' && (
-                    <div className="md:col-span-2 mt-2 pt-2 border-t border-gray-200">
-                      <div className="text-lg font-bold text-teal-900">
-                        Grand Total: ₹{parseFloat(detailsData.grandTotal).toLocaleString()}
-                      </div>
-                    </div>
+                  {detailsData.freightCharge && parseFloat(detailsData.freightCharge) > 0 && (
+                    <div><span className="font-semibold">Freight Charge:</span> ₹{parseFloat(detailsData.freightCharge).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                   )}
                 </div>
               </div>
@@ -2673,15 +2581,7 @@ const MedicineBookingPanel: React.FC = () => {
     if (currentStep === 5) {
       return false; // Don't show next button on preview page
     }
-    if (currentStep === 4 && billData.gst === 'No') {
-      return true; // Show next button to go to preview when GST is No
-    }
     return currentStep < 5;
-  };
-
-  // Determine if we should show the charges step
-  const shouldShowChargesStep = () => {
-    return currentStep === 5 || (currentStep === 4 && billData.gst === 'Yes');
   };
 
   return (
@@ -2706,137 +2606,7 @@ const MedicineBookingPanel: React.FC = () => {
           {/* Step Content */}
           {renderStepContent()}
           
-          {/* Charges Step - only shown when GST is Yes */}
-          {shouldShowChargesStep() && (
-            <div className="border border-pink-200 rounded-xl p-6 bg-pink-50">
-              <div className="flex items-center mb-6">
-                <div className="p-2 bg-pink-100 rounded-lg mr-3">
-                  <FileText className="h-6 w-6 text-pink-600" />
-                </div>
-                <h2 className="text-xl font-bold text-pink-800">Charges Details</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FloatingInput
-                  label="Freight Charge (₹)"
-                  value={detailsData.freightCharge}
-                  onChange={(value) => handleDetailsChange('freightCharge', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('freightCharge', detailsData.freightCharge)}
-                />
-                
-                <FloatingInput
-                  label="AWB Charge (₹)"
-                  value={detailsData.awbCharge}
-                  onChange={(value) => handleDetailsChange('awbCharge', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('awbCharge', detailsData.awbCharge)}
-                />
-                
-                <FloatingInput
-                  label="Local Collection (₹)"
-                  value={detailsData.localCollection}
-                  onChange={(value) => handleDetailsChange('localCollection', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('localCollection', detailsData.localCollection)}
-                />
-                
-                <FloatingInput
-                  label="Door Delivery (₹)"
-                  value={detailsData.doorDelivery}
-                  onChange={(value) => handleDetailsChange('doorDelivery', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('doorDelivery', detailsData.doorDelivery)}
-                />
-                
-                <FloatingInput
-                  label="Loading/Unloading (₹)"
-                  value={detailsData.loadingUnloading}
-                  onChange={(value) => handleDetailsChange('loadingUnloading', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('loadingUnloading', detailsData.loadingUnloading)}
-                />
-                
-                <FloatingInput
-                  label="Demurrage Charge (₹)"
-                  value={detailsData.demurrageCharge}
-                  onChange={(value) => handleDetailsChange('demurrageCharge', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('demurrageCharge', detailsData.demurrageCharge)}
-                />
-                
-                <FloatingInput
-                  label="DDA Charge (₹)"
-                  value={detailsData.ddaCharge}
-                  onChange={(value) => handleDetailsChange('ddaCharge', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('ddaCharge', detailsData.ddaCharge)}
-                />
-                
-                <FloatingInput
-                  label="Hamali Charge (₹)"
-                  value={detailsData.hamaliCharge}
-                  onChange={(value) => handleDetailsChange('hamaliCharge', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('hamaliCharge', detailsData.hamaliCharge)}
-                />
-                
-                <FloatingInput
-                  label="Packing Charge (₹)"
-                  value={detailsData.packingCharge}
-                  onChange={(value) => handleDetailsChange('packingCharge', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('packingCharge', detailsData.packingCharge)}
-                />
-                
-                <FloatingInput
-                  label="Other Charge (₹)"
-                  value={detailsData.otherCharge}
-                  onChange={(value) => handleDetailsChange('otherCharge', value)}
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  onBlur={() => handlePriceBlur('otherCharge', detailsData.otherCharge)}
-                />
-                
-                <FloatingInput
-                  label="Fuel Charge (%)"
-                  value={detailsData.fuelCharge}
-                  onChange={(value) => handleDetailsChange('fuelCharge', value)}
-                  type="text"
-                  onBlur={() => handlePriceBlur('fuelCharge', detailsData.fuelCharge)}
-                />
-                
-                <FloatingInput
-                  label="GST (18%)"
-                  value={detailsData.gstAmount}
-                  onChange={() => {}} // Read-only, auto-calculated
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  disabled={true}
-                />
-                
-                <FloatingInput
-                  label="Grand Total"
-                  value={detailsData.grandTotal}
-                  onChange={() => {}} // Read-only, auto-calculated
-                  type="text"
-                  icon={<IndianRupee className="h-4 w-4" />}
-                  disabled={true}
-                />
-              </div>
-            </div>
-          )}
-          
-          {/* Confirm Booking Buttons - shown on Preview step (step 5) below charges */}
+          {/* Confirm Booking Buttons - shown on Preview step (step 5) */}
           {currentStep === 5 && (
             <div className="flex flex-col items-center pt-6 space-y-4">
               {/* Consignment availability warning */}

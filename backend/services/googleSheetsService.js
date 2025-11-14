@@ -50,6 +50,26 @@ class GoogleSheetsService {
    * Sync medicine booking data to Google Sheets in Excel format
    * @param {Array} bookings - Array of booking documents with populated fields
    */
+  /**
+   * Map booking status to Google Sheets status format
+   * @param {string} bookingStatus - Status from booking
+   * @returns {string} - Mapped status for Google Sheets
+   */
+  mapBookingStatus(bookingStatus) {
+    const statusMap = {
+      'delivered': 'DLVD',
+      'arrived': 'ARRIVED',
+      'Arrived at Hub': 'ARRIVED',
+      'in_transit': 'IN TRANSIT',
+      'confirmed': 'CONFIRMED',
+      'pending': 'PENDING',
+      'Booked': 'BOOKED',
+      'Ready to Dispatch': 'READY TO DISPATCH',
+      'cancelled': 'CANCELLED'
+    };
+    return statusMap[bookingStatus] || bookingStatus.toUpperCase() || 'PENDING';
+  }
+
   async syncMedicineBookings(bookings) {
     try {
       if (!this.sheets) {
@@ -65,6 +85,55 @@ class GoogleSheetsService {
       // Check if sheet exists, create if not
       await this.ensureSheetExists(sheetName);
 
+      // Read existing sheet data
+      let existingRows = [];
+      let existingDataMap = new Map(); // Map of docket number -> row index
+      let totalsStartRow = -1; // Track where totals rows start
+      let hasHeader = false;
+      
+      try {
+        const existingData = await this.sheets.spreadsheets.values.get({
+          spreadsheetId: this.spreadsheetId,
+          range: `${sheetName}!A:AI`,
+        });
+        
+        if (existingData.data.values && existingData.data.values.length > 0) {
+          existingRows = existingData.data.values;
+          
+          // Check if first row is header
+          const firstRow = existingRows[0] || [];
+          hasHeader = firstRow.includes('STATUS') && firstRow.includes('Docket No.');
+          
+          if (hasHeader) {
+            // Find header row and totals start row
+            const headers = firstRow;
+            const docketNoIndex = headers.indexOf('Docket No.');
+            
+            // Build map of docket numbers to row indices (skip header row)
+            for (let i = 1; i < existingRows.length; i++) {
+              const row = existingRows[i];
+              if (row && row.length > docketNoIndex && row[docketNoIndex]) {
+                const docketNo = String(row[docketNoIndex]).trim();
+                // Check if this is a totals row (has "WILL PAY", "NOT PAID", etc. in Payment Upd column)
+                const paymentUpdIndex = headers.indexOf('Payment Upd');
+                if (paymentUpdIndex >= 0 && row[paymentUpdIndex] && 
+                    ['WILL PAY', 'NOT PAID', 'PAID', 'PAID @'].includes(String(row[paymentUpdIndex]).trim())) {
+                  if (totalsStartRow === -1) {
+                    totalsStartRow = i;
+                  }
+                  break;
+                }
+                if (docketNo && !isNaN(parseInt(docketNo))) {
+                  existingDataMap.set(docketNo, i);
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.log('No existing data found or error reading sheet, will create new:', error.message);
+      }
+
       // Prepare header row with all columns from Excel
       const headers = [
         'STATUS', 'DSTN:', 'Pckup Dt:', 'AWB Dt:', 'Forwarding Dt:', 'Arrived Dt.', 'DLV DT.',
@@ -76,7 +145,21 @@ class GoogleSheetsService {
         'Remarks', 'FU Date:', 'FUp Time:', 'Receiver Name', 'Receiver Mob No.', 'POD'
       ];
 
-      const rows = [headers];
+      // Create header if sheet is empty
+      if (!hasHeader && existingRows.length === 0) {
+        await this.sheets.spreadsheets.values.update({
+          spreadsheetId: this.spreadsheetId,
+          range: `${sheetName}!A1`,
+          valueInputOption: 'USER_ENTERED',
+          resource: {
+            values: [headers]
+          }
+        });
+        existingRows = [headers];
+        hasHeader = true;
+      }
+      const statusUpdates = []; // Array of {range, value} for status updates
+      const newBookings = []; // Bookings that need new rows
 
       // Track totals
       let totalWeightSum = 0;
@@ -84,14 +167,8 @@ class GoogleSheetsService {
 
       // Process each booking
       bookings.forEach(booking => {
-        // 1. STATUS - from booking.status
-        let status = '';
-        if (booking.status === 'delivered') status = 'DLVD';
-        else if (booking.status === 'arrived') status = 'ARRIVED';
-        else if (booking.status === 'in_transit') status = 'IN TRANSIT';
-        else if (booking.status === 'confirmed') status = 'CONFIRMED';
-        else if (booking.status === 'pending') status = 'PENDING';
-        else if (booking.status === 'cancelled') status = 'CANCELLED';
+        // 1. STATUS - from booking.status (using new mapping function)
+        const status = this.mapBookingStatus(booking.status);
 
         // 2. DSTN (Destination - full city name)
         const dstn = booking.destination?.city || '';
@@ -108,9 +185,9 @@ class GoogleSheetsService {
           forwardingDate = new Date(booking.manifestId.createdAt).toLocaleDateString('en-GB');
         }
 
-        // 6. Arrived Date - set when status is 'arrived'
+        // 6. Arrived Date - set when status is 'arrived' or 'Arrived at Hub'
         let arrivedDate = '';
-        if (booking.status === 'arrived' && booking.updatedAt) {
+        if ((booking.status === 'arrived' || booking.status === 'Arrived at Hub') && booking.updatedAt) {
           arrivedDate = new Date(booking.updatedAt).toLocaleDateString('en-GB');
         }
 
@@ -184,109 +261,131 @@ class GoogleSheetsService {
         const receiverMobNo = '';
         const pod = '';
 
-        // Add row
-        rows.push([
-          status, dstn, pickupDate, awbDate, forwardingDate, arrivedDate, deliveryDate,
-          coLoader, coLoaderBusNo, coLoaderDocketNo, coLoaderMobNo, docketNo,
-          senderAdd, senderPhNo, recipients, recipientAddress, dlvArea,
-          mNo1, mobNo2, units, weight,
-          toPayINR, invNo, gst, total,
-          paymentUpd, amountCollected, upiRefNo, paymentDt,
-          remarks, fuDate, fupTime, receiverName, receiverMobNo, pod
-        ]);
+        // Check if this booking already exists in the sheet
+        const docketNoStr = String(docketNo).trim();
+        if (docketNoStr && existingDataMap.has(docketNoStr)) {
+          // Booking exists - update status only
+          const rowIndex = existingDataMap.get(docketNoStr);
+          // STATUS is column A (index 0), row is 1-indexed in Google Sheets
+          const statusRange = `${sheetName}!A${rowIndex + 1}`;
+          statusUpdates.push({
+            range: statusRange,
+            value: status
+          });
+        } else {
+          // New booking - add to new bookings array
+          newBookings.push({
+            status, dstn, pickupDate, awbDate, forwardingDate, arrivedDate, deliveryDate,
+            coLoader, coLoaderBusNo, coLoaderDocketNo, coLoaderMobNo, docketNo,
+            senderAdd, senderPhNo, recipients, recipientAddress, dlvArea,
+            mNo1, mobNo2, units, weight,
+            toPayINR, invNo, gst, total,
+            paymentUpd, amountCollected, upiRefNo, paymentDt,
+            remarks, fuDate, fupTime, receiverName, receiverMobNo, pod
+          });
+        }
       });
 
-      // Add empty rows for spacing before totals
-      rows.push(Array(35).fill(''));
-      rows.push(Array(35).fill(''));
-      
-      // Add totals row with colored status cells
-      rows.push([
-        '', '', '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', 
-        '', // Units column
-        totalWeightSum.toFixed(2), // Weight total
-        totalToPaySum.toFixed(2), // To Pay INR total
-        '', // INV No
-        '', // GST
-        '', // Total
-        'WILL PAY', // Payment Upd - Green
-        '', '', '',
-        '', '', '', '', '', ''
-      ]);
+      // Update statuses for existing rows
+      if (statusUpdates.length > 0) {
+        // Batch update statuses
+        const updateRequests = statusUpdates.map(update => ({
+          range: update.range,
+          values: [[update.value]]
+        }));
 
-      // Add status indicator rows
-      rows.push([
-        '', '', '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '', '', '', '',
-        'WILL PAY', // Green
-        '', '', '',
-        '', '', '', '', '', ''
-      ]);
-
-      rows.push([
-        '', '', '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '', '', '', '',
-        'NOT PAID', // Yellow
-        '', '', '',
-        '', '', '', '', '', ''
-      ]);
-
-      rows.push([
-        '', '', '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '', '', '', '',
-        'PAID', // Purple
-        '', '', '',
-        '', '', '', '', '', ''
-      ]);
-
-      rows.push([
-        '', '', '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '',
-        '', '', '', '', '', '', '', '',
-        'PAID @', // Pink
-        '', '', '',
-        '', '', '', '', '', ''
-      ]);
-
-      // Clear and update the sheet
-      const range = `${sheetName}!A1`;
-      
-      try {
-        await this.sheets.spreadsheets.values.clear({
+        // Use batchUpdate for multiple status updates
+        await this.sheets.spreadsheets.values.batchUpdate({
           spreadsheetId: this.spreadsheetId,
-          range: `${sheetName}!A:AI`,
+          resource: {
+            valueInputOption: 'USER_ENTERED',
+            data: updateRequests
+          }
         });
-      } catch (error) {
-        console.log('Sheet might be empty, proceeding...');
+        console.log(`✅ Updated status for ${statusUpdates.length} existing bookings`);
       }
 
-      await this.sheets.spreadsheets.values.update({
-        spreadsheetId: this.spreadsheetId,
-        range: range,
-        valueInputOption: 'USER_ENTERED',
-        resource: {
-          values: rows,
-        },
-      });
+      // Append new bookings if any
+      if (newBookings.length > 0) {
+        // Determine where to append (before totals rows)
+        let appendStartRow = totalsStartRow > 0 ? totalsStartRow : (existingRows.length > 0 ? existingRows.length : 1);
+        
+        // Prepare new rows data
+        const newRows = newBookings.map(booking => [
+          booking.status, booking.dstn, booking.pickupDate, booking.awbDate, booking.forwardingDate, 
+          booking.arrivedDate, booking.deliveryDate,
+          booking.coLoader, booking.coLoaderBusNo, booking.coLoaderDocketNo, booking.coLoaderMobNo, booking.docketNo,
+          booking.senderAdd, booking.senderPhNo, booking.recipients, booking.recipientAddress, booking.dlvArea,
+          booking.mNo1, booking.mobNo2, booking.units, booking.weight,
+          booking.toPayINR, booking.invNo, booking.gst, booking.total,
+          booking.paymentUpd, booking.amountCollected, booking.upiRefNo, booking.paymentDt,
+          booking.remarks, booking.fuDate, booking.fupTime, booking.receiverName, booking.receiverMobNo, booking.pod
+        ]);
+
+        // If totals exist, insert rows before them, otherwise append at the end
+        if (totalsStartRow > 0) {
+          // Insert empty rows first
+          const sheetId = await this.getSheetId(sheetName);
+          await this.sheets.spreadsheets.batchUpdate({
+            spreadsheetId: this.spreadsheetId,
+            resource: {
+              requests: [{
+                insertDimension: {
+                  range: {
+                    sheetId: sheetId,
+                    dimension: 'ROWS',
+                    startIndex: totalsStartRow,
+                    endIndex: totalsStartRow + newRows.length
+                  },
+                  inheritFromBefore: false
+                }
+              }]
+            }
+          });
+        }
+
+        // Write new rows data
+        const appendRange = `${sheetName}!A${appendStartRow + 1}`;
+        await this.sheets.spreadsheets.values.update({
+          spreadsheetId: this.spreadsheetId,
+          range: appendRange,
+          valueInputOption: 'USER_ENTERED',
+          resource: {
+            values: newRows
+          }
+        });
+        console.log(`✅ Added ${newBookings.length} new bookings to sheet`);
+      }
+
+      // Re-read sheet to get updated row count for formatting
+      let finalRowCount = existingRows.length;
+      if (newBookings.length > 0) {
+        finalRowCount += newBookings.length;
+      }
 
       // Format the sheet with colored status cells
-      await this.formatMedicineSheet(sheetName, rows.length, totalWeightSum, totalToPaySum);
+      await this.formatMedicineSheet(sheetName, finalRowCount, totalWeightSum, totalToPaySum);
+
+      const updatedCount = statusUpdates.length;
+      const addedCount = newBookings.length;
+      let message = '';
+      if (updatedCount > 0 && addedCount > 0) {
+        message = `Updated ${updatedCount} booking statuses and added ${addedCount} new bookings to Google Sheets: ${sheetName}`;
+      } else if (updatedCount > 0) {
+        message = `Updated ${updatedCount} booking statuses in Google Sheets: ${sheetName}`;
+      } else if (addedCount > 0) {
+        message = `Added ${addedCount} new bookings to Google Sheets: ${sheetName}`;
+      } else {
+        message = `No changes needed. All ${bookings.length} bookings are already synced: ${sheetName}`;
+      }
 
       return {
         success: true,
-        message: `${bookings.length} bookings synced to Google Sheets: ${sheetName}`,
+        message: message,
         sheetName,
-        rowsAdded: rows.length
+        rowsUpdated: updatedCount,
+        rowsAdded: addedCount,
+        totalBookings: bookings.length
       };
     } catch (error) {
       console.error('Error syncing medicine bookings to Google Sheets:', error);
@@ -407,6 +506,28 @@ class GoogleSheetsService {
       };
     } catch (error) {
       console.error('Error syncing to Google Sheets:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get sheet ID by sheet name
+   * @param {string} sheetName - Name of the sheet
+   * @returns {number} - Sheet ID
+   */
+  async getSheetId(sheetName) {
+    try {
+      const response = await this.sheets.spreadsheets.get({
+        spreadsheetId: this.spreadsheetId,
+      });
+
+      const sheet = response.data.sheets.find(s => s.properties.title === sheetName);
+      if (!sheet) {
+        throw new Error(`Sheet ${sheetName} not found`);
+      }
+      return sheet.properties.gridProperties?.sheetId || sheet.properties.sheetId;
+    } catch (error) {
+      console.error('Error getting sheet ID:', error);
       throw error;
     }
   }

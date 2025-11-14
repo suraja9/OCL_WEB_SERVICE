@@ -44,6 +44,7 @@ interface BookingImage {
 
 interface Coloader {
   _id: string;
+  name?: string;
   phoneNumber: string;
   busNumber: string;
 }
@@ -52,7 +53,7 @@ interface MedicineBooking {
   _id: string;
   bookingReference: string;
   consignmentNumber?: number;
-  status: 'pending' | 'confirmed' | 'in_transit' | 'arrived' | 'delivered' | 'cancelled';
+  status: 'Booked' | 'pending' | 'confirmed' | 'in_transit' | 'arrived' | 'delivered' | 'cancelled' | 'Arrived at Hub' | 'Ready to Dispatch';
   coloaderId?: Coloader | string;
   origin: {
     name: string;
@@ -218,42 +219,17 @@ const MedicineHistory: React.FC = () => {
   };
 
   const getStatusBadge = (status: string, consignmentNumber?: number) => {
-    // Check if the booking is in the manifest (ready to dispatch)
-    const storedManifest = localStorage.getItem('medicineManifest');
-    let isInManifest = false;
-    if (storedManifest && consignmentNumber) {
-      try {
-        const manifestArray = JSON.parse(storedManifest);
-        isInManifest = manifestArray.some((b: any) => b.consignmentNumber === consignmentNumber);
-      } catch (error) {
-        console.error('Error parsing manifest data:', error);
-      }
-    }
-
-    // If in manifest, show "Ready to Dispatch" status
-    if (isInManifest) {
-      const config = {
-        bg: 'bg-yellow-50',
-        text: 'text-yellow-700',
-        border: 'border-yellow-200',
-        icon: Clock,
-        label: 'Ready to Dispatch'
-      };
-      const Icon = config.icon;
-
-      return (
-        <Badge className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text} border ${config.border}`}>
-          <Icon className="w-3 h-3" />
-          {config.label}
-        </Badge>
-      );
-    }
-
+    // NOTE: We're removing the localStorage check for "Ready to Dispatch" status
+    // The status should come from the backend, not localStorage
+    
     const statusConfig = {
+      Booked: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: CheckCircle, label: 'Booked' },
       pending: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: Clock, label: 'Pending' },
       confirmed: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: CheckCircle, label: 'Confirmed' },
       in_transit: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', icon: Truck, label: 'In Transit' },
       arrived: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', icon: Package, label: 'Arrived' },
+      'Arrived at Hub': { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', icon: Package, label: 'Arrived at Hub' },
+      'Ready to Dispatch': { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', icon: Clock, label: 'Ready to Dispatch' },
       delivered: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', icon: CheckCircle, label: 'Delivered' },
       cancelled: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', icon: XCircle, label: 'Cancelled' }
     };
@@ -385,7 +361,7 @@ const MedicineHistory: React.FC = () => {
 
           {/* Stats Cards */}
           {bookings.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -403,12 +379,12 @@ const MedicineHistory: React.FC = () => {
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-amber-100">
-                      <Clock className="h-5 w-5 text-amber-600" />
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <CheckCircle className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Pending</p>
-                      <p className="text-xl font-semibold">{bookings.filter(b => b.status === 'pending').length}</p>
+                      <p className="text-sm text-gray-500">Booked</p>
+                      <p className="text-xl font-semibold">{bookings.filter(b => b.status === 'Booked').length}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -423,18 +399,7 @@ const MedicineHistory: React.FC = () => {
                     <div>
                       <p className="text-sm text-gray-500">Ready to Dispatch</p>
                       <p className="text-xl font-semibold">
-                        {(() => {
-                          const storedManifest = localStorage.getItem('medicineManifest');
-                          if (storedManifest) {
-                            try {
-                              const manifestArray = JSON.parse(storedManifest);
-                              return manifestArray.length;
-                            } catch (error) {
-                              return 0;
-                            }
-                          }
-                          return 0;
-                        })()}
+                        {bookings.filter(b => b.status === 'Ready to Dispatch').length}
                       </p>
                     </div>
                   </div>
@@ -462,7 +427,7 @@ const MedicineHistory: React.FC = () => {
                       <Package className="h-5 w-5 text-teal-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Arrived</p>
+                      <p className="text-sm text-gray-500">Received at OCL Hub</p>
                       <p className="text-xl font-semibold">{bookings.filter(b => b.status === 'arrived').length}</p>
                     </div>
                   </div>
@@ -472,12 +437,12 @@ const MedicineHistory: React.FC = () => {
               <Card className="border-0 shadow-sm">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-100">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div className="p-2 rounded-lg bg-indigo-100">
+                      <Package className="h-5 w-5 text-indigo-600" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-500">Delivered</p>
-                      <p className="text-xl font-semibold">{bookings.filter(b => b.status === 'delivered').length}</p>
+                      <p className="text-sm text-gray-500">Arrived at Hub</p>
+                      <p className="text-xl font-semibold">{bookings.filter(b => b.status === 'Arrived at Hub').length}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -592,7 +557,7 @@ const MedicineHistory: React.FC = () => {
                                   <div className="text-sm text-gray-900">{booking.package.totalPackages}</div>
                                 </td>
                                 <td className="py-4 px-6">
-                                  <div className="font-medium text-gray-900">₹{parseFloat(booking.invoice.invoiceValue).toLocaleString()}</div>
+                                  <div className="font-medium text-gray-900">₹{booking.charges?.freightCharge ? parseFloat(booking.charges.freightCharge).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}</div>
                                 </td>
                                 <td className="py-4 px-6">
                                   {getStatusBadge(booking.status, booking.consignmentNumber)}
@@ -677,20 +642,18 @@ const MedicineHistory: React.FC = () => {
                                         <div className="space-y-3 text-sm">
                                           <div>
                                             <p className="text-xs text-gray-500">Freight Charge</p>
-                                            <p className="font-medium text-gray-900">₹{booking.charges?.freightCharge ? parseFloat(booking.charges.freightCharge).toLocaleString() : 'N/A'}</p>
+                                            <p className="font-medium text-gray-900">₹{booking.charges?.freightCharge ? parseFloat(booking.charges.freightCharge).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}</p>
                                           </div>
-                                          {booking.billing?.gst === 'Yes' && booking.charges?.gstAmount && (
+                                          {booking.shipment?.actualWeight && booking.shipment?.perKgWeight && (
                                             <div>
-                                              <p className="text-xs text-gray-500">GST (18%)</p>
-                                              <p className="font-medium text-gray-900">₹{parseFloat(booking.charges.gstAmount).toLocaleString()}</p>
+                                              <p className="text-xs text-gray-500">Calculation</p>
+                                              <p className="font-medium text-gray-900">{booking.shipment.actualWeight} kg × ₹{parseFloat(booking.shipment.perKgWeight).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} = ₹{booking.charges?.freightCharge ? parseFloat(booking.charges.freightCharge).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : 'N/A'}</p>
                                             </div>
                                           )}
-                                          {booking.charges && booking.charges.grandTotal && (
-                                            <div>
-                                              <p className="text-xs text-gray-500">Grand Total</p>
-                                              <p className="font-medium text-gray-900">₹{parseFloat(booking.charges.grandTotal).toLocaleString()}</p>
-                                            </div>
-                                          )}
+                                          <div>
+                                            <p className="text-xs text-gray-500">Invoice Value</p>
+                                            <p className="font-medium text-gray-900">₹{parseFloat(booking.invoice.invoiceValue).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                          </div>
                                           <div>
                                             <p className="text-xs text-gray-500">Status</p>
                                             <div className="mt-1">{getStatusBadge(booking.status, booking.consignmentNumber)}</div>
@@ -706,6 +669,12 @@ const MedicineHistory: React.FC = () => {
                                             Coloader
                                           </h4>
                                           <div className="space-y-3 text-sm">
+                                            <div>
+                                              <p className="text-xs text-gray-500">Name</p>
+                                              <p className="font-medium text-gray-900">
+                                                {typeof booking.coloaderId === 'object' ? (booking.coloaderId.name || 'N/A') : 'N/A'}
+                                              </p>
+                                            </div>
                                             <div>
                                               <p className="text-xs text-gray-500">Bus Number</p>
                                               <p className="font-medium text-gray-900">

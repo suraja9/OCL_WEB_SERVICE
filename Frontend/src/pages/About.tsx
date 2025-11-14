@@ -30,13 +30,13 @@ const About = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <h1
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4"
               style={{ color: "#0D1B2A" }}
             >
               About OCL Services
             </h1>
             <p
-              className="text-xl md:text-2xl font-light max-w-3xl mx-auto"
+              className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl font-light max-w-3xl mx-auto"
               style={{ color: "#0D1B2A" }}
             >
               We make sure your shipments reach on time — every time.
@@ -91,8 +91,8 @@ const About = () => {
         transition={{ duration: 0.8 }}
       >
         <div className="container mx-auto px-4 md:px-6 max-w-4xl">
-          <motion.p
-            className="text-lg md:text-xl font-light leading-relaxed text-gray-700 text-justify"
+            <motion.p
+            className="text-sm sm:text-base md:text-lg lg:text-xl font-light leading-relaxed text-gray-700 text-justify"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -122,7 +122,7 @@ const About = () => {
               transition={{ duration: 0.8 }}
             >
               <h2
-                className="text-3xl md:text-4xl font-bold mb-8"
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-8"
                 style={{ color: "#0D1B2A" }}
               >
                 We specialize in:
@@ -146,7 +146,7 @@ const About = () => {
                       className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
                       style={{ backgroundColor: "#FFD54F" }}
                     />
-                    <span className="text-lg font-light text-gray-700">{item}</span>
+                    <span className="text-sm sm:text-base md:text-lg font-light text-gray-700">{item}</span>
                   </motion.li>
                 ))}
               </ul>
@@ -201,12 +201,12 @@ const About = () => {
               transition={{ duration: 0.8 }}
             >
               <h2
-                className="text-3xl md:text-4xl font-bold mb-6"
+                className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-6"
                 style={{ color: "#0D1B2A" }}
               >
                 Making Logistics Simple & Stress-Free
               </h2>
-              <p className="text-lg font-light leading-relaxed text-gray-700 text-justify">
+              <p className="text-sm sm:text-base md:text-lg font-light leading-relaxed text-gray-700 text-justify">
                 At OCL, we believe logistics should be simple, transparent, and stress-free. That's why we focus on customer-centric solutions, real-time updates, and efficient support at every step of the journey.
               </p>
             </motion.div>
@@ -231,12 +231,12 @@ const About = () => {
             transition={{ duration: 0.6 }}
           >
             <h2
-              className="text-3xl md:text-4xl font-bold mb-4"
+              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-4"
               style={{ color: "#0D1B2A" }}
             >
               We help businesses grow faster and bigger
             </h2>
-            <p className="text-xl font-light text-gray-600">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl font-light text-gray-600">
               Simplifying your logistics with smart, scalable solutions.
             </p>
           </motion.div>
@@ -276,12 +276,12 @@ const About = () => {
                   <card.icon className="w-8 h-8" style={{ color: "#0D1B2A" }} />
                 </div>
                 <h3
-                  className="text-xl font-bold mb-3"
+                  className="text-base sm:text-lg md:text-xl font-bold mb-3"
                   style={{ color: "#0D1B2A" }}
                 >
                   {card.title}
                 </h3>
-                <p className="text-gray-600 font-light">
+                <p className="text-xs sm:text-sm md:text-base text-gray-600 font-light">
                   {card.description}
                 </p>
               </motion.div>

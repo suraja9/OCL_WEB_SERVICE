@@ -14,25 +14,45 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';1
+import { useToast } from '@/hooks/use-toast';
 import { makePermissionAwareRequest } from '@/utils/apiUtils';
 
-type LocationRates = {
-  assam: string;
-  neBySurface: string;
-  neByAirAgtImp: string;
-  restOfIndia: string;
+// New route-based pricing (Assam → NE, Assam → ROI)
+type RouteRates = {
+  assamToNe: string;
+  assamToRoi: string;
 };
 
-type DoxPricingState = {
-  '01gm-250gm': LocationRates;
-  '251gm-500gm': LocationRates;
-  add500gm: LocationRates;
+// Standard DOX weight slabs
+type StandardDoxWeightSlabs = {
+  '01gm-250gm': RouteRates;
+  '251gm-500gm': RouteRates;
+  add500gm: RouteRates;
 };
 
+// Standard DOX modes (Air, Road, Train)
+type StandardDoxModes = {
+  air: StandardDoxWeightSlabs;
+  road: StandardDoxWeightSlabs;
+  train: RouteRates; // Train uses per-kg only
+};
+
+// Standard NON DOX weight slabs
+type StandardNonDoxWeightSlabs = {
+  '1kg-5kg': RouteRates; // Per kg
+  '5kg-100kg': RouteRates; // Per kg
+};
+
+// Standard NON DOX modes (Air, Road, Train)
+type StandardNonDoxModes = {
+  air: StandardNonDoxWeightSlabs;
+  road: StandardNonDoxWeightSlabs;
+  train: RouteRates; // Train uses per-kg only
+};
+
+// Priority unified pricing (no modes, no DOX/NON DOX, single price for both routes)
 type PriorityPricingState = {
-  '01gm-500gm': LocationRates;
-  add500gm: LocationRates;
+  base500gm: string;
 };
 
 type ReverseDeliveryRates = {
@@ -51,11 +71,40 @@ type ReversePricingState = {
   toNorthEast: ReverseTransportRates;
 };
 
-type NumericLocationRates = {
-  assam: number;
-  neBySurface: number;
-  neByAirAgtImp: number;
-  restOfIndia: number;
+// Numeric route rates for API responses
+type NumericRouteRates = {
+  assamToNe: number;
+  assamToRoi: number;
+};
+
+// Standard DOX response types
+type StandardDoxWeightSlabsResponse = {
+  '01gm-250gm': NumericRouteRates;
+  '251gm-500gm': NumericRouteRates;
+  add500gm: NumericRouteRates;
+};
+
+type StandardDoxModesResponse = {
+  air: StandardDoxWeightSlabsResponse;
+  road: StandardDoxWeightSlabsResponse;
+  train: NumericRouteRates;
+};
+
+// Standard NON DOX response types
+type StandardNonDoxWeightSlabsResponse = {
+  '1kg-5kg': NumericRouteRates;
+  '5kg-100kg': NumericRouteRates;
+};
+
+type StandardNonDoxModesResponse = {
+  air: StandardNonDoxWeightSlabsResponse;
+  road: StandardNonDoxWeightSlabsResponse;
+  train: NumericRouteRates;
+};
+
+// Priority response type
+type PriorityPricingResponse = {
+  base500gm: number;
 };
 
 type ReverseDeliveryNumericRates = {
@@ -69,26 +118,14 @@ type ReverseTransportNumericRates = {
   byFlight: ReverseDeliveryNumericRates;
 };
 
-type DoxPricingResponse = {
-  '01gm-250gm': NumericLocationRates;
-  '251gm-500gm': NumericLocationRates;
-  add500gm: NumericLocationRates;
-};
-
-type PriorityPricingResponse = {
-  '01gm-500gm': NumericLocationRates;
-  add500gm: NumericLocationRates;
-};
-
 type ReversePricingResponse = {
   toAssam: ReverseTransportNumericRates;
   toNorthEast: ReverseTransportNumericRates;
 };
 
 interface CustomerPricingApiResponse {
-  doxPricing: DoxPricingResponse;
-  nonDoxSurfacePricing: NumericLocationRates;
-  nonDoxAirPricing: NumericLocationRates;
+  standardDox: StandardDoxModesResponse;
+  standardNonDox: StandardNonDoxModesResponse;
   priorityPricing: PriorityPricingResponse;
   reversePricing: ReversePricingResponse;
   notes?: string;
@@ -100,22 +137,36 @@ interface CustomerPricingApiResponse {
   } | string | null;
 }
 
-const createLocationRates = (fillValue = ''): LocationRates => ({
-  assam: fillValue,
-  neBySurface: fillValue,
-  neByAirAgtImp: fillValue,
-  restOfIndia: fillValue
+const createRouteRates = (fillValue = ''): RouteRates => ({
+  assamToNe: fillValue,
+  assamToRoi: fillValue
 });
 
-const createDoxPricingState = (fillValue = ''): DoxPricingState => ({
-  '01gm-250gm': createLocationRates(fillValue),
-  '251gm-500gm': createLocationRates(fillValue),
-  add500gm: createLocationRates(fillValue)
+const createStandardDoxWeightSlabs = (fillValue = ''): StandardDoxWeightSlabs => ({
+  '01gm-250gm': createRouteRates(fillValue),
+  '251gm-500gm': createRouteRates(fillValue),
+  add500gm: createRouteRates(fillValue)
+});
+
+const createStandardDoxModes = (fillValue = ''): StandardDoxModes => ({
+  air: createStandardDoxWeightSlabs(fillValue),
+  road: createStandardDoxWeightSlabs(fillValue),
+  train: createRouteRates(fillValue)
+});
+
+const createStandardNonDoxWeightSlabs = (fillValue = ''): StandardNonDoxWeightSlabs => ({
+  '1kg-5kg': createRouteRates(fillValue),
+  '5kg-100kg': createRouteRates(fillValue)
+});
+
+const createStandardNonDoxModes = (fillValue = ''): StandardNonDoxModes => ({
+  air: createStandardNonDoxWeightSlabs(fillValue),
+  road: createStandardNonDoxWeightSlabs(fillValue),
+  train: createRouteRates(fillValue)
 });
 
 const createPriorityPricingState = (fillValue = ''): PriorityPricingState => ({
-  '01gm-500gm': createLocationRates(fillValue),
-  add500gm: createLocationRates(fillValue)
+  base500gm: fillValue
 });
 
 const createReverseDeliveryRates = (fillValue = ''): ReverseDeliveryRates => ({
@@ -147,11 +198,9 @@ const formatNumberValue = (value: unknown): string => {
   return numeric.toFixed(2);
 };
 
-const mapLocationRatesToState = (source?: NumericLocationRates): LocationRates => ({
-  assam: formatNumberValue(source?.assam),
-  neBySurface: formatNumberValue(source?.neBySurface),
-  neByAirAgtImp: formatNumberValue(source?.neByAirAgtImp),
-  restOfIndia: formatNumberValue(source?.restOfIndia)
+const mapRouteRatesToState = (source?: NumericRouteRates): RouteRates => ({
+  assamToNe: formatNumberValue(source?.assamToNe),
+  assamToRoi: formatNumberValue(source?.assamToRoi)
 });
 
 const mapReverseDeliveryRatesToState = (source?: ReverseDeliveryNumericRates): ReverseDeliveryRates => ({
@@ -165,17 +214,34 @@ const mapReverseTransportRatesToState = (source?: ReverseTransportNumericRates):
   byFlight: mapReverseDeliveryRatesToState(source?.byFlight)
 });
 
+const mapStandardDoxWeightSlabsToState = (source?: StandardDoxWeightSlabsResponse): StandardDoxWeightSlabs => ({
+  '01gm-250gm': mapRouteRatesToState(source?.['01gm-250gm']),
+  '251gm-500gm': mapRouteRatesToState(source?.['251gm-500gm']),
+  add500gm: mapRouteRatesToState(source?.add500gm)
+});
+
+const mapStandardDoxModesToState = (source?: StandardDoxModesResponse): StandardDoxModes => ({
+  air: mapStandardDoxWeightSlabsToState(source?.air),
+  road: mapStandardDoxWeightSlabsToState(source?.road),
+  train: mapRouteRatesToState(source?.train)
+});
+
+const mapStandardNonDoxWeightSlabsToState = (source?: StandardNonDoxWeightSlabsResponse): StandardNonDoxWeightSlabs => ({
+  '1kg-5kg': mapRouteRatesToState(source?.['1kg-5kg']),
+  '5kg-100kg': mapRouteRatesToState(source?.['5kg-100kg'])
+});
+
+const mapStandardNonDoxModesToState = (source?: StandardNonDoxModesResponse): StandardNonDoxModes => ({
+  air: mapStandardNonDoxWeightSlabsToState(source?.air),
+  road: mapStandardNonDoxWeightSlabsToState(source?.road),
+  train: mapRouteRatesToState(source?.train)
+});
+
 const mapCustomerPricingResponseToState = (data: CustomerPricingApiResponse) => ({
-  doxPricing: {
-    '01gm-250gm': mapLocationRatesToState(data.doxPricing?.['01gm-250gm']),
-    '251gm-500gm': mapLocationRatesToState(data.doxPricing?.['251gm-500gm']),
-    add500gm: mapLocationRatesToState(data.doxPricing?.add500gm)
-  } as DoxPricingState,
-  nonDoxSurfacePricing: mapLocationRatesToState(data.nonDoxSurfacePricing),
-  nonDoxAirPricing: mapLocationRatesToState(data.nonDoxAirPricing),
+  standardDox: mapStandardDoxModesToState(data.standardDox),
+  standardNonDox: mapStandardNonDoxModesToState(data.standardNonDox),
   priorityPricing: {
-    '01gm-500gm': mapLocationRatesToState(data.priorityPricing?.['01gm-500gm']),
-    add500gm: mapLocationRatesToState(data.priorityPricing?.add500gm)
+    base500gm: formatNumberValue(data.priorityPricing?.base500gm)
   } as PriorityPricingState,
   reversePricing: {
     toAssam: mapReverseTransportRatesToState(data.reversePricing?.toAssam),
@@ -196,11 +262,9 @@ const parsePriceValue = (value: string): number => {
   return Math.round(numeric * 100) / 100;
 };
 
-const mapLocationRatesToPayload = (state: LocationRates): NumericLocationRates => ({
-  assam: parsePriceValue(state.assam),
-  neBySurface: parsePriceValue(state.neBySurface),
-  neByAirAgtImp: parsePriceValue(state.neByAirAgtImp),
-  restOfIndia: parsePriceValue(state.restOfIndia)
+const mapRouteRatesToPayload = (state: RouteRates): NumericRouteRates => ({
+  assamToNe: parsePriceValue(state.assamToNe),
+  assamToRoi: parsePriceValue(state.assamToRoi)
 });
 
 const mapReverseDeliveryRatesToPayload = (state: ReverseDeliveryRates): ReverseDeliveryNumericRates => ({
@@ -214,23 +278,39 @@ const mapReverseTransportRatesToPayload = (state: ReverseTransportRates): Revers
   byFlight: mapReverseDeliveryRatesToPayload(state.byFlight)
 });
 
+const mapStandardDoxWeightSlabsToPayload = (state: StandardDoxWeightSlabs): StandardDoxWeightSlabsResponse => ({
+  '01gm-250gm': mapRouteRatesToPayload(state['01gm-250gm']),
+  '251gm-500gm': mapRouteRatesToPayload(state['251gm-500gm']),
+  add500gm: mapRouteRatesToPayload(state.add500gm)
+});
+
+const mapStandardDoxModesToPayload = (state: StandardDoxModes): StandardDoxModesResponse => ({
+  air: mapStandardDoxWeightSlabsToPayload(state.air),
+  road: mapStandardDoxWeightSlabsToPayload(state.road),
+  train: mapRouteRatesToPayload(state.train)
+});
+
+const mapStandardNonDoxWeightSlabsToPayload = (state: StandardNonDoxWeightSlabs): StandardNonDoxWeightSlabsResponse => ({
+  '1kg-5kg': mapRouteRatesToPayload(state['1kg-5kg']),
+  '5kg-100kg': mapRouteRatesToPayload(state['5kg-100kg'])
+});
+
+const mapStandardNonDoxModesToPayload = (state: StandardNonDoxModes): StandardNonDoxModesResponse => ({
+  air: mapStandardNonDoxWeightSlabsToPayload(state.air),
+  road: mapStandardNonDoxWeightSlabsToPayload(state.road),
+  train: mapRouteRatesToPayload(state.train)
+});
+
 const buildCustomerPricingPayload = (
-  doxPricing: DoxPricingState,
-  nonDoxSurfacePricing: LocationRates,
-  nonDoxAirPricing: LocationRates,
+  standardDox: StandardDoxModes,
+  standardNonDox: StandardNonDoxModes,
   priorityPricing: PriorityPricingState,
   reversePricing: ReversePricingState
 ): CustomerPricingApiResponse => ({
-  doxPricing: {
-    '01gm-250gm': mapLocationRatesToPayload(doxPricing['01gm-250gm']),
-    '251gm-500gm': mapLocationRatesToPayload(doxPricing['251gm-500gm']),
-    add500gm: mapLocationRatesToPayload(doxPricing.add500gm)
-  },
-  nonDoxSurfacePricing: mapLocationRatesToPayload(nonDoxSurfacePricing),
-  nonDoxAirPricing: mapLocationRatesToPayload(nonDoxAirPricing),
+  standardDox: mapStandardDoxModesToPayload(standardDox),
+  standardNonDox: mapStandardNonDoxModesToPayload(standardNonDox),
   priorityPricing: {
-    '01gm-500gm': mapLocationRatesToPayload(priorityPricing['01gm-500gm']),
-    add500gm: mapLocationRatesToPayload(priorityPricing.add500gm)
+    base500gm: parsePriceValue(priorityPricing.base500gm)
   },
   reversePricing: {
     toAssam: mapReverseTransportRatesToPayload(reversePricing.toAssam),
@@ -241,16 +321,13 @@ const buildCustomerPricingPayload = (
 const CustomerPricing = () => {
   const { toast } = useToast();
   
-  // State for Standard Service - DOX pricing
-  const [doxPricing, setDoxPricing] = useState<DoxPricingState>(() => createDoxPricingState());
+  // State for Standard Service - DOX pricing (with modes: Air, Road, Train)
+  const [standardDox, setStandardDox] = useState<StandardDoxModes>(() => createStandardDoxModes());
 
-  // State for NON DOX Surface pricing
-  const [nonDoxSurfacePricing, setNonDoxSurfacePricing] = useState<LocationRates>(() => createLocationRates());
+  // State for Standard Service - NON DOX pricing (with modes: Air, Road, Train)
+  const [standardNonDox, setStandardNonDox] = useState<StandardNonDoxModes>(() => createStandardNonDoxModes());
 
-  // State for NON DOX Air pricing
-  const [nonDoxAirPricing, setNonDoxAirPricing] = useState<LocationRates>(() => createLocationRates());
-
-  // State for Priority Service - DOX pricing
+  // State for Priority Service (Unified - no modes, no DOX/NON DOX)
   const [priorityPricing, setPriorityPricing] = useState<PriorityPricingState>(() => createPriorityPricingState());
 
   // State for Reverse Pricing (From Rest of India to Guwahati/Assam and North East)
@@ -280,9 +357,8 @@ const CustomerPricing = () => {
       }
 
       const formatted = mapCustomerPricingResponseToState(response.data);
-      setDoxPricing(formatted.doxPricing);
-      setNonDoxSurfacePricing(formatted.nonDoxSurfacePricing);
-      setNonDoxAirPricing(formatted.nonDoxAirPricing);
+      setStandardDox(formatted.standardDox);
+      setStandardNonDox(formatted.standardNonDox);
       setPriorityPricing(formatted.priorityPricing);
       setReversePricing(formatted.reversePricing);
       setIsDirty(false);
@@ -339,9 +415,8 @@ const CustomerPricing = () => {
     setIsSaving(true);
     try {
       const payload = buildCustomerPricingPayload(
-        doxPricing,
-        nonDoxSurfacePricing,
-        nonDoxAirPricing,
+        standardDox,
+        standardNonDox,
         priorityPricing,
         reversePricing
       );
@@ -356,9 +431,8 @@ const CustomerPricing = () => {
       }
 
       const formatted = mapCustomerPricingResponseToState(response.data);
-      setDoxPricing(formatted.doxPricing);
-      setNonDoxSurfacePricing(formatted.nonDoxSurfacePricing);
-      setNonDoxAirPricing(formatted.nonDoxAirPricing);
+      setStandardDox(formatted.standardDox);
+      setStandardNonDox(formatted.standardNonDox);
       setPriorityPricing(formatted.priorityPricing);
       setReversePricing(formatted.reversePricing);
       setIsDirty(false);
@@ -389,7 +463,7 @@ const CustomerPricing = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [doxPricing, nonDoxSurfacePricing, nonDoxAirPricing, priorityPricing, reversePricing, isDirty, isSaving, toast]);
+  }, [standardDox, standardNonDox, priorityPricing, reversePricing, isDirty, isSaving, toast]);
 
   const handleRefresh = useCallback(() => {
     if (isSaving) {
@@ -400,18 +474,19 @@ const CustomerPricing = () => {
 
   // Testing section state
   const [testInputs, setTestInputs] = useState({
-    fromPincode: '',
     destinationPincode: '',
     weight: '',
-    type: 'dox', // 'dox' or 'non-dox'
-    byAir: false,
-    priority: false,
-    transportMode: 'byRoad', // 'byRoad', 'byTrain', 'byFlight' for reverse pricing
-    deliveryType: 'normal' // 'normal' or 'priority' for reverse pricing
+    serviceType: 'standard', // 'standard' or 'priority'
+    type: 'dox', // 'dox' or 'non-dox' (only for standard service)
+    mode: 'air', // 'air', 'road', 'train' (only for standard service)
   });
 
-  const [calculatedPrice, setCalculatedPrice] = useState(null);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [calculationDetails, setCalculationDetails] = useState<{
+    isMinimumWeightApplied: boolean;
+    chargeableWeight: number;
+  } | null>(null);
 
   // Format price input to show .00 at the end
   const formatPriceInput = (value) => {
@@ -457,73 +532,24 @@ const CustomerPricing = () => {
     }
   };
 
-  // Check if pincode is in Assam
-  const isAssamPincode = (pincode) => {
-    const pin = parseInt(pincode);
-    return (pin >= 781000 && pin <= 781999) || 
-           (pin >= 782000 && pin <= 782999) || 
-           (pin >= 783000 && pin <= 783999) || 
-           (pin >= 784000 && pin <= 784999) || 
-           (pin >= 785000 && pin <= 785999) || 
-           (pin >= 786000 && pin <= 786999) || 
-           (pin >= 787000 && pin <= 787999) || 
-           (pin >= 788000 && pin <= 788999);
-  };
-
-  // Check if pincode is in North East (excluding Assam)
-  const isNorthEastPincode = (pincode) => {
-    const pin = parseInt(pincode);
-    return (pin >= 790000 && pin <= 791999) || // Arunachal Pradesh
-           (pin >= 793000 && pin <= 793999) || // Meghalaya
-           (pin >= 795000 && pin <= 795999) || // Manipur
-           (pin >= 796000 && pin <= 796999) || // Mizoram
-           (pin >= 797000 && pin <= 797999) || // Nagaland
-           (pin >= 737000 && pin <= 737999) || // Sikkim
-           (pin >= 799000 && pin <= 799999);   // Tripura
-  };
-
-  // Location classification logic
-  const classifyLocation = (pincode, isAirRoute = false) => {
+  // Determine route: Assam → NE or Assam → ROI
+  const determineRoute = (pincode: string): 'assamToNe' | 'assamToRoi' => {
     const pin = parseInt(pincode);
     
-    // Assam pincodes
-    if ((pin >= 781000 && pin <= 781999) || 
-        (pin >= 782000 && pin <= 782999) || 
-        (pin >= 783000 && pin <= 783999) || 
-        (pin >= 784000 && pin <= 784999) || 
-        (pin >= 785000 && pin <= 785999) || 
-        (pin >= 786000 && pin <= 786999) || 
-        (pin >= 787000 && pin <= 787999) || 
-        (pin >= 788000 && pin <= 788999)) {
-      return 'assam';
-    }
-    
-    // Kolkata pincodes (700xxx)
-    if (pin >= 700000 && pin <= 700999) {
-      return 'kol';
-    }
-    
-    // Tripura (799xxx) and Manipur (795xxx) - AGT IMP only for air routes
-    if (isAirRoute && ((pin >= 799000 && pin <= 799999) || (pin >= 795000 && pin <= 795999))) {
-      return 'neByAirAgtImp';
-    }
-    
-    // Tripura (799xxx) and Manipur (795xxx) - Surface route
-    if (!isAirRoute && ((pin >= 799000 && pin <= 799999) || (pin >= 795000 && pin <= 795999))) {
-      return 'neBySurface';
-    }
-    
-    // Other NE states
-    if ((pin >= 790000 && pin <= 791999) || 
-        (pin >= 793000 && pin <= 793999) || 
-        (pin >= 796000 && pin <= 796999) || 
-        (pin >= 797000 && pin <= 797999) || 
-        (pin >= 737000 && pin <= 737999)) {
-      return 'neBySurface';
+    // North East pincodes (Assam + other NE states)
+    if ((pin >= 781000 && pin <= 788999) || // Assam
+        (pin >= 790000 && pin <= 791999) || // Arunachal Pradesh
+        (pin >= 793000 && pin <= 793999) || // Meghalaya
+        (pin >= 795000 && pin <= 795999) || // Manipur
+        (pin >= 796000 && pin <= 796999) || // Mizoram
+        (pin >= 797000 && pin <= 797999) || // Nagaland
+        (pin >= 737000 && pin <= 737999) || // Sikkim
+        (pin >= 799000 && pin <= 799999)) { // Tripura
+      return 'assamToNe';
     }
     
     // Rest of India
-    return 'restOfIndia';
+    return 'assamToRoi';
   };
 
   // Price calculation logic
@@ -538,95 +564,161 @@ const CustomerPricing = () => {
     }
 
     const weight = parseFloat(testInputs.weight);
+    const weightInGrams = testInputs.type === 'dox' ? weight : weight * 1000; // DOX in grams, NON DOX in kg
+    const weightInKg = testInputs.type === 'dox' ? weight / 1000 : weight;
+    
     let price = 0;
-    let serviceType = testInputs.type.toUpperCase();
-    let location = '';
-    let transportMode = '';
+    let serviceType = '';
+    let route = determineRoute(testInputs.destinationPincode);
+    let routeKey: 'assamToNe' | 'assamToRoi' = route;
     let chargeableWeight = weight;
     let isMinimumWeightApplied = false;
+    let autoSwitchedToNonDox = false;
 
-    // Check if this is reverse pricing (from pincode provided and destination is Assam/North East)
-    if (testInputs.fromPincode && testInputs.type === 'non-dox') {
-      // Reverse pricing logic
-      const minChargeableWeights = {
-        byRoad: 500,
-        byTrain: 100,
-        byFlight: 25
-      };
-      
-      chargeableWeight = Math.max(weight, minChargeableWeights[testInputs.transportMode]);
-      isMinimumWeightApplied = chargeableWeight > weight;
-
-      if (isAssamPincode(testInputs.destinationPincode)) {
-        location = 'Assam';
-        const pricePerKg = parseFloat(reversePricing.toAssam[testInputs.transportMode][testInputs.deliveryType]) || 0;
-        price = pricePerKg * chargeableWeight;
-        transportMode = testInputs.transportMode;
-      } else if (isNorthEastPincode(testInputs.destinationPincode)) {
-        location = 'North East';
-        const pricePerKg = parseFloat(reversePricing.toNorthEast[testInputs.transportMode][testInputs.deliveryType]) || 0;
-        price = pricePerKg * chargeableWeight;
-        transportMode = testInputs.transportMode;
-      } else {
+    if (testInputs.serviceType === 'priority') {
+      // Priority Service (Unified - no modes, no DOX/NON DOX)
+      if (weightInGrams > 100000) { // > 100kg
         toast({
-          title: "Error",
-          description: "Reverse pricing is only available for Assam and North East destinations",
-          variant: "destructive"
+          title: "Call Customer Care",
+          description: "Weight exceeds 100kg. Please contact customer care for pricing.",
+          variant: "default"
         });
         return;
       }
+      
+      // Priority uses single base500gm rate per 500gm (same for both routes)
+      const pricePer500gm = parseFloat(priorityPricing.base500gm) || 0;
+      const units = Math.ceil(weightInGrams / 500);
+      price = pricePer500gm * units;
+      serviceType = 'Priority';
     } else {
-      // Normal pricing logic
-      location = classifyLocation(testInputs.destinationPincode, testInputs.byAir);
-    
+      // Standard Service
       if (testInputs.type === 'dox') {
-        // DOX pricing logic
-        if (testInputs.priority) {
-          // Priority Service pricing
-          if (weight <= 500) {
-            price = parseFloat(priorityPricing['01gm-500gm'][location]) || 0;
-          } else {
-            const basePrice = parseFloat(priorityPricing['01gm-500gm'][location]) || 0;
-            const additionalWeight = Math.ceil((weight - 500) / 500);
-            const additionalPrice = parseFloat(priorityPricing.add500gm[location]) || 0;
-            price = basePrice + (additionalWeight * additionalPrice);
-          }
+        // DOX pricing - check if weight > 1kg, auto-switch to NON DOX
+        if (weightInGrams > 1000) {
+          autoSwitchedToNonDox = true;
+          toast({
+            title: "Auto-switched to NON DOX",
+            description: "DOX is limited to 1kg. Switched to NON DOX pricing.",
+            variant: "default"
+          });
+          // Continue with NON DOX logic below
         } else {
-          // Standard Service pricing
-          if (weight <= 250) {
-            price = parseFloat(doxPricing['01gm-250gm'][location]) || 0;
-          } else if (weight <= 500) {
-            price = parseFloat(doxPricing['251gm-500gm'][location]) || 0;
+          // Standard DOX pricing (0-1kg)
+          const mode = testInputs.mode;
+          
+          if (mode === 'train') {
+            // Train uses per-kg rate only with 25kg minimum
+            const minWeightKg = 25;
+            chargeableWeight = Math.max(weightInKg, minWeightKg);
+            isMinimumWeightApplied = chargeableWeight > weightInKg;
+            const pricePerKg = parseFloat(standardDox.train[routeKey]) || 0;
+            price = pricePerKg * chargeableWeight;
+            serviceType = `Standard DOX (Train)`;
+          } else if (mode === 'road') {
+            // Road uses weight slabs with 3kg (3000g) minimum
+            const minWeightGrams = 3000;
+            const chargeableWeightGrams = Math.max(weightInGrams, minWeightGrams);
+            isMinimumWeightApplied = chargeableWeightGrams > weightInGrams;
+            chargeableWeight = chargeableWeightGrams / 1000; // Convert to kg for display
+            const doxMode = standardDox[mode];
+            if (chargeableWeightGrams <= 250) {
+              price = parseFloat(doxMode['01gm-250gm'][routeKey]) || 0;
+            } else if (chargeableWeightGrams <= 500) {
+              price = parseFloat(doxMode['251gm-500gm'][routeKey]) || 0;
+            } else {
+              const basePrice = parseFloat(doxMode['251gm-500gm'][routeKey]) || 0;
+              const additionalWeight = Math.ceil((chargeableWeightGrams - 500) / 500);
+              const additionalPrice = parseFloat(doxMode.add500gm[routeKey]) || 0;
+              price = basePrice + (additionalWeight * additionalPrice);
+            }
+            serviceType = `Standard DOX (Road)`;
           } else {
-            const basePrice = parseFloat(doxPricing['251gm-500gm'][location]) || 0;
-            const additionalWeight = Math.ceil((weight - 500) / 500);
-            const additionalPrice = parseFloat(doxPricing.add500gm[location]) || 0;
-            price = basePrice + (additionalWeight * additionalPrice);
+            // Air uses weight slabs (no minimum)
+            const doxMode = standardDox[mode];
+            if (weightInGrams <= 250) {
+              price = parseFloat(doxMode['01gm-250gm'][routeKey]) || 0;
+            } else if (weightInGrams <= 500) {
+              price = parseFloat(doxMode['251gm-500gm'][routeKey]) || 0;
+            } else {
+              const basePrice = parseFloat(doxMode['251gm-500gm'][routeKey]) || 0;
+              const additionalWeight = Math.ceil((weightInGrams - 500) / 500);
+              const additionalPrice = parseFloat(doxMode.add500gm[routeKey]) || 0;
+              price = basePrice + (additionalWeight * additionalPrice);
+            }
+            serviceType = `Standard DOX (Air)`;
           }
         }
-      } else {
-        // NON-DOX pricing logic (per kg)
-        if (testInputs.byAir) {
-          const pricePerKg = parseFloat(nonDoxAirPricing[location]) || 0;
-          price = pricePerKg * weight;
+      }
+      
+      // NON DOX pricing (or auto-switched from DOX)
+      if (testInputs.type === 'non-dox' || autoSwitchedToNonDox) {
+        if (weight > 100) {
+          toast({
+            title: "Call Customer Care",
+            description: "Weight exceeds 100kg. Please contact customer care for pricing.",
+            variant: "default"
+          });
+          return;
+        }
+        
+        const mode = testInputs.mode;
+        
+        if (mode === 'train') {
+          // Train uses per-kg rate only with 25kg minimum
+          const minWeight = 25;
+          chargeableWeight = Math.max(weight, minWeight);
+          isMinimumWeightApplied = chargeableWeight > weight;
+          const pricePerKg = parseFloat(standardNonDox.train[routeKey]) || 0;
+          price = pricePerKg * chargeableWeight;
+          serviceType = `Standard NON DOX (Train)`;
+        } else if (mode === 'road') {
+          // Road uses weight slabs with 3kg minimum
+          const minWeight = 3;
+          chargeableWeight = Math.max(weight, minWeight);
+          isMinimumWeightApplied = chargeableWeight > weight;
+          const nonDoxMode = standardNonDox[mode];
+          let pricePerKg = 0;
+          
+          if (chargeableWeight >= 1 && chargeableWeight <= 5) {
+            pricePerKg = parseFloat(nonDoxMode['1kg-5kg'][routeKey]) || 0;
+          } else if (chargeableWeight > 5 && chargeableWeight <= 100) {
+            pricePerKg = parseFloat(nonDoxMode['5kg-100kg'][routeKey]) || 0;
+          }
+          
+          price = pricePerKg * chargeableWeight;
+          serviceType = `Standard NON DOX (Road)`;
         } else {
-          const pricePerKg = parseFloat(nonDoxSurfacePricing[location]) || 0;
+          // Air uses weight slabs (no minimum)
+          const nonDoxMode = standardNonDox[mode];
+          let pricePerKg = 0;
+          
+          if (weight >= 1 && weight <= 5) {
+            pricePerKg = parseFloat(nonDoxMode['1kg-5kg'][routeKey]) || 0;
+          } else if (weight > 5 && weight <= 100) {
+            pricePerKg = parseFloat(nonDoxMode['5kg-100kg'][routeKey]) || 0;
+          }
+          
           price = pricePerKg * weight;
+          serviceType = `Standard NON DOX (Air)`;
         }
       }
     }
     
     setCalculatedPrice(price);
+    setCalculationDetails({
+      isMinimumWeightApplied,
+      chargeableWeight
+    });
     
-    if (testInputs.priority) serviceType += ' (Priority)';
-    if (testInputs.byAir) serviceType += ' (By Air)';
-    if (transportMode) serviceType += ` (${transportMode})`;
+    const routeText = route === 'assamToNe' ? 'Assam → NE' : 'Assam → ROI';
+    const weightText = isMinimumWeightApplied ? ` (charged for ${chargeableWeight.toFixed(2)}${testInputs.type === 'dox' && !autoSwitchedToNonDox ? 'kg' : 'kg'})` : '';
+    const weightUnit = testInputs.type === 'dox' && !autoSwitchedToNonDox ? 'grams' : 'kg';
+    const minWeightInfo = testInputs.mode === 'train' ? ' (Min. 25kg)' : testInputs.mode === 'road' ? ' (Min. 3kg)' : '';
     
-    const fromText = testInputs.fromPincode ? ` from ${testInputs.fromPincode}` : '';
-    const weightText = isMinimumWeightApplied ? ` (charged for ${chargeableWeight}kg)` : '';
     toast({
       title: "Price Calculated",
-      description: `Calculated price: ₹${price.toFixed(2)} for ${serviceType}${fromText} to ${location}${weightText}`,
+      description: `Calculated price: ₹${price.toFixed(2)} for ${serviceType} to ${routeText} (${testInputs.weight} ${weightUnit})${weightText}${minWeightInfo}`,
     });
   };
 
@@ -654,7 +746,7 @@ const CustomerPricing = () => {
             </div>
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">Customer Pricing Management</h1>
-              <p className="mt-1 text-sm text-gray-500">Manage customer pricing plans and rates</p>
+              <p className="mt-1 text-sm text-gray-500">View and edit active customer pricing rates from the database</p>
             </div>
           </div>
           <div className="flex w-full flex-col items-end gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
@@ -723,22 +815,6 @@ const CustomerPricing = () => {
               {/* Test Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="fromPincode" className="text-sm font-medium">From Pincode (Optional)</Label>
-                  <Input
-                    id="fromPincode"
-                    value={testInputs.fromPincode}
-                    onChange={(e) => setTestInputs({
-                      ...testInputs,
-                      fromPincode: e.target.value,
-                      type: e.target.value ? 'non-dox' : 'dox',
-                      weight: ''
-                    })}
-                    placeholder="e.g., 110001"
-                    className="w-full"
-                  />
-                  <p className="text-xs text-gray-500">Leave empty for normal pricing</p>
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="destinationPincode" className="text-sm font-medium">Destination Pincode</Label>
                   <Input
                     id="destinationPincode"
@@ -753,22 +829,65 @@ const CustomerPricing = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="weight" className="text-sm font-medium">
-                    Weight ({testInputs.fromPincode ? 'Kg.' : (testInputs.type === 'dox' ? 'grams' : 'Kg.')})
+                    Weight ({testInputs.serviceType === 'priority' ? 'grams' : (testInputs.type === 'dox' ? 'grams' : 'Kg.')})
                   </Label>
                   <Input
                     id="weight"
                     type="number"
-                    step={testInputs.fromPincode ? "0.01" : (testInputs.type === 'dox' ? "0.1" : "0.01")}
+                    step={testInputs.serviceType === 'priority' || testInputs.type === 'dox' ? "0.1" : "0.01"}
                     value={testInputs.weight}
                     onChange={(e) => setTestInputs({
                       ...testInputs,
                       weight: e.target.value
                     })}
-                    placeholder={testInputs.fromPincode ? "e.g., 25" : (testInputs.type === 'dox' ? "e.g., 250" : "e.g., 1.5")}
+                    placeholder={testInputs.serviceType === 'priority' || testInputs.type === 'dox' ? "e.g., 250" : "e.g., 1.5"}
                     className="w-full"
                   />
                 </div>
-                {!testInputs.fromPincode && (
+                <div className="space-y-2">
+                  <Label htmlFor="serviceType" className="text-sm font-medium">Service Type</Label>
+                  <Select
+                    value={testInputs.serviceType}
+                    onValueChange={(value) => setTestInputs({
+                      ...testInputs,
+                      serviceType: value,
+                      weight: ''
+                    })}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select service type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="standard">Standard</SelectItem>
+                      <SelectItem value="priority">Priority</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mode" className="text-sm font-medium">Mode</Label>
+                  <Select
+                    value={testInputs.mode}
+                    onValueChange={(value) => setTestInputs({
+                      ...testInputs,
+                      mode: value
+                    })}
+                    disabled={testInputs.serviceType === 'priority'}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="air">Air</SelectItem>
+                      <SelectItem value="road">Road (Min. 3kg)</SelectItem>
+                      <SelectItem value="train">Train (Min. 25kg)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Standard Service Options */}
+              {testInputs.serviceType === 'standard' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="type" className="text-sm font-medium">Type</Label>
                     <Select
@@ -783,98 +902,21 @@ const CustomerPricing = () => {
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="dox">DOX (Documents)</SelectItem>
-                        <SelectItem value="non-dox">NON-DOX (Non-Documents)</SelectItem>
+                        <SelectItem value="dox">DOX (0-1kg only)</SelectItem>
+                        <SelectItem value="non-dox">NON-DOX (1kg+)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                )}
-                {testInputs.fromPincode && (
-                  <div className="space-y-2">
-                    <Label htmlFor="type" className="text-sm font-medium">Type</Label>
-                    <div className="px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-sm text-gray-600">
-                      NON-DOX (Reverse pricing only)
-                    </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs text-blue-800 font-medium">Minimum Weight Rules:</p>
+                    <ul className="text-xs text-blue-700 mt-1 space-y-1">
+                      <li>• Train: Minimum 25kg chargeable</li>
+                      <li>• Road: Minimum 3kg chargeable</li>
+                      <li>• Air: No minimum weight</li>
+                    </ul>
                   </div>
-                )}
-              </div>
-
-              {/* Service Options */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="byAir"
-                    checked={testInputs.byAir}
-                    onChange={(e) => setTestInputs({
-                      ...testInputs,
-                      byAir: e.target.checked
-                    })}
-                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                    disabled={testInputs.fromPincode && testInputs.type === 'non-dox'}
-                  />
-                  <Label htmlFor="byAir" className="text-sm font-medium">
-                    By Air {testInputs.fromPincode && testInputs.type === 'non-dox' && '(Use Transport Mode below)'}
-                  </Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="priority"
-                    checked={testInputs.priority}
-                    onChange={(e) => setTestInputs({
-                      ...testInputs,
-                      priority: e.target.checked
-                    })}
-                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-                    disabled={testInputs.type === 'non-dox'}
-                  />
-                  <Label htmlFor="priority" className="text-sm font-medium">
-                    Priority {testInputs.type === 'non-dox' && '(DOX only)'}
-                  </Label>
-                </div>
-                {testInputs.fromPincode && testInputs.type === 'non-dox' && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="transportMode" className="text-sm font-medium">Transport Mode</Label>
-                      <Select
-                        value={testInputs.transportMode || 'byRoad'}
-                        onValueChange={(value) => setTestInputs({
-                          ...testInputs,
-                          transportMode: value
-                        })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select transport mode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="byRoad">By Road (Min. 500kg)</SelectItem>
-                          <SelectItem value="byTrain">By Train (Min. 100kg)</SelectItem>
-                          <SelectItem value="byFlight">By Flight (Min. 25kg)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="deliveryType" className="text-sm font-medium">Delivery Type</Label>
-                      <Select
-                        value={testInputs.deliveryType || 'normal'}
-                        onValueChange={(value) => setTestInputs({
-                          ...testInputs,
-                          deliveryType: value
-                        })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select delivery type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="normal">Normal Delivery</SelectItem>
-                          <SelectItem value="priority">Priority Delivery</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
-                )}
-              </div>
+              )}
 
               {/* Calculate Button */}
               <div className="flex justify-center">
@@ -895,29 +937,28 @@ const CustomerPricing = () => {
                     Calculation Results
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {testInputs.fromPincode && (
-                      <div className="bg-white/60 rounded-lg p-3">
-                        <span className="font-semibold text-gray-700">From:</span> <span className="text-gray-900">{testInputs.fromPincode}</span>
-                      </div>
-                    )}
                     <div className="bg-white/60 rounded-lg p-3">
-                      <span className="font-semibold text-gray-700">To:</span> <span className="text-gray-900">{testInputs.destinationPincode}</span>
-                      {!testInputs.fromPincode && ` (${classifyLocation(testInputs.destinationPincode, testInputs.byAir)})`}
+                      <span className="font-semibold text-gray-700">Destination:</span> <span className="text-gray-900">{testInputs.destinationPincode}</span>
                     </div>
                     <div className="bg-white/60 rounded-lg p-3">
-                      <span className="font-semibold text-gray-700">Type:</span> <span className="text-gray-900">{testInputs.type.toUpperCase()}</span>
+                      <span className="font-semibold text-gray-700">Route:</span> <span className="text-gray-900">{determineRoute(testInputs.destinationPincode) === 'assamToNe' ? 'Assam → NE' : 'Assam → ROI'}</span>
                     </div>
                     <div className="bg-white/60 rounded-lg p-3">
-                      <span className="font-semibold text-gray-700">Weight:</span> <span className="text-gray-900">{testInputs.weight} {testInputs.fromPincode ? 'Kg.' : (testInputs.type === 'dox' ? 'grams' : 'Kg.')}</span>
+                      <span className="font-semibold text-gray-700">Service:</span> <span className="text-gray-900">{testInputs.serviceType === 'priority' ? 'Priority' : `Standard ${testInputs.type === 'dox' ? 'DOX' : 'NON-DOX'}`}</span>
                     </div>
                     <div className="bg-white/60 rounded-lg p-3">
-                      <span className="font-semibold text-gray-700">Service:</span> 
+                      <span className="font-semibold text-gray-700">Mode:</span> 
                       <span className="text-gray-900">
-                        {testInputs.priority ? ' Priority' : ''}
-                        {testInputs.byAir ? ' By Air' : ''}
-                        {testInputs.transportMode && testInputs.fromPincode && testInputs.type === 'non-dox' ? ` ${testInputs.transportMode}` : ''}
-                        {testInputs.deliveryType && testInputs.fromPincode && testInputs.type === 'non-dox' ? ` (${testInputs.deliveryType} delivery)` : ''}
-                        {!testInputs.priority && !testInputs.byAir && !testInputs.transportMode ? ' Standard' : ''}
+                        {testInputs.serviceType === 'standard' && testInputs.mode ? ` ${testInputs.mode.charAt(0).toUpperCase() + testInputs.mode.slice(1)}` : testInputs.serviceType === 'priority' ? ' N/A' : ''}
+                      </span>
+                    </div>
+                    <div className="bg-white/60 rounded-lg p-3">
+                      <span className="font-semibold text-gray-700">Weight:</span> <span className="text-gray-900">{testInputs.weight} {testInputs.serviceType === 'priority' || testInputs.type === 'dox' ? 'grams' : 'Kg.'}</span>
+                    </div>
+                    <div className="bg-white/60 rounded-lg p-3">
+                      <span className="font-semibold text-gray-700">Chargeable Weight:</span> 
+                      <span className="text-gray-900">
+                        {calculationDetails?.isMinimumWeightApplied ? `${calculationDetails.chargeableWeight.toFixed(2)} kg (Min. applied)` : `${testInputs.weight} ${testInputs.serviceType === 'priority' || testInputs.type === 'dox' ? 'grams' : 'Kg.'}`}
                       </span>
                     </div>
                     <div className="md:col-span-2 bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-2 border-green-300">
@@ -940,610 +981,525 @@ const CustomerPricing = () => {
             Standard Service - DOX
           </CardTitle>
           <div className="flex items-center gap-2 mt-2">
-            <Badge variant="secondary" className="bg-blue-100 text-blue-700">By Air & Surface</Badge>
+            <Badge variant="secondary" className="bg-blue-100 text-blue-700">By Air, Road & Train</Badge>
             <Badge variant="secondary" className="bg-blue-100 text-blue-700">Upto 1 Kg</Badge>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Air & Road Combined */}
+          <div className="px-3 pt-2">
+            <div className="flex items-center gap-3 mb-1">
+              <h3 className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+                <Plane className="h-3 w-3" />
+                Air
+              </h3>
+              <h3 className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+                <Truck className="h-3 w-3" />
+                Road
+              </h3>
+            </div>
+          </div>
+          <div className="overflow-x-auto px-3 pb-2">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gradient-to-r from-blue-100 to-cyan-100 border-b-2 border-blue-200">
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Weight</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Assam</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">NE By Surface</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">NE By Air AGT IMP</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Rest of India</TableHead>
+                <TableRow className="bg-gradient-to-r from-blue-100 to-cyan-100 border-b border-blue-200">
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 border-r border-blue-300">Weight</TableHead>
+                  <TableHead colSpan={2} className="font-bold text-gray-800 text-xs py-1.5 text-center border-r-2 border-blue-300">
+                    <div className="flex items-center justify-center gap-1">
+                      <Plane className="h-3 w-3" />
+                      Air
+                    </div>
+                  </TableHead>
+                  <TableHead colSpan={2} className="font-bold text-gray-800 text-xs py-1.5 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Truck className="h-3 w-3" />
+                      Road
+                    </div>
+                  </TableHead>
+                </TableRow>
+                <TableRow className="bg-gradient-to-r from-blue-50 to-cyan-50 border-b border-blue-200">
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 border-r border-blue-300"></TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 text-center border-r border-blue-300">Assam → NE</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 text-center border-r-2 border-blue-300">Assam → ROI</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 text-center border-r border-blue-300">Assam → NE</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 text-center">Assam → ROI</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow className="border-b border-gray-100 hover:bg-blue-50/50">
-                  <TableCell className="font-semibold text-sm py-3">01 gm. to 250 gm.</TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing['01gm-250gm'].assam}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, '01gm-250gm.assam')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, '01gm-250gm.assam')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                <TableRow className="border-b border-gray-200 hover:bg-blue-50/50">
+                  <TableCell className="font-semibold text-xs py-1.5 border-r border-blue-300">01 gm. to 250 gm.</TableCell>
+                  <TableCell className="text-xs py-1.5 border-r border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.air['01gm-250gm'].assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'air.01gm-250gm.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'air.01gm-250gm.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing['01gm-250gm'].neBySurface}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, '01gm-250gm.neBySurface')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, '01gm-250gm.neBySurface')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5 border-r-2 border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.air['01gm-250gm'].assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'air.01gm-250gm.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'air.01gm-250gm.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing['01gm-250gm'].neByAirAgtImp}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, '01gm-250gm.neByAirAgtImp')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, '01gm-250gm.neByAirAgtImp')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5 border-r border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.road['01gm-250gm'].assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'road.01gm-250gm.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'road.01gm-250gm.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing['01gm-250gm'].restOfIndia}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, '01gm-250gm.restOfIndia')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, '01gm-250gm.restOfIndia')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.road['01gm-250gm'].assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'road.01gm-250gm.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'road.01gm-250gm.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
-                <TableRow className="border-b border-gray-100 hover:bg-blue-50/50">
-                  <TableCell className="font-semibold text-sm py-3">251 gm. to 500 gm.</TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing['251gm-500gm'].assam}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, '251gm-500gm.assam')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, '251gm-500gm.assam')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                <TableRow className="border-b border-gray-200 hover:bg-blue-50/50">
+                  <TableCell className="font-semibold text-xs py-1.5 border-r border-blue-300">251 gm. to 500 gm.</TableCell>
+                  <TableCell className="text-xs py-1.5 border-r border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.air['251gm-500gm'].assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'air.251gm-500gm.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'air.251gm-500gm.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing['251gm-500gm'].neBySurface}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, '251gm-500gm.neBySurface')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, '251gm-500gm.neBySurface')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5 border-r-2 border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.air['251gm-500gm'].assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'air.251gm-500gm.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'air.251gm-500gm.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing['251gm-500gm'].neByAirAgtImp}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, '251gm-500gm.neByAirAgtImp')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, '251gm-500gm.neByAirAgtImp')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5 border-r border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.road['251gm-500gm'].assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'road.251gm-500gm.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'road.251gm-500gm.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing['251gm-500gm'].restOfIndia}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, '251gm-500gm.restOfIndia')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, '251gm-500gm.restOfIndia')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.road['251gm-500gm'].assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'road.251gm-500gm.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'road.251gm-500gm.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
                 <TableRow className="hover:bg-blue-50/50">
-                  <TableCell className="font-semibold text-sm py-3">Add. 500 gm.</TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing.add500gm.assam}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, 'add500gm.assam')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, 'add500gm.assam')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="font-semibold text-xs py-1.5 border-r border-blue-300">Add. 500 gm.</TableCell>
+                  <TableCell className="text-xs py-1.5 border-r border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.air.add500gm.assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'air.add500gm.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'air.add500gm.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing.add500gm.neBySurface}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, 'add500gm.neBySurface')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, 'add500gm.neBySurface')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5 border-r-2 border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.air.add500gm.assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'air.add500gm.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'air.add500gm.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing.add500gm.neByAirAgtImp}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, 'add500gm.neByAirAgtImp')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, 'add500gm.neByAirAgtImp')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5 border-r border-blue-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.road.add500gm.assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'road.add500gm.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'road.add500gm.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={doxPricing.add500gm.restOfIndia}
-                      onChange={(e) => handlePriceChange(e.target.value, setDoxPricing, 'add500gm.restOfIndia')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setDoxPricing, 'add500gm.restOfIndia')}
-                      className="w-24 h-9 text-xs text-right border-blue-200 focus:border-blue-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.road.add500gm.assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'road.add500gm.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'road.add500gm.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </div>
-          <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-blue-50 border-t-2 border-blue-200">
-            <p className="text-xs text-gray-600 font-medium">
+
+          {/* Train Mode */}
+          <div className="px-3 pt-2">
+            <h3 className="text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
+              <Train className="h-3 w-3" />
+              Train (Per Kg)
+            </h3>
+          </div>
+          <div className="overflow-x-auto px-3 pb-2">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gradient-to-r from-blue-100 to-cyan-100 border-b border-blue-200">
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 border-r border-blue-300">Route</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 text-center">Assam → NE</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 text-center">Assam → ROI</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="hover:bg-blue-50/50">
+                  <TableCell className="font-semibold text-xs py-1.5 border-r border-blue-300">Per Kg</TableCell>
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.train.assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'train.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'train.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardDox.train.assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardDox, 'train.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardDox, 'train.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-blue-200 focus:border-blue-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-3 py-2 bg-gradient-to-r from-gray-50 to-blue-50 border-t border-blue-200">
+            <p className="text-xs text-gray-600">
               Above price is excluding of Other Charge and GST 18%
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Section 2: NON DOX Surface */}
+      {/* Section 2: Standard Service - NON DOX */}
       <Card className="border-2 border-orange-200 shadow-lg hover:shadow-xl transition-shadow">
         <CardHeader className="bg-gradient-to-r from-orange-50 to-amber-50 border-b-2 border-orange-200 py-4">
           <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <Truck className="h-6 w-6 text-orange-600" />
-            NON DOX (By Surface) Upto 1 Kg
+            Standard Service - NON DOX
           </CardTitle>
           <div className="flex items-center gap-2 mt-2">
-            <Badge variant="secondary" className="bg-orange-100 text-orange-700">Per Kg Rate</Badge>
+            <Badge variant="secondary" className="bg-orange-100 text-orange-700">By Air, Road & Train</Badge>
+            <Badge variant="secondary" className="bg-orange-100 text-orange-700">1kg - 100kg</Badge>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          {/* Air & Road Combined */}
+          <div className="px-3 pt-2">
+            <div className="flex items-center gap-3 mb-1">
+              <h3 className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+                <Plane className="h-3 w-3" />
+                Air
+              </h3>
+              <h3 className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+                <Truck className="h-3 w-3" />
+                Road
+              </h3>
+            </div>
+          </div>
+          <div className="overflow-x-auto px-3 pb-2">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gradient-to-r from-orange-100 to-amber-100 border-b-2 border-orange-200">
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Weight</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Assam</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">NE By Surface</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">NE By Air AGT IMP</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Rest of India</TableHead>
+                <TableRow className="bg-gradient-to-r from-orange-100 to-amber-100 border-b border-orange-200">
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 border-r border-orange-300">Weight</TableHead>
+                  <TableHead colSpan={2} className="font-bold text-gray-800 text-xs py-1.5 text-center border-r-2 border-orange-300">
+                    <div className="flex items-center justify-center gap-1">
+                      <Plane className="h-3 w-3" />
+                      Air
+                    </div>
+                  </TableHead>
+                  <TableHead colSpan={2} className="font-bold text-gray-800 text-xs py-1.5 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Truck className="h-3 w-3" />
+                      Road
+                    </div>
+                  </TableHead>
+                </TableRow>
+                <TableRow className="bg-gradient-to-r from-orange-50 to-amber-50 border-b border-orange-200">
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 border-r border-orange-300"></TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 text-center border-r border-orange-300">Assam → NE</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 text-center border-r-2 border-orange-300">Assam → ROI</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 text-center border-r border-orange-300">Assam → NE</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1 text-center">Assam → ROI</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow className="border-b border-gray-200 hover:bg-orange-50/50">
+                  <TableCell className="font-semibold text-xs py-1.5 border-r border-orange-300">1kg - 5kg</TableCell>
+                  <TableCell className="text-xs py-1.5 border-r border-orange-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.air['1kg-5kg'].assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'air.1kg-5kg.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'air.1kg-5kg.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs py-1.5 border-r-2 border-orange-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.air['1kg-5kg'].assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'air.1kg-5kg.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'air.1kg-5kg.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs py-1.5 border-r border-orange-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.road['1kg-5kg'].assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'road.1kg-5kg.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'road.1kg-5kg.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.road['1kg-5kg'].assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'road.1kg-5kg.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'road.1kg-5kg.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+                <TableRow className="hover:bg-orange-50/50">
+                  <TableCell className="font-semibold text-xs py-1.5 border-r border-orange-300">5kg - 100kg</TableCell>
+                  <TableCell className="text-xs py-1.5 border-r border-orange-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.air['5kg-100kg'].assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'air.5kg-100kg.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'air.5kg-100kg.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs py-1.5 border-r-2 border-orange-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.air['5kg-100kg'].assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'air.5kg-100kg.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'air.5kg-100kg.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs py-1.5 border-r border-orange-300">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.road['5kg-100kg'].assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'road.5kg-100kg.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'road.5kg-100kg.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.road['5kg-100kg'].assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'road.5kg-100kg.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'road.5kg-100kg.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Train Mode */}
+          <div className="px-3 pt-2">
+            <h3 className="text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1">
+              <Train className="h-3 w-3" />
+              Train (Per Kg)
+            </h3>
+          </div>
+          <div className="overflow-x-auto px-3 pb-2">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gradient-to-r from-orange-100 to-amber-100 border-b border-orange-200">
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 border-r border-orange-300">Route</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 text-center">Assam → NE</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 text-center">Assam → ROI</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow className="hover:bg-orange-50/50">
-                  <TableCell className="font-semibold text-sm py-3">Per Kg.</TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={nonDoxSurfacePricing.assam}
-                      onChange={(e) => handlePriceChange(e.target.value, setNonDoxSurfacePricing, 'assam')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setNonDoxSurfacePricing, 'assam')}
-                      className="w-24 h-9 text-xs text-right border-orange-200 focus:border-orange-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="font-semibold text-xs py-1.5 border-r border-orange-300">Per Kg</TableCell>
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.train.assamToNe}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'train.assamToNe')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'train.assamToNe')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={nonDoxSurfacePricing.neBySurface}
-                      onChange={(e) => handlePriceChange(e.target.value, setNonDoxSurfacePricing, 'neBySurface')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setNonDoxSurfacePricing, 'neBySurface')}
-                      className="w-24 h-9 text-xs text-right border-orange-200 focus:border-orange-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={nonDoxSurfacePricing.neByAirAgtImp}
-                      onChange={(e) => handlePriceChange(e.target.value, setNonDoxSurfacePricing, 'neByAirAgtImp')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setNonDoxSurfacePricing, 'neByAirAgtImp')}
-                      className="w-24 h-9 text-xs text-right border-orange-200 focus:border-orange-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={nonDoxSurfacePricing.restOfIndia}
-                      onChange={(e) => handlePriceChange(e.target.value, setNonDoxSurfacePricing, 'restOfIndia')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setNonDoxSurfacePricing, 'restOfIndia')}
-                      className="w-24 h-9 text-xs text-right border-orange-200 focus:border-orange-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={standardNonDox.train.assamToRoi}
+                        onChange={(e) => handlePriceChange(e.target.value, setStandardNonDox, 'train.assamToRoi')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setStandardNonDox, 'train.assamToRoi')}
+                        className="w-20 h-7 text-xs text-center border-orange-200 focus:border-orange-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Section 3: NON DOX Air */}
-      <Card className="border-2 border-sky-200 shadow-lg hover:shadow-xl transition-shadow">
-        <CardHeader className="bg-gradient-to-r from-sky-50 to-blue-50 border-b-2 border-sky-200 py-4">
-          <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <Plane className="h-6 w-6 text-sky-600" />
-            NON DOX (By Air) Upto 1 Kg
-          </CardTitle>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant="secondary" className="bg-sky-100 text-sky-700">Per Kg Rate</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gradient-to-r from-sky-100 to-blue-100 border-b-2 border-sky-200">
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Weight</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Assam</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">NE By Surface</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">NE By Air AGT IMP</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Rest of India</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow className="hover:bg-sky-50/50">
-                  <TableCell className="font-semibold text-sm py-3">Per Kg.</TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={nonDoxAirPricing.assam}
-                      onChange={(e) => handlePriceChange(e.target.value, setNonDoxAirPricing, 'assam')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setNonDoxAirPricing, 'assam')}
-                      className="w-24 h-9 text-xs text-right border-sky-200 focus:border-sky-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={nonDoxAirPricing.neBySurface}
-                      onChange={(e) => handlePriceChange(e.target.value, setNonDoxAirPricing, 'neBySurface')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setNonDoxAirPricing, 'neBySurface')}
-                      className="w-24 h-9 text-xs text-right border-sky-200 focus:border-sky-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={nonDoxAirPricing.neByAirAgtImp}
-                      onChange={(e) => handlePriceChange(e.target.value, setNonDoxAirPricing, 'neByAirAgtImp')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setNonDoxAirPricing, 'neByAirAgtImp')}
-                      className="w-24 h-9 text-xs text-right border-sky-200 focus:border-sky-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={nonDoxAirPricing.restOfIndia}
-                      onChange={(e) => handlePriceChange(e.target.value, setNonDoxAirPricing, 'restOfIndia')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setNonDoxAirPricing, 'restOfIndia')}
-                      className="w-24 h-9 text-xs text-right border-sky-200 focus:border-sky-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+          <div className="px-3 py-2 bg-gradient-to-r from-gray-50 to-orange-50 border-t border-orange-200">
+            <p className="text-xs text-gray-600">
+              Above price is excluding of Other Charge and GST 18%
+            </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Section 4: Priority Service */}
+      {/* Section 3: Priority Service */}
       <Card className="border-2 border-pink-200 shadow-lg hover:shadow-xl transition-shadow">
         <CardHeader className="bg-gradient-to-r from-pink-50 to-rose-50 border-b-2 border-pink-200 py-4">
           <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-pink-600" />
-            Priority Service - DOX
+            Priority Service
           </CardTitle>
           <div className="flex items-center gap-2 mt-2">
-            <Badge variant="secondary" className="bg-pink-100 text-pink-700">By Air & Surface</Badge>
-            <Badge variant="secondary" className="bg-pink-100 text-pink-700">Upto 1 Kg</Badge>
+            <Badge variant="secondary" className="bg-pink-100 text-pink-700">Unified Pricing</Badge>
+            <Badge variant="secondary" className="bg-pink-100 text-pink-700">Upto 100 Kg</Badge>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto px-3 py-2">
             <Table>
               <TableHeader>
-                <TableRow className="bg-gradient-to-r from-pink-100 to-rose-100 border-b-2 border-pink-200">
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Weight</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Assam</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">NE By Surface</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">NE By Air AGT IMP</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Rest of India</TableHead>
+                <TableRow className="bg-gradient-to-r from-pink-100 to-rose-100 border-b border-pink-200">
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 border-r border-pink-300">Weight</TableHead>
+                  <TableHead className="font-bold text-gray-800 text-xs py-1.5 text-center">Price (Per 500gm)</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow className="border-b border-gray-100 hover:bg-pink-50/50">
-                  <TableCell className="font-semibold text-sm py-3">01 gm. to 500 gm.</TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={priorityPricing['01gm-500gm'].assam}
-                      onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, '01gm-500gm.assam')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, '01gm-500gm.assam')}
-                      className="w-24 h-9 text-xs text-right border-pink-200 focus:border-pink-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={priorityPricing['01gm-500gm'].neBySurface}
-                      onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, '01gm-500gm.neBySurface')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, '01gm-500gm.neBySurface')}
-                      className="w-24 h-9 text-xs text-right border-pink-200 focus:border-pink-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={priorityPricing['01gm-500gm'].neByAirAgtImp}
-                      onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, '01gm-500gm.neByAirAgtImp')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, '01gm-500gm.neByAirAgtImp')}
-                      className="w-24 h-9 text-xs text-right border-pink-200 focus:border-pink-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={priorityPricing['01gm-500gm'].restOfIndia}
-                      onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, '01gm-500gm.restOfIndia')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, '01gm-500gm.restOfIndia')}
-                      className="w-24 h-9 text-xs text-right border-pink-200 focus:border-pink-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                </TableRow>
                 <TableRow className="hover:bg-pink-50/50">
-                  <TableCell className="font-semibold text-sm py-3">Every Add, 500gm.</TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={priorityPricing.add500gm.assam}
-                      onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, 'add500gm.assam')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, 'add500gm.assam')}
-                      className="w-24 h-9 text-xs text-right border-pink-200 focus:border-pink-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={priorityPricing.add500gm.neBySurface}
-                      onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, 'add500gm.neBySurface')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, 'add500gm.neBySurface')}
-                      className="w-24 h-9 text-xs text-right border-pink-200 focus:border-pink-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={priorityPricing.add500gm.neByAirAgtImp}
-                      onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, 'add500gm.neByAirAgtImp')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, 'add500gm.neByAirAgtImp')}
-                      className="w-24 h-9 text-xs text-right border-pink-200 focus:border-pink-400"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3">
-                    <Input
-                      type="text"
-                      value={priorityPricing.add500gm.restOfIndia}
-                      onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, 'add500gm.restOfIndia')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, 'add500gm.restOfIndia')}
-                      className="w-24 h-9 text-xs text-right border-pink-200 focus:border-pink-400"
-                      placeholder="0.00"
-                    />
+                  <TableCell className="font-semibold text-xs py-1.5 border-r border-pink-300">500gm</TableCell>
+                  <TableCell className="text-xs py-1.5">
+                    <div className="flex justify-center">
+                      <Input
+                        type="text"
+                        value={priorityPricing.base500gm}
+                        onChange={(e) => handlePriceChange(e.target.value, setPriorityPricing, 'base500gm')}
+                        onBlur={(e) => handlePriceBlur(e.target.value, setPriorityPricing, 'base500gm')}
+                        className="w-20 h-7 text-xs text-center border-pink-200 focus:border-pink-400"
+                        placeholder="0.00"
+                      />
+                    </div>
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </div>
-          <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-pink-50 border-t-2 border-pink-200">
-            <p className="text-xs text-gray-600 font-medium">
+          <div className="px-3 py-2 bg-gradient-to-r from-gray-50 to-pink-50 border-t border-pink-200">
+            <p className="text-xs text-gray-600">
               Above price is excluding of Other Charge and GST 18%
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Section 5: Reverse Pricing */}
-      <Card className="border-2 border-emerald-200 shadow-lg hover:shadow-xl transition-shadow">
-        <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b-2 border-emerald-200 py-4">
-          <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <Train className="h-6 w-6 text-emerald-600" />
-            Reverse Pricing
-          </CardTitle>
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">From Rest of India</Badge>
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">To Guwahati/Assam & North East</Badge>
-            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Per Kg Rate</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gradient-to-r from-emerald-100 to-teal-100 border-b-2 border-emerald-200">
-                  <TableHead className="font-bold text-gray-800 text-sm py-3">Destination</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center border-l-2 border-emerald-300" colSpan={2}>
-                    By Road (Min. 500kg)
-                  </TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center border-l-2 border-emerald-300" colSpan={2}>
-                    By Train (Min. 100kg)
-                  </TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center border-l-2 border-emerald-300" colSpan={2}>
-                    By Flight (Min. 25kg)
-                  </TableHead>
-                </TableRow>
-                <TableRow className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b-2 border-emerald-200">
-                  <TableHead className="font-bold text-gray-800 text-sm py-3"></TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center border-l-2 border-emerald-300">Normal</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center">Priority</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center border-l-2 border-emerald-300">Normal</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center">Priority</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center border-l-2 border-emerald-300">Normal</TableHead>
-                  <TableHead className="font-bold text-gray-800 text-sm py-3 text-center">Priority</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow className="border-b border-gray-100 hover:bg-emerald-50/50">
-                  <TableCell className="font-semibold text-sm py-3">To Guwahati (Assam)</TableCell>
-                  <TableCell className="text-sm py-3 text-center border-l-2 border-emerald-300">
-                    <Input
-                      type="text"
-                      value={reversePricing.toAssam.byRoad.normal}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toAssam.byRoad.normal')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toAssam.byRoad.normal')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center">
-                    <Input
-                      type="text"
-                      value={reversePricing.toAssam.byRoad.priority}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toAssam.byRoad.priority')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toAssam.byRoad.priority')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center border-l-2 border-emerald-300">
-                    <Input
-                      type="text"
-                      value={reversePricing.toAssam.byTrain.normal}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toAssam.byTrain.normal')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toAssam.byTrain.normal')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center">
-                    <Input
-                      type="text"
-                      value={reversePricing.toAssam.byTrain.priority}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toAssam.byTrain.priority')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toAssam.byTrain.priority')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center border-l-2 border-emerald-300">
-                    <Input
-                      type="text"
-                      value={reversePricing.toAssam.byFlight.normal}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toAssam.byFlight.normal')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toAssam.byFlight.normal')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center">
-                    <Input
-                      type="text"
-                      value={reversePricing.toAssam.byFlight.priority}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toAssam.byFlight.priority')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toAssam.byFlight.priority')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                </TableRow>
-                <TableRow className="hover:bg-emerald-50/50">
-                  <TableCell className="font-semibold text-sm py-3">To North East (6 States)</TableCell>
-                  <TableCell className="text-sm py-3 text-center border-l-2 border-emerald-300">
-                    <Input
-                      type="text"
-                      value={reversePricing.toNorthEast.byRoad.normal}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toNorthEast.byRoad.normal')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toNorthEast.byRoad.normal')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center">
-                    <Input
-                      type="text"
-                      value={reversePricing.toNorthEast.byRoad.priority}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toNorthEast.byRoad.priority')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toNorthEast.byRoad.priority')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center border-l-2 border-emerald-300">
-                    <Input
-                      type="text"
-                      value={reversePricing.toNorthEast.byTrain.normal}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toNorthEast.byTrain.normal')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toNorthEast.byTrain.normal')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center">
-                    <Input
-                      type="text"
-                      value={reversePricing.toNorthEast.byTrain.priority}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toNorthEast.byTrain.priority')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toNorthEast.byTrain.priority')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center border-l-2 border-emerald-300">
-                    <Input
-                      type="text"
-                      value={reversePricing.toNorthEast.byFlight.normal}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toNorthEast.byFlight.normal')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toNorthEast.byFlight.normal')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm py-3 text-center">
-                    <Input
-                      type="text"
-                      value={reversePricing.toNorthEast.byFlight.priority}
-                      onChange={(e) => handlePriceChange(e.target.value, setReversePricing, 'toNorthEast.byFlight.priority')}
-                      onBlur={(e) => handlePriceBlur(e.target.value, setReversePricing, 'toNorthEast.byFlight.priority')}
-                      className="w-24 h-9 text-xs text-center border-emerald-200 focus:border-emerald-400 mx-auto"
-                      placeholder="0.00"
-                    />
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-          <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-emerald-50 border-t-2 border-emerald-200">
-            <p className="text-xs text-gray-600 font-medium">
-              <strong>Minimum Chargeable Weight:</strong> By Road - 500kg, By Train - 100kg, By Flight - 25kg
-            </p>
-            <p className="text-xs text-gray-600 mt-1">
-              Above price is excluding of Other Charge and GST 18%
-            </p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

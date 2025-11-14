@@ -85,6 +85,14 @@ router.post('/bookings', async (req, res) => {
       });
     }
 
+    // Validate billing.partyType is required
+    if (!billing.partyType || !['sender', 'recipient'].includes(billing.partyType)) {
+      return res.status(400).json({
+        error: 'Invalid billing information',
+        message: 'Please select who will pay (sender or recipient)'
+      });
+    }
+
     // Check if medicineUserId is provided (required for consignment number assignment)
     if (!medicineUserId) {
       return res.status(400).json({
@@ -160,10 +168,13 @@ router.post('/bookings', async (req, res) => {
     const booking = new MedicineBooking({
       ...bookingPayload,
       consignmentNumber: consignmentNumber,
-      bookingReference: consignmentNumber.toString() // Use consignment number as booking reference
+      bookingReference: consignmentNumber.toString(), // Use consignment number as booking reference
+      status: 'Booked' // Explicitly set status to Booked for first booking
     });
 
+    console.log('Before saving booking:', booking.status);
     await booking.save();
+    console.log('After saving booking:', booking.status);
 
     // Record consignment usage
     const usage = new ConsignmentUsage({
@@ -181,6 +192,27 @@ router.post('/bookings', async (req, res) => {
     await usage.save();
 
     console.log(`✅ Medicine booking created: Medicine User ${medicineUserId} - Consignment: ${consignmentNumber}`);
+
+    // Auto-sync to Google Sheets after booking creation
+    try {
+      // Fetch all bookings for this medicine user that have been dispatched (have consignment numbers)
+      const allBookings = await MedicineBooking.find({
+        medicineUserId: medicineUserId,
+        consignmentNumber: { $exists: true, $ne: null }
+      })
+        .populate('coloaderId', 'name phoneNumber busNumber')
+        .populate('manifestId', 'manifestNumber createdAt coloaderDocketNo')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      if (allBookings && allBookings.length > 0) {
+        await googleSheetsService.syncMedicineBookings(allBookings);
+        console.log(`✅ Auto-synced ${allBookings.length} bookings to Google Sheets after new booking creation`);
+      }
+    } catch (syncError) {
+      console.error('Auto-sync to Google Sheets failed after booking creation:', syncError.message);
+      // Don't fail the request if sync fails, just log it
+    }
 
     res.status(201).json({
       success: true,
@@ -272,7 +304,7 @@ router.get('/bookings', authenticateMedicine, async (req, res) => {
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const bookings = await MedicineBooking.find(query)
-      .populate('coloaderId', 'phoneNumber busNumber')
+      .populate('coloaderId', 'name phoneNumber busNumber')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(skip)
@@ -636,7 +668,7 @@ router.patch('/bookings/:id/status', authenticateMedicine, async (req, res) => {
   try {
     const { status } = req.body;
 
-    if (!status || !['pending', 'confirmed', 'in_transit', 'arrived', 'delivered', 'cancelled'].includes(status)) {
+    if (!status || !['Booked', 'pending', 'confirmed', 'in_transit', 'arrived', 'Arrived at Hub', 'Ready to Dispatch', 'delivered', 'cancelled'].includes(status)) {
       return res.status(400).json({
         error: 'Invalid status',
         message: 'Please provide a valid status'
@@ -807,17 +839,234 @@ router.get('/coloaders', authenticateMedicine, async (req, res) => {
   }
 });
 
-// POST /api/medicine/coloaders - Create a new coloader
-router.post('/coloaders', authenticateMedicine, async (req, res) => {
+// POST /api/medicine/coloaders/register - Register new coloader (full registration)
+router.post('/coloaders/register', authenticateMedicine, async (req, res) => {
   try {
-    const { phoneNumber, busNumber } = req.body;
+    console.log('Received medicine coloader registration data:', req.body);
+    
+    const {
+      companyName,
+      serviceModes,
+      concernPerson,
+      mobileNumbers,
+      email,
+      website,
+      companyAddress,
+      fromLocations,
+      toLocations,
+      vehicleDetails
+    } = req.body;
     
     // Validate required fields
-    if (!phoneNumber || !busNumber) {
+    const requiredFields = [
+      'companyName', 'serviceModes', 'concernPerson', 
+      'mobileNumbers', 'email', 'companyAddress', 
+      'fromLocations', 'toLocations'
+    ];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        error: `Missing required fields: ${missingFields.join(', ')}` 
+      });
+    }
+
+    // Validate service modes
+    if (!Array.isArray(serviceModes) || serviceModes.length === 0) {
+      return res.status(400).json({ 
+        error: 'At least one service mode is required' 
+      });
+    }
+
+    // Validate mobile numbers
+    if (!Array.isArray(mobileNumbers) || mobileNumbers.length === 0) {
+      return res.status(400).json({ 
+        error: 'At least one mobile number is required' 
+      });
+    }
+
+    // Validate locations
+    if (!Array.isArray(fromLocations) || fromLocations.length === 0) {
+      return res.status(400).json({ 
+        error: 'At least one FROM location is required' 
+      });
+    }
+
+    if (!Array.isArray(toLocations) || toLocations.length === 0) {
+      return res.status(400).json({ 
+        error: 'At least one TO location is required' 
+      });
+    }
+
+    // Check if company with same email already exists
+    const existingColoader = await MedicineColoader.findOne({
+      email: email.toLowerCase()
+    });
+
+    if (existingColoader) {
+      return res.status(409).json({ 
+        error: 'A coloader with this email already exists' 
+      });
+    }
+
+    // Check if company with same name already exists
+    const existingCompany = await MedicineColoader.findOne({
+      companyName: companyName.trim()
+    });
+
+    if (existingCompany) {
+      return res.status(409).json({ 
+        error: 'A coloader with this company name already exists' 
+      });
+    }
+
+    // Get medicine user ID from token
+    const medicineUserId = req.user?.id || null;
+
+    // Create new coloader registration
+    const coloaderData = new MedicineColoader({
+      medicineUserId,
+      companyName: companyName.trim(),
+      serviceModes: serviceModes,
+      concernPerson: concernPerson.trim(),
+      mobileNumbers: mobileNumbers.map(num => num.trim()),
+      email: email.toLowerCase().trim(),
+      website: website?.trim() || '',
+      companyAddress: {
+        pincode: companyAddress.pincode.trim(),
+        state: companyAddress.state.trim(),
+        city: companyAddress.city.trim(),
+        area: companyAddress.area.trim(),
+        address: companyAddress.address.trim(),
+        flatNo: companyAddress.flatNo.trim(),
+        landmark: companyAddress.landmark?.trim() || '',
+        gst: companyAddress.gst.trim().toUpperCase()
+      },
+      vehicleDetails: Array.isArray(vehicleDetails)
+        ? vehicleDetails
+            .filter(detail => 
+              (detail.vehicleName && detail.vehicleName.trim()) ||
+              (detail.vehicleNumber && detail.vehicleNumber.trim()) ||
+              (detail.driverName && detail.driverName.trim()) ||
+              (detail.driverNumber && detail.driverNumber.trim())
+            )
+            .map(detail => ({
+              vehicleName: detail.vehicleName?.trim() || '',
+              vehicleNumber: detail.vehicleNumber?.trim().toUpperCase() || '',
+              driverName: detail.driverName?.trim() || '',
+              driverNumber: detail.driverNumber?.trim() || ''
+            }))
+        : [],
+      fromLocations: fromLocations.map(location => ({
+        concernPerson: location.concernPerson.trim(),
+        mobile: location.mobile.trim(),
+        email: location.email.toLowerCase().trim(),
+        pincode: location.pincode.trim(),
+        state: location.state.trim(),
+        city: location.city.trim(),
+        area: location.area.trim(),
+        address: location.address.trim(),
+        flatNo: location.flatNo.trim(),
+        landmark: location.landmark?.trim() || '',
+        gst: location.gst.trim().toUpperCase(),
+        vehicleDetails: Array.isArray(location.vehicleDetails)
+          ? location.vehicleDetails
+              .filter(detail =>
+                (detail.vehicleName && detail.vehicleName.trim()) ||
+                (detail.vehicleNumber && detail.vehicleNumber.trim()) ||
+                (detail.driverName && detail.driverName.trim()) ||
+                (detail.driverNumber && detail.driverNumber.trim())
+              )
+              .map(detail => ({
+                vehicleName: detail.vehicleName?.trim() || '',
+                vehicleNumber: detail.vehicleNumber?.trim().toUpperCase() || '',
+                driverName: detail.driverName?.trim() || '',
+                driverNumber: detail.driverNumber?.trim() || ''
+              }))
+          : []
+      })),
+      toLocations: toLocations.map(location => ({
+        concernPerson: location.concernPerson.trim(),
+        mobile: location.mobile.trim(),
+        email: location.email.toLowerCase().trim(),
+        pincode: location.pincode.trim(),
+        state: location.state.trim(),
+        city: location.city.trim(),
+        area: location.area.trim(),
+        address: location.address.trim(),
+        flatNo: location.flatNo.trim(),
+        landmark: location.landmark?.trim() || '',
+        gst: location.gst.trim().toUpperCase(),
+        vehicleDetails: Array.isArray(location.vehicleDetails)
+          ? location.vehicleDetails
+              .filter(detail =>
+                (detail.vehicleName && detail.vehicleName.trim()) ||
+                (detail.vehicleNumber && detail.vehicleNumber.trim()) ||
+                (detail.driverName && detail.driverName.trim()) ||
+                (detail.driverNumber && detail.driverNumber.trim())
+              )
+              .map(detail => ({
+                vehicleName: detail.vehicleName?.trim() || '',
+                vehicleNumber: detail.vehicleNumber?.trim().toUpperCase() || '',
+                driverName: detail.driverName?.trim() || '',
+                driverNumber: detail.driverNumber?.trim() || ''
+              }))
+          : []
+      })),
+      status: 'approved' // Automatically approve upon registration completion
+    });
+
+    await coloaderData.save();
+    
+    console.log('Medicine coloader registration successful:', coloaderData.coloaderId);
+    
+    res.json({ 
+      success: true, 
+      message: 'Coloader registration completed and approved successfully!',
+      coloaderId: coloaderData.coloaderId,
+      data: {
+        coloaderId: coloaderData.coloaderId,
+        companyName: coloaderData.companyName,
+        email: coloaderData.email,
+        status: coloaderData.status,
+        registrationDate: coloaderData.registrationDate,
+        completionPercentage: coloaderData.getCompletionPercentage()
+      }
+    });
+    
+  } catch (err) {
+    console.error('Error in medicine coloader registration:', err);
+    
+    if (err.name === 'ValidationError') {
+      const validationErrors = Object.values(err.errors).map(e => e.message);
+      res.status(400).json({ 
+        error: 'Validation failed',
+        details: validationErrors
+      });
+    } else if (err.code === 11000) {
+      res.status(409).json({ 
+        error: 'Duplicate entry detected',
+        details: 'A coloader with this information already exists'
+      });
+    } else {
+      res.status(500).json({ 
+        error: err.message || 'Internal server error'
+      });
+    }
+  }
+});
+
+// POST /api/medicine/coloaders - Create a new coloader (simple version for backward compatibility)
+router.post('/coloaders', authenticateMedicine, async (req, res) => {
+  try {
+    const { name, phoneNumber, busNumber } = req.body;
+    
+    // Validate required fields
+    if (!name || !phoneNumber || !busNumber) {
       return res.status(400).json({
         success: false,
         error: 'Missing required fields',
-        message: 'Phone number and bus number are required'
+        message: 'Name, phone number and bus number are required'
       });
     }
     
@@ -838,6 +1087,14 @@ router.post('/coloaders', authenticateMedicine, async (req, res) => {
     });
     
     if (existingColoader) {
+      // If we find an existing coloader with the same phone and bus number,
+      // update its name if it doesn't have one
+      if (!existingColoader.name && name) {
+        existingColoader.name = name;
+        await existingColoader.save();
+        console.log(`Updated coloader ${existingColoader._id} with name: ${name}`);
+      }
+      
       return res.status(400).json({
         success: false,
         error: 'Duplicate coloader',
@@ -851,6 +1108,7 @@ router.post('/coloaders', authenticateMedicine, async (req, res) => {
     // Create new coloader
     const coloader = new MedicineColoader({
       medicineUserId,
+      name,
       phoneNumber,
       busNumber,
       isActive: true
@@ -861,7 +1119,7 @@ router.post('/coloaders', authenticateMedicine, async (req, res) => {
     // Populate medicine user info
     await coloader.populate('medicineUserId', 'name email');
     
-    console.log(`✅ Medicine coloader created: ${phoneNumber} - ${busNumber}`);
+    console.log(`✅ Medicine coloader created: ${name} - ${phoneNumber} - ${busNumber}`);
     
     res.status(201).json({
       success: true,
@@ -918,8 +1176,8 @@ router.get('/manifests', authenticateMedicine, async (req, res) => {
       status: 'submitted'
     })
       .sort({ createdAt: -1 })
-      .populate('coloaderId', 'phoneNumber busNumber')
-      .populate('consignments.bookingId', 'consignmentNumber origin destination shipment package');
+      .populate('coloaderId', 'name phoneNumber busNumber')
+      .populate('consignments.bookingId', 'consignmentNumber origin destination shipment package createdAt');
     
     res.status(200).json({
       success: true,
@@ -939,7 +1197,7 @@ router.get('/manifests', authenticateMedicine, async (req, res) => {
 // GET /api/medicine/manifests/all - Get all manifests with year filtering (for viewing)
 router.get('/manifests/all', authenticateMedicine, async (req, res) => {
   try {
-    const { year, month } = req.query;
+    const { year, month, startDate: startDateParam, endDate: endDateParam } = req.query;
     
     // Default to current financial year if not provided
     let financialYear = year ? parseInt(year) : null;
@@ -957,15 +1215,24 @@ router.get('/manifests/all', authenticateMedicine, async (req, res) => {
     
     // Financial year runs from April 1 to March 31
     let startDate, endDate;
-    const m = month ? parseInt(month) : null;
-    if (m && !isNaN(m) && m >= 1 && m <= 12) {
-      // Specific month within the selected financial year
-      const monthYear = m >= 4 ? financialYear : financialYear + 1;
-      startDate = new Date(monthYear, m - 1, 1);
-      endDate = new Date(monthYear, m, 0, 23, 59, 59, 999); // last day of the month
+    
+    // If date range is provided, use it instead of financial year/month
+    if (startDateParam && endDateParam) {
+      startDate = new Date(startDateParam);
+      endDate = new Date(endDateParam);
+      // Set end date to end of day
+      endDate.setHours(23, 59, 59, 999);
     } else {
-      startDate = new Date(financialYear, 3, 1); // April 1 (month 3 = April)
-      endDate = new Date(financialYear + 1, 2, 31, 23, 59, 59, 999); // March 31
+      const m = month ? parseInt(month) : null;
+      if (m && !isNaN(m) && m >= 1 && m <= 12) {
+        // Specific month within the selected financial year
+        const monthYear = m >= 4 ? financialYear : financialYear + 1;
+        startDate = new Date(monthYear, m - 1, 1);
+        endDate = new Date(monthYear, m, 0, 23, 59, 59, 999); // last day of the month
+      } else {
+        startDate = new Date(financialYear, 3, 1); // April 1 (month 3 = April)
+        endDate = new Date(financialYear + 1, 2, 31, 23, 59, 59, 999); // March 31
+      }
     }
     
     const manifests = await MedicineManifest.find({
@@ -976,8 +1243,8 @@ router.get('/manifests/all', authenticateMedicine, async (req, res) => {
       }
     })
       .sort({ createdAt: -1 })
-      .populate('coloaderId', 'phoneNumber busNumber')
-      .populate('consignments.bookingId', 'consignmentNumber origin destination shipment package');
+      .populate('coloaderId', 'name phoneNumber busNumber')
+      .populate('consignments.bookingId', 'consignmentNumber origin destination shipment package createdAt');
     
     res.status(200).json({
       success: true,
@@ -1070,7 +1337,28 @@ router.post('/manifests/:id/dispatch', authenticateMedicine, async (req, res) =>
       }
     );
     
-    console.log(`✅ Manifest ${manifest.manifestNumber} dispatched with coloader ${coloader.busNumber}`);
+    console.log(`✅ Manifest ${manifest.manifestNumber} dispatched with coloader ${coloader.name || coloader.busNumber}`);
+    
+    // Auto-sync to Google Sheets after manifest dispatch
+    try {
+      // Fetch all bookings for this medicine user that have been dispatched (have consignment numbers)
+      const allBookings = await MedicineBooking.find({
+        medicineUserId: req.medicine._id,
+        consignmentNumber: { $exists: true, $ne: null }
+      })
+        .populate('coloaderId', 'name phoneNumber busNumber')
+        .populate('manifestId', 'manifestNumber createdAt coloaderDocketNo')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      if (allBookings && allBookings.length > 0) {
+        await googleSheetsService.syncMedicineBookings(allBookings);
+        console.log(`✅ Auto-synced ${allBookings.length} bookings to Google Sheets after manifest dispatch`);
+      }
+    } catch (syncError) {
+      console.error('Auto-sync to Google Sheets failed after manifest dispatch:', syncError.message);
+      // Don't fail the request if sync fails, just log it
+    }
     
     res.status(200).json({
       success: true,
@@ -1101,7 +1389,7 @@ router.get('/sync-bookings', authenticateMedicine, async (req, res) => {
       medicineUserId: req.medicine._id,
       consignmentNumber: { $exists: true, $ne: null }
     })
-      .populate('coloaderId', 'phoneNumber busNumber')
+      .populate('coloaderId', 'name phoneNumber busNumber')
       .populate('manifestId', 'manifestNumber createdAt coloaderDocketNo')
       .sort({ createdAt: -1 })
       .lean();
@@ -1170,11 +1458,13 @@ router.get('/dashboard-summary', authenticateMedicine, async (req, res) => {
 
     const [
       totalBookings,
+      bookedBookings,
       pendingBookings,
       readyToDispatchBookings,
       inTransitBookings,
       deliveredBookings,
       cancelledBookings,
+      arrivedAtHubBookings,
       allBookings,
       totalManifests,
       submittedManifests,
@@ -1182,11 +1472,13 @@ router.get('/dashboard-summary', authenticateMedicine, async (req, res) => {
       deliveredManifests
     ] = await Promise.all([
       MedicineBooking.countDocuments({ medicineUserId, createdAt: bookingDateFilter }),
+      MedicineBooking.countDocuments({ medicineUserId, status: 'Booked', createdAt: bookingDateFilter }),
       MedicineBooking.countDocuments({ medicineUserId, status: 'pending', createdAt: bookingDateFilter }),
-      MedicineBooking.countDocuments({ medicineUserId, status: 'confirmed', createdAt: bookingDateFilter }),
+      MedicineBooking.countDocuments({ medicineUserId, status: 'Ready to Dispatch', createdAt: bookingDateFilter }),
       MedicineBooking.countDocuments({ medicineUserId, status: 'in_transit', createdAt: bookingDateFilter }),
       MedicineBooking.countDocuments({ medicineUserId, status: 'delivered', createdAt: bookingDateFilter }),
       MedicineBooking.countDocuments({ medicineUserId, status: 'cancelled', createdAt: bookingDateFilter }),
+      MedicineBooking.countDocuments({ medicineUserId, status: 'Arrived at Hub', createdAt: bookingDateFilter }),
       MedicineBooking.find({ medicineUserId, createdAt: bookingDateFilter }, { billing: 1 }),
       MedicineManifest.countDocuments({ medicineUserId, createdAt: bookingDateFilter }),
       MedicineManifest.countDocuments({ medicineUserId, status: 'submitted', createdAt: bookingDateFilter }),
@@ -1259,11 +1551,13 @@ router.get('/dashboard-summary', authenticateMedicine, async (req, res) => {
       data: {
         bookings: {
           total: totalBookings,
+          booked: bookedBookings,
           pending: pendingBookings,
           readyToDispatch: readyToDispatchBookings,
           inTransit: inTransitBookings,
           delivered: deliveredBookings,
-          cancelled: cancelledBookings
+          cancelled: cancelledBookings,
+          arrivedAtHub: arrivedAtHubBookings
         },
         payments: {
           paid: paidCount,

@@ -12,6 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
   ArrowRight,
+  ArrowLeft,
   Loader2,
   ChevronDown,
   ChevronUp,
@@ -30,7 +31,33 @@ import {
   Plane,
   Train,
   Truck,
-  Calendar
+  Calendar,
+  Eye,
+  Cog,
+  Book,
+  CreditCard,
+  Gift,
+  Shirt,
+  Monitor,
+  Briefcase,
+  FileCheck,
+  Apple,
+  Home,
+  Laptop,
+  Luggage,
+  Heart,
+  Pill,
+  BookOpen,
+  HardDrive,
+  FileText as FileTextIcon,
+  CreditCard as SimCardIcon,
+  Dumbbell,
+  PenTool,
+  Candy,
+  Gamepad2,
+  Wallet,
+  Smartphone,
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -45,6 +72,34 @@ import {
 
 const API_BASE: string = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
 const VOLUMETRIC_DIVISOR = 5000; // Standard volumetric conversion factor (cm³ to kg)
+
+// Package Type Options with Icons
+const packageTypeOptions = [
+  { value: 'Auto & Machine Parts', icon: Cog },
+  { value: 'Books', icon: Book },
+  { value: 'Cheque Book', icon: FileCheck },
+  { value: 'Chocolates', icon: Candy },
+  { value: 'Clothing (General)', icon: Shirt },
+  { value: 'Computer Accessories', icon: Monitor },
+  { value: 'Corporate Gifts', icon: Gift },
+  { value: 'Credit / Debit Card', icon: CreditCard },
+  { value: 'Documents', icon: FileText },
+  { value: 'Dry Fruits', icon: Apple },
+  { value: 'Household Goods', icon: Home },
+  { value: 'Laptop', icon: Laptop },
+  { value: 'Luggage / Travel Bag', icon: Luggage },
+  { value: 'Medical Equipment', icon: Heart },
+  { value: 'Medicines', icon: Pill },
+  { value: 'Passport', icon: BookOpen },
+  { value: 'Pen Drive', icon: HardDrive },
+  { value: 'Promotional Material (Paper)', icon: FileTextIcon },
+  { value: 'SIM Card', icon: SimCardIcon },
+  { value: 'Sports', icon: Dumbbell },
+  { value: 'Stationery Items', icon: PenTool },
+  { value: 'Sweets', icon: Candy },
+  { value: 'Toys', icon: Gamepad2 },
+  { value: 'Others', icon: Package }
+];
 
 // Helper functions for input sanitization
 const sanitizeInteger = (value: string) => value.replace(/\D/g, '');
@@ -134,6 +189,7 @@ interface SimpleSelectProps {
   disabled?: boolean;
   className?: string;
   isDarkMode?: boolean;
+  hideLabel?: boolean;
 }
 
 const SimpleSelect: React.FC<SimpleSelectProps> = ({
@@ -144,16 +200,19 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
   required = false,
   disabled = false,
   className = '',
-  isDarkMode = false
+  isDarkMode = false,
+  hideLabel = false
 }) => {
   return (
     <div className={cn("space-y-1.5 relative", className)}>
+      {!hideLabel && (
       <label className={cn(
         "text-sm font-normal block",
         isDarkMode ? "text-slate-200" : "text-slate-700"
       )}>
         {label}{required && <span className="text-red-500 ml-1">*</span>}
       </label>
+      )}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -177,7 +236,10 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
           </option>
         ))}
       </select>
-      <div className="absolute right-3 top-[38px] pointer-events-none">
+      <div className={cn(
+        "absolute right-3 pointer-events-none",
+        hideLabel ? "top-[14px]" : "top-[38px]"
+      )}>
         <ChevronDown className={cn(
           "h-4 w-4",
           isDarkMode ? "text-slate-400" : "text-slate-500"
@@ -207,6 +269,7 @@ interface FloatingInputProps {
   validationErrorMessage?: string;
   isDarkMode?: boolean;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  noBorder?: boolean;
 }
 
 const FloatingInput: React.FC<FloatingInputProps> = ({
@@ -227,7 +290,8 @@ const FloatingInput: React.FC<FloatingInputProps> = ({
   hasValidationError = false,
   validationErrorMessage = '',
   isDarkMode = false,
-  onBlur
+  onBlur,
+  noBorder = false
 }) => {
   const [isFocused, setIsFocused] = useState(false);
   const hasValue = value.length > 0;
@@ -279,21 +343,23 @@ const FloatingInput: React.FC<FloatingInputProps> = ({
           maxLength={maxLength}
           disabled={disabled}
           className={cn(
-            "w-full h-10 px-3 border rounded-xl transition-all duration-200 ease-in-out text-sm",
+            "w-full h-10 px-3 rounded-xl transition-all duration-200 ease-in-out text-xs",
+            !noBorder && "border",
             icon ? "pl-10" : "pl-3",
             hasInlineStatus || hasValidationError ? "pr-10" : "pr-3",
             isDarkMode 
-              ? "bg-slate-800/60 border-slate-700 text-slate-100" 
-              : "bg-white/90 border-gray-300/60 text-slate-900",
+              ? "bg-slate-800/60 text-slate-100 placeholder:text-slate-400" 
+              : "bg-white/90 text-[#4B5563] placeholder:text-[#4B5563]",
+            !noBorder && (isDarkMode ? "border-slate-700" : "border-gray-300/60"),
             hasValidationError
               ? "border-red-500 ring-2 ring-red-200"
-              : isFocused 
+              : isFocused && !noBorder
                 ? isDarkMode
                   ? "border-blue-500 ring-2 ring-blue-500/20 shadow-lg"
                   : "border-blue-500 ring-2 ring-blue-200 shadow-md"
-                : isDarkMode
+                : !noBorder && (isDarkMode
                   ? "hover:border-blue-400/50"
-                  : "hover:border-blue-400/50 hover:shadow-sm",
+                  : "hover:border-blue-400/50 hover:shadow-sm"),
             disabled && (isDarkMode ? "bg-slate-900/40 cursor-not-allowed" : "bg-gray-50 cursor-not-allowed"),
             "focus:outline-none"
           )}
@@ -325,7 +391,7 @@ const FloatingInput: React.FC<FloatingInputProps> = ({
             icon ? "left-12" : "left-4",
             shouldFloat
               ? "top-0 -translate-y-1/2 text-xs px-2"
-              : "top-1/2 -translate-y-1/2 text-base",
+              : "top-1/2 -translate-y-1/2 text-xs",
             shouldFloat
               ? isDarkMode 
                 ? "bg-slate-900 text-blue-400" 
@@ -437,12 +503,12 @@ const FloatingSelect: React.FC<FloatingSelectProps> = ({
           onBlur={() => setIsFocused(false)}
           disabled={disabled}
           className={cn(
-            "w-full h-10 px-3 border rounded-xl transition-all duration-200 ease-in-out text-sm appearance-none",
+            "w-full h-10 px-3 border rounded-xl transition-all duration-200 ease-in-out text-xs appearance-none",
             icon ? "pl-10" : "pl-3",
             "pr-8",
             isDarkMode 
               ? "bg-slate-800/60 border-slate-700 text-slate-100" 
-              : "bg-white/90 border-gray-300/60 text-slate-900",
+              : "bg-white/90 border-gray-300/60 text-[#4B5563]",
             isFocused 
               ? isDarkMode
                 ? "border-blue-500 ring-2 ring-blue-500/20 shadow-lg"
@@ -472,7 +538,196 @@ const FloatingSelect: React.FC<FloatingSelectProps> = ({
             icon ? "left-12" : "left-4",
             shouldFloat
               ? "top-0 -translate-y-1/2 text-xs px-2"
-              : "top-1/2 -translate-y-1/2 text-base",
+              : "top-1/2 -translate-y-1/2 text-xs",
+            shouldFloat
+              ? isDarkMode 
+                ? "bg-slate-900 text-blue-400" 
+                : "bg-white text-blue-600"
+              : isDarkMode 
+                ? "text-slate-400" 
+                : "text-gray-500",
+            isFocused && !hasValue && (isDarkMode ? "text-blue-400" : "text-blue-600")
+          )}
+        >
+          {label}{required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      </div>
+    </div>
+  );
+};
+
+// Floating Select with Icons Component
+interface FloatingSelectWithIconsProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; icon: React.ComponentType<any> }>;
+  required?: boolean;
+  icon?: React.ReactNode;
+  disabled?: boolean;
+  className?: string;
+  isDarkMode?: boolean;
+}
+
+const FloatingSelectWithIcons: React.FC<FloatingSelectWithIconsProps> = ({
+  label,
+  value,
+  onChange,
+  options,
+  required = false,
+  icon,
+  disabled = false,
+  className = '',
+  isDarkMode = false
+}) => {
+  const [isFocused, setIsFocused] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const hasValue = value.length > 0;
+  const shouldFloat = isFocused || hasValue || isOpen;
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  const selectedOption = options.find(opt => opt.value === value);
+  const SelectedIcon = selectedOption?.icon;
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setIsFocused(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className={cn("relative", className)} ref={dropdownRef}>
+      <div className="relative">
+        {icon && (
+          <div className={cn(
+            "absolute left-3 top-1/2 transform -translate-y-1/2 z-10",
+            isDarkMode ? "text-slate-400" : "text-gray-400"
+          )}>
+            {icon}
+          </div>
+        )}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => !disabled && setIsOpen(!isOpen)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => {
+              // Don't close immediately to allow option click
+              setTimeout(() => {
+                if (!isOpen) {
+                  setIsFocused(false);
+                }
+              }, 150);
+            }}
+            disabled={disabled}
+            className={cn(
+              "w-full h-10 px-3 border rounded-xl transition-all duration-200 ease-in-out text-sm text-left",
+              icon ? "pl-10" : "pl-3",
+              "pr-10",
+              isDarkMode 
+                ? "bg-slate-800/60 border-slate-700 text-slate-100" 
+                : "bg-white/90 border-gray-300/60 text-slate-900",
+              isFocused || isOpen
+                ? isDarkMode
+                  ? "border-blue-500 ring-2 ring-blue-500/20 shadow-lg"
+                  : "border-blue-500 ring-2 ring-blue-200 shadow-md"
+                : isDarkMode
+                  ? "hover:border-blue-400/50"
+                  : "hover:border-blue-400/50 hover:shadow-sm",
+              disabled && (isDarkMode ? "bg-slate-900/40 cursor-not-allowed" : "bg-gray-50 cursor-not-allowed"),
+              "focus:outline-none"
+            )}
+          >
+            <div className="flex items-center gap-2">
+              {selectedOption && SelectedIcon && (
+                <SelectedIcon className={cn("h-4 w-4 flex-shrink-0", isDarkMode ? "text-blue-400" : "text-blue-600")} />
+              )}
+              <span className={cn("truncate text-xs", isDarkMode ? "text-slate-100" : "text-[#4B5563]")}>{selectedOption?.value || ''}</span>
+            </div>
+          </button>
+          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+            <ChevronDown className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              isOpen ? "transform rotate-180" : "",
+              isDarkMode ? "text-slate-400" : "text-gray-400"
+            )} />
+          </div>
+        </div>
+        
+        {isOpen && (
+          <div className={cn(
+            "absolute z-50 w-full mt-1 border rounded-xl shadow-lg overflow-hidden",
+            isDarkMode
+              ? "bg-slate-800 border-slate-700"
+              : "bg-white border-gray-200"
+          )}>
+            {/* Show exactly 7 items (7 * 40px = 280px) with scrolling for rest */}
+            <div className="max-h-[280px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-400/50 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400/70">
+              {options.map((option, index) => {
+                const OptionIcon = option.icon;
+                const isSelected = value === option.value;
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Prevent blur from firing before click
+                    }}
+                    onClick={() => {
+                      onChange(option.value);
+                      setIsOpen(false);
+                      setIsFocused(false);
+                    }}
+                    className={cn(
+                      "w-full px-3 py-2.5 text-left text-xs transition-colors flex items-center gap-2",
+                      isSelected
+                        ? isDarkMode
+                          ? "bg-blue-500/20 text-blue-300"
+                          : "bg-blue-50 text-blue-700"
+                        : isDarkMode
+                          ? "text-slate-200 hover:bg-slate-700"
+                          : "text-[#4B5563] hover:bg-slate-50"
+                    )}
+                  >
+                    <OptionIcon className={cn(
+                      "h-4 w-4 flex-shrink-0",
+                      isSelected
+                        ? isDarkMode ? "text-blue-300" : "text-blue-600"
+                        : isDarkMode ? "text-slate-400" : "text-slate-500"
+                    )} />
+                    <span className="truncate">{option.value}</span>
+                    {isSelected && (
+                      <Check className={cn(
+                        "h-4 w-4 ml-auto flex-shrink-0",
+                        isDarkMode ? "text-blue-300" : "text-blue-600"
+                      )} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+        
+        <label
+          className={cn(
+            "absolute transition-all duration-200 ease-in-out pointer-events-none select-none",
+            icon ? "left-12" : "left-4",
+            shouldFloat
+              ? "top-0 -translate-y-1/2 text-xs px-2"
+              : "top-1/2 -translate-y-1/2 text-xs",
             shouldFloat
               ? isDarkMode 
                 ? "bg-slate-900 text-blue-400" 
@@ -500,15 +755,15 @@ interface StepperProps {
 
 const Stepper: React.FC<StepperProps> = ({ currentStep, steps, completedSteps, isDarkMode = false }) => {
   return (
-    <div className="w-full py-4">
-      <div className="flex items-center justify-center">
-        <div className="flex items-center space-x-4">
+    <div className="w-full py-2 sm:py-3 md:py-4">
+      <div className="flex items-center justify-center overflow-x-hidden pb-2">
+        <div className="flex items-center justify-center space-x-0.5 sm:space-x-2 md:space-x-3 lg:space-x-4 w-full px-1 sm:px-2 mx-auto">
           {steps.map((step, index) => (
             <React.Fragment key={index}>
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center justify-center min-w-0 flex-1 sm:min-w-[60px] md:min-w-[80px]">
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
+                    "w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-semibold transition-all duration-300 flex-shrink-0",
                     completedSteps[index] 
                       ? "bg-green-500 text-white" 
                       : currentStep === index 
@@ -520,11 +775,19 @@ const Stepper: React.FC<StepperProps> = ({ currentStep, steps, completedSteps, i
                           : "bg-gray-300 text-gray-600"
                   )}
                 >
-                  {completedSteps[index] ? <Check className="w-3 h-3" /> : index + 1}
+                  {/* Mobile: Always show number, Desktop: Show checkmark if completed */}
+                  {completedSteps[index] ? (
+                    <>
+                      <span className="sm:hidden">{index + 1}</span>
+                      <Check className="hidden sm:block w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                    </>
+                  ) : (
+                    index + 1
+                  )}
                 </div>
                 <span
                   className={cn(
-                    "mt-1 text-xs font-medium text-center max-w-16",
+                    "hidden sm:block mt-0.5 sm:mt-1 text-[9px] sm:text-[10px] md:text-xs font-medium text-center leading-tight w-full px-0.5",
                     currentStep === index 
                       ? isDarkMode 
                         ? "text-blue-400 font-semibold" 
@@ -538,14 +801,15 @@ const Stepper: React.FC<StepperProps> = ({ currentStep, steps, completedSteps, i
                 </span>
               </div>
               {index < steps.length - 1 && (
-                <div
+                <ArrowRight 
+                  strokeWidth={3}
                   className={cn(
-                    "w-8 h-0.5 rounded-full transition-all duration-300",
+                    "w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 flex-shrink-0 transition-all duration-300 md:-translate-y-3",
                     completedSteps[index] 
-                      ? "bg-green-500" 
+                      ? "text-green-500" 
                       : isDarkMode 
-                        ? "bg-slate-700" 
-                        : "bg-gray-300"
+                        ? "text-slate-700" 
+                        : "text-gray-300"
                   )}
                 />
               )}
@@ -582,6 +846,7 @@ interface ShipmentDetails {
   riskCoverage: string;
   packagesCount: string;
   materials: string;
+  others: string;
   description: string;
   weight: string;
   length: string;
@@ -590,6 +855,7 @@ interface ShipmentDetails {
   insuranceCompanyName: string;
   insurancePolicyNumber: string;
   insurancePolicyDate: string;
+  insuranceValidUpto: string;
   insurancePremiumAmount: string;
   insuranceDocumentName: string;
   insuranceDocument: File | null;
@@ -599,6 +865,7 @@ interface InsuranceFormState {
   companyName: string;
   policyNumber: string;
   policyDate: string;
+  validUpto: string;
   premiumAmount: string;
   document: File | null;
   documentName: string;
@@ -608,17 +875,17 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ title, icon, isDarkMode, 
   return (
     <div
       className={cn(
-        'rounded-2xl border p-5 transition-all duration-300',
+        'rounded-xl sm:rounded-2xl border p-4 sm:p-5 transition-all duration-300',
         isDarkMode
           ? 'border-slate-800/70 bg-slate-900/70 shadow-[0_18px_40px_rgba(15,23,42,0.35)]'
           : 'border-slate-200/70 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.12)]'
       )}
     >
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-3 sm:mb-4">
         {icon && (
           <div
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-xl',
+              'flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-xl flex-shrink-0',
               isDarkMode ? 'bg-blue-500/15 text-blue-300' : 'bg-blue-100 text-blue-600'
             )}
           >
@@ -627,14 +894,14 @@ const ReviewSection: React.FC<ReviewSectionProps> = ({ title, icon, isDarkMode, 
         )}
         <h4
           className={cn(
-            'text-sm font-semibold uppercase tracking-wide',
+            'text-xs sm:text-sm font-semibold uppercase tracking-wide',
             isDarkMode ? 'text-slate-200' : 'text-slate-800'
           )}
         >
           {title}
         </h4>
       </div>
-      <div className="grid gap-4">{children}</div>
+      <div className="grid gap-3 sm:gap-4">{children}</div>
     </div>
   );
 };
@@ -684,7 +951,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   // Step management
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<boolean[]>([false, false, false, false, false, false]);
-  const steps = ['Serviceability', 'Address Details', 'Shipment Details', 'Package & Images', 'Shipping Mode & Pricing', 'Preview'];
+  const steps = ['Serviceability', 'Address ', 'Shipment Details', 'Material Details', 'Shipping & Pricing', 'Preview'];
 
   // Serviceability states
   const [originPincode, setOriginPincode] = useState('');
@@ -756,6 +1023,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     riskCoverage: 'Owner',
     packagesCount: '',
     materials: '',
+    others: '',
     description: '',
     weight: '',
     length: '',
@@ -764,6 +1032,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     insuranceCompanyName: '',
     insurancePolicyNumber: '',
     insurancePolicyDate: '',
+    insuranceValidUpto: '',
     insurancePremiumAmount: '',
     insuranceDocumentName: '',
     insuranceDocument: null
@@ -773,22 +1042,59 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     companyName: '',
     policyNumber: '',
     policyDate: '',
+    validUpto: '',
     premiumAmount: '',
     document: null,
     documentName: ''
   });
   const [insuranceFormError, setInsuranceFormError] = useState<string>('');
+  const [isPremiumAmountFocused, setIsPremiumAmountFocused] = useState(false);
+  const [documentPreviewOpen, setDocumentPreviewOpen] = useState(false);
+  const [documentPreviewUrl, setDocumentPreviewUrl] = useState<string | null>(null);
+  
+  // Checkout states
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'upi' | 'netbanking' | 'cod'>('card');
+  const [paymentDetails, setPaymentDetails] = useState({
+    cardNumber: '',
+    cardName: '',
+    expiryDate: '',
+    cvv: '',
+    upiId: '',
+    netBankingBank: '',
+    walletProvider: ''
+  });
+
+  // Cleanup object URL when component unmounts or preview closes
+  useEffect(() => {
+    return () => {
+      if (documentPreviewUrl) {
+        URL.revokeObjectURL(documentPreviewUrl);
+      }
+    };
+  }, [documentPreviewUrl]);
+
+  // Cleanup when preview dialog closes
+  const handleClosePreview = () => {
+    if (documentPreviewUrl) {
+      URL.revokeObjectURL(documentPreviewUrl);
+      setDocumentPreviewUrl(null);
+    }
+    setDocumentPreviewOpen(false);
+  };
 
   const openInsuranceModal = () => {
     setInsuranceForm({
       companyName: shipmentDetails.insuranceCompanyName,
       policyNumber: shipmentDetails.insurancePolicyNumber,
       policyDate: shipmentDetails.insurancePolicyDate,
+      validUpto: shipmentDetails.insuranceValidUpto,
       premiumAmount: shipmentDetails.insurancePremiumAmount,
       document: shipmentDetails.insuranceDocument,
       documentName: shipmentDetails.insuranceDocumentName
     });
     setInsuranceFormError('');
+    setIsPremiumAmountFocused(false);
     setInsuranceModalOpen(true);
   };
 
@@ -797,9 +1103,10 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       setShipmentDetails((prev) => ({
         ...prev,
         insurance: value,
-        riskCoverage: 'Owner',
+        riskCoverage: 'Carrier',
         packagesCount: '',
         materials: '',
+        others: '',
         description: '',
         weight: '',
         length: '',
@@ -816,6 +1123,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       companyName: '',
       policyNumber: '',
       policyDate: '',
+      validUpto: '',
       premiumAmount: '',
       document: null,
       documentName: ''
@@ -826,6 +1134,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       riskCoverage: 'Owner',
       packagesCount: '',
       materials: '',
+      others: '',
       description: '',
       weight: '',
       length: '',
@@ -834,6 +1143,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       insuranceCompanyName: '',
       insurancePolicyNumber: '',
       insurancePolicyDate: '',
+      insuranceValidUpto: '',
       insurancePremiumAmount: '',
       insuranceDocumentName: '',
       insuranceDocument: null
@@ -845,6 +1155,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       !insuranceForm.companyName.trim() ||
       !insuranceForm.policyNumber.trim() ||
       !insuranceForm.policyDate.trim() ||
+      !insuranceForm.validUpto.trim() ||
       !insuranceForm.document
     ) {
       setInsuranceFormError('Please complete all required fields before saving.');
@@ -857,6 +1168,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       insuranceCompanyName: insuranceForm.companyName.trim(),
       insurancePolicyNumber: insuranceForm.policyNumber.trim(),
       insurancePolicyDate: insuranceForm.policyDate,
+      insuranceValidUpto: insuranceForm.validUpto,
       insurancePremiumAmount: insuranceForm.premiumAmount.trim(),
       insuranceDocument: insuranceForm.document,
       insuranceDocumentName: insuranceForm.documentName
@@ -866,6 +1178,13 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   };
 
   const handleInsuranceFormCancel = () => {
+    // Cleanup preview URL if open
+    if (documentPreviewUrl) {
+      URL.revokeObjectURL(documentPreviewUrl);
+      setDocumentPreviewUrl(null);
+    }
+    setDocumentPreviewOpen(false);
+
     const hasSavedInsurance =
       Boolean(shipmentDetails.insuranceCompanyName) ||
       Boolean(shipmentDetails.insurancePolicyNumber) ||
@@ -877,6 +1196,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         companyName: '',
         policyNumber: '',
         policyDate: '',
+        validUpto: '',
         premiumAmount: '',
         document: null,
         documentName: ''
@@ -887,6 +1207,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         riskCoverage: 'Owner',
         packagesCount: '',
         materials: '',
+        others: '',
         description: '',
         weight: '',
         length: '',
@@ -951,8 +1272,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   const [availableModes, setAvailableModes] = useState<{ byAir: boolean; byTrain: boolean; byRoad: boolean } | null>(null);
   const [availableServiceTypes, setAvailableServiceTypes] = useState<{ standard: boolean; priority: boolean } | null>(null);
   const [customerPricing, setCustomerPricing] = useState<any>(null);
-  const [standardPrice, setStandardPrice] = useState<number | null>(null);
-  const [priorityPrice, setPriorityPrice] = useState<number | null>(null);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [loadingPricing, setLoadingPricing] = useState(false);
 
   // Inline editing states for Preview step
@@ -1392,17 +1712,17 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
 
   const isPackageStepComplete = isPackageInfoComplete;
 
-  const addressTypeOptions = ['Home', 'Office', 'Other'];
+  const addressTypeOptions = ['HOME', 'OFFICE', 'OTHERS'];
   const natureOptions = [
     {
       value: 'DOX',
-      title: 'Documents (DOX)',
+      title: 'Documents',
       description: 'Important papers, legal documents and lightweight document shipments.',
       icon: FileText
     },
     {
       value: 'NON-DOX',
-      title: 'Non-Documents (NON-DOX)',
+      title: 'Parcel ',
       description: 'Merchandise, parcels, samples and any non-document consignments.',
       icon: Package
     }
@@ -1411,14 +1731,13 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   const insuranceOptions = [
     {
       value: 'Without insurance',
-      title: 'Without insurance',
-      description: 'We can arrange coverage through our carrier partners.',
+      title: 'Without Insurance',
       icon: Shield
     },
     {
       value: 'With insurance',
-      title: 'With insurance',
-      description: 'Shipment is already covered by the consignor.',
+      title: 'With Insurance',
+      description: 'Shipment Insurance is covered by the Consignor/Consignee.',
       icon: ShieldCheck
     }
   ];
@@ -1427,7 +1746,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     {
       value: 'Owner',
       title: 'Owner Risk',
-      description: 'Consignor assumes any transit risk for the shipment.',
+      description: 'Consignor/Consignee agrees to bear any transit Damage, Lost etc.',
       icon: Shield
     },
     {
@@ -1442,7 +1761,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     const isOrigin = type === 'origin';
     const data = isOrigin ? originData : destinationData;
     const isFormComplete = isOrigin ? isOriginFormComplete : isDestinationFormComplete;
-    const cardTitle = isOrigin ? 'SELECT PICKUP ADDRESS' : 'SELECT DELIVERY ADDRESS';
+    const cardTitle = isOrigin ? 'Select Sender Address' : 'Select Recipient Address';
     
     // In step 5 (Review & Submit), show both origin and destination cards
     if (currentStep === 5) {
@@ -1847,64 +2166,45 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     }
   }, [currentStep, destinationPincode]);
 
-  // Calculate prices for both standard and priority when mode or weight changes
+  // Calculate prices when service type, mode, or weight changes
   useEffect(() => {
-    if (selectedMode && customerPricing && chargeableWeight > 0) {
-      calculatePrices();
+    if (selectedServiceType && customerPricing && chargeableWeight > 0) {
+      if (selectedServiceType === 'priority') {
+        calculatePrices();
+      } else if (selectedServiceType === 'standard' && selectedMode) {
+        calculatePrices();
+      } else {
+        setCalculatedPrice(null);
+      }
     } else {
-      setStandardPrice(null);
-      setPriorityPrice(null);
+      setCalculatedPrice(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedMode, customerPricing, chargeableWeight, shipmentDetails.natureOfConsignment, destinationPincode]);
+  }, [selectedServiceType, selectedMode, customerPricing, chargeableWeight, shipmentDetails.natureOfConsignment, destinationPincode]);
 
-  // Helper function to classify location
-  const classifyLocation = (pincode: string, isAirRoute: boolean = false): string => {
+  // Helper function to determine route (Assam to NE or Assam to ROI)
+  const determineRoute = (pincode: string): 'assamToNe' | 'assamToRoi' => {
     const pin = parseInt(pincode);
     
-    // Assam pincodes
-    if ((pin >= 781000 && pin <= 781999) || 
-        (pin >= 782000 && pin <= 782999) || 
-        (pin >= 783000 && pin <= 783999) || 
-        (pin >= 784000 && pin <= 784999) || 
-        (pin >= 785000 && pin <= 785999) || 
-        (pin >= 786000 && pin <= 786999) || 
-        (pin >= 787000 && pin <= 787999) || 
-        (pin >= 788000 && pin <= 788999)) {
-      return 'assam';
-    }
-    
-    // Kolkata pincodes (700xxx)
-    if (pin >= 700000 && pin <= 700999) {
-      return 'kol';
-    }
-    
-    // Tripura (799xxx) and Manipur (795xxx) - AGT IMP only for air routes
-    if (isAirRoute && ((pin >= 799000 && pin <= 799999) || (pin >= 795000 && pin <= 795999))) {
-      return 'neByAirAgtImp';
-    }
-    
-    // Tripura (799xxx) and Manipur (795xxx) - Surface route
-    if (!isAirRoute && ((pin >= 799000 && pin <= 799999) || (pin >= 795000 && pin <= 795999))) {
-      return 'neBySurface';
-    }
-    
-    // Other NE states
-    if ((pin >= 790000 && pin <= 791999) || 
-        (pin >= 793000 && pin <= 793999) || 
-        (pin >= 796000 && pin <= 796999) || 
-        (pin >= 797000 && pin <= 797999) || 
-        (pin >= 737000 && pin <= 737999)) {
-      return 'neBySurface';
+    // North East pincodes (Assam + other NE states)
+    if ((pin >= 781000 && pin <= 788999) || // Assam
+        (pin >= 790000 && pin <= 791999) || // Arunachal Pradesh
+        (pin >= 793000 && pin <= 793999) || // Meghalaya
+        (pin >= 795000 && pin <= 795999) || // Manipur
+        (pin >= 796000 && pin <= 796999) || // Mizoram
+        (pin >= 797000 && pin <= 797999) || // Nagaland
+        (pin >= 737000 && pin <= 737999) || // Sikkim
+        (pin >= 799000 && pin <= 799999)) { // Tripura
+      return 'assamToNe';
     }
     
     // Rest of India
-    return 'restOfIndia';
+    return 'assamToRoi';
   };
 
-  // Calculate prices for both standard and priority
+  // Calculate prices based on service type
   const calculatePrices = () => {
-    if (!selectedMode || !customerPricing || chargeableWeight <= 0) {
+    if (!selectedServiceType || !customerPricing || chargeableWeight <= 0) {
       return;
     }
 
@@ -1913,46 +2213,112 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       return;
     }
 
-    const isAirRoute = selectedMode === 'byAir';
-    const location = classifyLocation(destinationPincode, isAirRoute);
     const isDox = shipmentDetails.natureOfConsignment === 'DOX';
-    let standardPriceCalc = 0;
-    let priorityPriceCalc = 0;
+    const route = determineRoute(destinationPincode);
+    const routeKey: 'assamToNe' | 'assamToRoi' = route;
+    let price = 0;
 
-    if (isDox) {
-      // DOX pricing logic
-      // Standard Service pricing
-      if (weight <= 250) {
-        standardPriceCalc = parseFloat(customerPricing.doxPricing?.['01gm-250gm']?.[location] || 0);
-      } else if (weight <= 500) {
-        standardPriceCalc = parseFloat(customerPricing.doxPricing?.['251gm-500gm']?.[location] || 0);
-      } else {
-        const basePrice = parseFloat(customerPricing.doxPricing?.['251gm-500gm']?.[location] || 0);
-        const additionalWeight = Math.ceil((weight - 500) / 500);
-        const additionalPrice = parseFloat(customerPricing.doxPricing?.add500gm?.[location] || 0);
-        standardPriceCalc = basePrice + (additionalWeight * additionalPrice);
+    if (selectedServiceType === 'priority') {
+      // Priority Service (Unified - no modes, no DOX/NON DOX)
+      // Convert weight to grams for calculation
+      const weightInGrams = isDox ? weight * 1000 : weight * 1000; // Both in grams for priority
+      
+      if (weightInGrams > 100000) { // > 100kg
+        setCalculatedPrice(null);
+        return;
       }
       
-      // Priority Service pricing
-      if (weight <= 500) {
-        priorityPriceCalc = parseFloat(customerPricing.priorityPricing?.['01gm-500gm']?.[location] || 0);
-      } else {
-        const basePrice = parseFloat(customerPricing.priorityPricing?.['01gm-500gm']?.[location] || 0);
-        const additionalWeight = Math.ceil((weight - 500) / 500);
-        const additionalPrice = parseFloat(customerPricing.priorityPricing?.add500gm?.[location] || 0);
-        priorityPriceCalc = basePrice + (additionalWeight * additionalPrice);
-      }
+      // Priority uses single base500gm rate per 500gm (same for both routes)
+      const pricePer500gm = parseFloat(customerPricing.priorityPricing?.base500gm || 0);
+      const units = Math.ceil(weightInGrams / 500);
+      price = pricePer500gm * units;
     } else {
-      // NON-DOX pricing logic (per kg)
-      const pricePerKg = isAirRoute 
-        ? parseFloat(customerPricing.nonDoxAirPricing?.[location] || 0)
-        : parseFloat(customerPricing.nonDoxSurfacePricing?.[location] || 0);
-      standardPriceCalc = pricePerKg * weight;
-      priorityPriceCalc = pricePerKg * weight; // For NON-DOX, priority uses same pricing
+      // Standard Service - requires mode selection
+      if (!selectedMode) {
+        setCalculatedPrice(null);
+        return;
+      }
+
+      const mode = selectedMode === 'byAir' ? 'air' : selectedMode === 'byTrain' ? 'train' : 'road';
+      const weightInGrams = isDox ? weight * 1000 : weight * 1000; // Convert to grams
+      const weightInKg = weight;
+
+      if (isDox) {
+        // Standard DOX pricing
+        if (mode === 'train') {
+          // Train uses per-kg rate only with 25kg minimum
+          const minWeightKg = 25;
+          const chargeableWeightKg = Math.max(weightInKg, minWeightKg);
+          const pricePerKg = parseFloat(customerPricing.standardDox?.train?.[routeKey] || 0);
+          price = pricePerKg * chargeableWeightKg;
+        } else if (mode === 'road') {
+          // Road uses weight slabs with 3kg (3000g) minimum
+          const minWeightGrams = 3000;
+          const chargeableWeightGrams = Math.max(weightInGrams, minWeightGrams);
+          const doxMode = customerPricing.standardDox?.[mode];
+          if (chargeableWeightGrams <= 250) {
+            price = parseFloat(doxMode?.['01gm-250gm']?.[routeKey] || 0);
+          } else if (chargeableWeightGrams <= 500) {
+            price = parseFloat(doxMode?.['251gm-500gm']?.[routeKey] || 0);
+          } else {
+            const basePrice = parseFloat(doxMode?.['251gm-500gm']?.[routeKey] || 0);
+            const additionalWeight = Math.ceil((chargeableWeightGrams - 500) / 500);
+            const additionalPrice = parseFloat(doxMode?.add500gm?.[routeKey] || 0);
+            price = basePrice + (additionalWeight * additionalPrice);
+          }
+        } else {
+          // Air uses weight slabs (no minimum)
+          const doxMode = customerPricing.standardDox?.[mode];
+          if (weightInGrams <= 250) {
+            price = parseFloat(doxMode?.['01gm-250gm']?.[routeKey] || 0);
+          } else if (weightInGrams <= 500) {
+            price = parseFloat(doxMode?.['251gm-500gm']?.[routeKey] || 0);
+          } else {
+            const basePrice = parseFloat(doxMode?.['251gm-500gm']?.[routeKey] || 0);
+            const additionalWeight = Math.ceil((weightInGrams - 500) / 500);
+            const additionalPrice = parseFloat(doxMode?.add500gm?.[routeKey] || 0);
+            price = basePrice + (additionalWeight * additionalPrice);
+          }
+        }
+      } else {
+        // Standard NON DOX pricing
+        if (mode === 'train') {
+          // Train uses per-kg rate only with 25kg minimum
+          const minWeight = 25;
+          const chargeableWeightKg = Math.max(weightInKg, minWeight);
+          const pricePerKg = parseFloat(customerPricing.standardNonDox?.train?.[routeKey] || 0);
+          price = pricePerKg * chargeableWeightKg;
+        } else if (mode === 'road') {
+          // Road uses weight slabs with 3kg minimum
+          const minWeight = 3;
+          const chargeableWeightKg = Math.max(weightInKg, minWeight);
+          const nonDoxMode = customerPricing.standardNonDox?.[mode];
+          let pricePerKg = 0;
+          
+          if (chargeableWeightKg >= 1 && chargeableWeightKg <= 5) {
+            pricePerKg = parseFloat(nonDoxMode?.['1kg-5kg']?.[routeKey] || 0);
+          } else if (chargeableWeightKg > 5 && chargeableWeightKg <= 100) {
+            pricePerKg = parseFloat(nonDoxMode?.['5kg-100kg']?.[routeKey] || 0);
+          }
+          
+          price = pricePerKg * chargeableWeightKg;
+        } else {
+          // Air uses weight slabs (no minimum)
+          const nonDoxMode = customerPricing.standardNonDox?.[mode];
+          let pricePerKg = 0;
+          
+          if (weightInKg >= 1 && weightInKg <= 5) {
+            pricePerKg = parseFloat(nonDoxMode?.['1kg-5kg']?.[routeKey] || 0);
+          } else if (weightInKg > 5 && weightInKg <= 100) {
+            pricePerKg = parseFloat(nonDoxMode?.['5kg-100kg']?.[routeKey] || 0);
+          }
+          
+          price = pricePerKg * weightInKg;
+        }
+      }
     }
 
-    setStandardPrice(standardPriceCalc);
-    setPriorityPrice(priorityPriceCalc);
+    setCalculatedPrice(price);
   };
 
 
@@ -2001,17 +2367,18 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         setCurrentStep(4);
       }
     } else if (currentStep === 4) {
-      if (selectedMode && selectedServiceType) {
+      if (selectedServiceType && (selectedServiceType === 'priority' || (selectedServiceType === 'standard' && selectedMode))) {
         const newCompleted = [...completedSteps];
         newCompleted[4] = true;
         setCompletedSteps(newCompleted);
         setCurrentStep(5);
       }
     } else if (currentStep === 5) {
-      // Submit the booking
+      // Open checkout page
       const newCompleted = [...completedSteps];
       newCompleted[5] = true;
       setCompletedSteps(newCompleted);
+      setCheckoutOpen(true);
       console.log('User dashboard booking draft:', {
         originData,
         destinationData,
@@ -2019,9 +2386,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         uploadedImages: uploadedImages.length,
         selectedMode,
         selectedServiceType,
-        price: selectedServiceType === 'priority' ? priorityPrice : standardPrice,
+        price: calculatedPrice,
       });
-      // Here you can add API call to submit the booking
     }
   };
 
@@ -2033,7 +2399,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       <Stepper 
         currentStep={currentStep} 
         steps={steps} 
@@ -2046,28 +2412,23 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          className="space-y-4 sm:space-y-6"
         >
           <div>
             <h3 className={cn(
-              "text-xl font-semibold mb-2",
+              "text-lg sm:text-xl font-semibold mb-2",
               isDarkMode ? "text-slate-100" : "text-slate-900"
             )}>
-              Check Serviceability
+              Check Serviceability : 
             </h3>
-            <p className={cn(
-              "text-sm mb-6",
-              isDarkMode ? "text-slate-400" : "text-slate-600"
-            )}>
-              Enter origin and destination pincodes to check if we service these areas.
-            </p>
+            
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Origin Pincode */}
             <div className="space-y-2">
               <FloatingInput
-                label="Origin Pincode"
+                label="Sender's Pin No."
                 value={originPincode}
                 onChange={handleOriginPincodeChange}
                 type="text"
@@ -2081,7 +2442,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                 isDarkMode={isDarkMode}
               />
               {checkingOrigin && (
-                <div className="flex items-center gap-2 text-sm text-blue-600">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-600">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Checking serviceability...</span>
                 </div>
@@ -2091,7 +2452,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
             {/* Destination Pincode */}
             <div className="space-y-2">
               <FloatingInput
-                label="Destination Pincode"
+                label="Recipient's Pin No."
                 value={destinationPincode}
                 onChange={handleDestinationPincodeChange}
                 type="text"
@@ -2105,7 +2466,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                 isDarkMode={isDarkMode}
               />
               {checkingDestination && (
-                <div className="flex items-center gap-2 text-sm text-blue-600">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-600">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Checking serviceability...</span>
                 </div>
@@ -2114,12 +2475,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
           </div>
 
           {/* Next Button */}
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-2 sm:pt-4">
             <Button
               onClick={handleNextStep}
               disabled={originServiceable !== true || destinationServiceable !== true}
               className={cn(
-                "px-6",
+                "w-full sm:w-auto px-6",
                 isDarkMode
                   ? "bg-blue-500 hover:bg-blue-600 text-white"
                   : "bg-blue-500 hover:bg-blue-600 text-white"
@@ -2132,33 +2493,81 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         </motion.div>
       )}
 
-      {/* Step 1: Address Details - Show only destination preview at the end */}
-      {currentStep === 1 && isDestinationFormComplete && (
+      {/* Step 1: Address Details */}
+      {currentStep === 1 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
+          className="space-y-4 sm:space-y-6"
         >
-          {/* Only show destination preview card */}
-          {renderAddressCard('destination')}
-          
-          {/* Auto-advancing message */}
-          <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Preparing shipment details...</span>
+          <div>
+            <h3 className={cn(
+              "text-lg sm:text-xl font-semibold mb-2",
+              isDarkMode ? "text-slate-100" : "text-slate-900"
+            )}>
+              Address Details
+            </h3>
+            <p className={cn(
+              "text-xs sm:text-sm mb-4 sm:mb-6",
+              isDarkMode ? "text-slate-400" : "text-slate-600"
+            )}>
+              Please fill in the origin and destination address details. Click on the address cards below to get started.
+            </p>
           </div>
+
+          {/* Show destination preview card when both forms are complete */}
+          {isDestinationFormComplete && (
+            <>
+              {renderAddressCard('destination')}
+              
+              {/* Auto-advancing message */}
+              <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-blue-600">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Preparing shipment details...</span>
+              </div>
+            </>
+          )}
+
+          {/* Show placeholder when forms are not complete */}
+          {!isDestinationFormComplete && (
+            <div className={cn(
+              "rounded-2xl border p-6 sm:p-8 text-center",
+              isDarkMode
+                ? "border-slate-800/60 bg-slate-900/40"
+                : "border-slate-200/70 bg-slate-50/50"
+            )}>
+              <MapPin className={cn(
+                "w-12 h-12 mx-auto mb-4",
+                isDarkMode ? "text-slate-400" : "text-slate-400"
+              )} />
+              <p className={cn(
+                "text-sm font-medium mb-2",
+                isDarkMode ? "text-slate-200" : "text-slate-700"
+              )}>
+                {!isOriginFormComplete 
+                  ? "Please fill in the origin address details first"
+                  : "Please fill in the destination address details"}
+              </p>
+              <p className={cn(
+                "text-xs",
+                isDarkMode ? "text-slate-400" : "text-slate-500"
+              )}>
+                The address forms will open automatically. If they don't, check the modals.
+              </p>
+            </div>
+          )}
           
           <div className="flex justify-start pt-2">
             <Button
               onClick={handlePreviousStep}
-              variant="outline"
               className={cn(
-                'sm:w-auto',
+                'w-full sm:w-auto px-6',
                 isDarkMode
-                  ? 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700 hover:border-slate-600'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
               )}
             >
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
           </div>
@@ -2170,45 +2579,28 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="space-y-4 sm:space-y-6 md:space-y-8"
         >
           <div className="space-y-2">
             <h3
               className={cn(
-                'text-xl font-semibold',
+                'text-lg sm:text-xl font-semibold',
                 isDarkMode ? 'text-slate-100' : 'text-slate-900'
               )}
             >
             </h3>
             <p
               className={cn(
-                'text-sm',
+                'text-xs sm:text-sm',
                 isDarkMode ? 'text-slate-400' : 'text-slate-600'
               )}
             >
             </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4">
             {/* Nature of Consignment */}
-            <div
-              className={cn(
-                'rounded-3xl border p-6 transition-all duration-300',
-                isDarkMode
-                  ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
-                  : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
-              )}
-            >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className={cn('text-base font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                    Nature of Consignment
-                  </h4>
-                  <span className={cn('text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                    Select one option to continue
-                  </span>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
                   {natureOptions.map((option) => {
                     const isSelected = shipmentDetails.natureOfConsignment === option.value;
                     const IconComponent = option.icon;
@@ -2223,6 +2615,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                             riskCoverage: 'Owner',
                             packagesCount: '',
                             materials: '',
+                            others: '',
                             description: '',
                             weight: '',
                             length: '',
@@ -2231,26 +2624,27 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                             insuranceCompanyName: '',
                             insurancePolicyNumber: '',
                             insurancePolicyDate: '',
+                            insuranceValidUpto: '',
                             insurancePremiumAmount: '',
                             insuranceDocumentName: '',
                             insuranceDocument: null
                           })
                         }
                         className={cn(
-                          'w-full text-left rounded-2xl border px-4 py-4 transition-all duration-200 focus:outline-none',
+                      'w-full text-left rounded-xl border px-3 py-3 transition-all duration-200 focus:outline-none',
                           isSelected
                             ? isDarkMode
-                              ? 'border-blue-500 bg-blue-500/20 shadow-[0_10px_30px_rgba(59,130,246,0.3)]'
-                              : 'border-blue-500 bg-blue-50/80 shadow-[0_10px_30px_rgba(59,130,246,0.18)]'
+                          ? 'border-blue-500 bg-blue-500/20 shadow-[0_8px_24px_rgba(59,130,246,0.25)]'
+                          : 'border-blue-500 bg-blue-50/80 shadow-[0_8px_24px_rgba(59,130,246,0.15)]'
                             : isDarkMode
                               ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
                               : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
                         )}
                       >
-                        <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2">
                           <div
                             className={cn(
-                              'mt-1 flex h-5 w-5 items-center justify-center rounded-full border text-xs transition-colors',
+                          'mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border text-xs transition-colors',
                               isSelected
                                 ? 'border-blue-500 bg-blue-500 text-white'
                                 : isDarkMode
@@ -2258,12 +2652,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                   : 'border-slate-300 text-transparent'
                             )}
                           >
-                            <Check className="h-3 w-3" />
+                        <Check className="h-2.5 w-2.5" />
                           </div>
-                          <div className="space-y-1">
+                      <div className="space-y-0.5">
                             <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                              <span className="inline-flex items-center gap-2">
-                                {IconComponent && <IconComponent className={cn('h-4 w-4', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />}
+                          <span className="inline-flex items-center gap-1.5">
+                            {IconComponent && <IconComponent className={cn('h-3.5 w-3.5', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />}
                                 {option.title}
                               </span>
                             </p>
@@ -2275,30 +2669,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       </button>
                     );
                   })}
-                </div>
-              </div>
             </div>
 
             {/* Insurance */}
             {shipmentDetails.natureOfConsignment && (
-              <div
-                className={cn(
-                  'rounded-3xl border p-6 transition-all duration-300',
-                  isDarkMode
-                    ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
-                    : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
-                )}
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className={cn('text-base font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                      Insurance
-                    </h4>
-                    <span className={cn('text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                      Choose how the shipment is insured
-                    </span>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
+              <>
+                <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
                     {insuranceOptions.map((option) => {
                       const isSelected = shipmentDetails.insurance === option.value;
                       const IconComponent = option.icon;
@@ -2308,20 +2684,20 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           key={option.value}
                           onClick={() => handleInsuranceSelection(option.value)}
                           className={cn(
-                            'w-full text-left rounded-2xl border px-4 py-4 transition-all duration-200 focus:outline-none',
+                          'w-full text-left rounded-xl border px-3 py-3 transition-all duration-200 focus:outline-none',
                             isSelected
                               ? isDarkMode
-                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_10px_30px_rgba(59,130,246,0.3)]'
-                                : 'border-blue-500 bg-blue-50/80 shadow-[0_10px_30px_rgba(59,130,246,0.18)]'
+                              ? 'border-blue-500 bg-blue-500/20 shadow-[0_8px_24px_rgba(59,130,246,0.25)]'
+                              : 'border-blue-500 bg-blue-50/80 shadow-[0_8px_24px_rgba(59,130,246,0.15)]'
                               : isDarkMode
                                 ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
                                 : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
                           )}
                         >
-                          <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-2">
                             <div
                               className={cn(
-                                'mt-1 flex h-5 w-5 items-center justify-center rounded-full border text-xs transition-colors',
+                              'mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border text-xs transition-colors',
                                 isSelected
                                   ? 'border-blue-500 bg-blue-500 text-white'
                                   : isDarkMode
@@ -2329,12 +2705,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                     : 'border-slate-300 text-transparent'
                               )}
                             >
-                              <Check className="h-3 w-3" />
+                            <Check className="h-2.5 w-2.5" />
                             </div>
-                            <div className="space-y-1">
+                          <div className="space-y-0.5">
                               <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                                <span className="inline-flex items-center gap-2">
-                                  {IconComponent && <IconComponent className={cn('h-4 w-4', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />}
+                              <span className="inline-flex items-center gap-1.5">
+                                {IconComponent && <IconComponent className={cn('h-3.5 w-3.5', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />}
                                   {option.title}
                                 </span>
                               </p>
@@ -2346,43 +2722,36 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                         </button>
                       );
                     })}
-                  </div>
                 </div>
               {shipmentDetails.insurance === 'With insurance' && (
                 <div
                   className={cn(
-                    'mt-4 rounded-2xl border p-5 transition-all duration-300',
+                    'mt-3 rounded-xl border p-4 transition-all duration-300',
                     isDarkMode
-                      ? 'border-slate-800/60 bg-slate-900/60'
-                      : 'border-slate-200/70 bg-white/80'
+                      ? 'border-blue-500 bg-slate-900/60 shadow-[0_8px_24px_rgba(59,130,246,0.25)]'
+                      : 'border-blue-500 bg-white/80 shadow-[0_8px_24px_rgba(59,130,246,0.15)]'
                   )}
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3 mb-0.5">
                     <div>
-                      <h5 className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                        Insurance Details
+                      <h5 style={{textDecoration:'underline'}}>
+                      Preview
                       </h5>
-                      <p className={cn('text-xs mt-1', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                        {hasInsuranceDetails
-                          ? 'Review your provided insurance information.'
-                          : 'Complete the insurance details to proceed.'}
-                      </p>
                     </div>
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
-                      size="sm"
                       onClick={openInsuranceModal}
                       className={cn(
+                        'p-2 rounded-md transition-colors ml-auto',
                         isDarkMode
-                          ? 'border-slate-700 text-slate-200 hover:bg-slate-800'
-                          : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                          ? 'text-slate-300 hover:bg-slate-800 hover:text-slate-100'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                       )}
                     >
-                      {hasInsuranceDetails ? 'Edit Details' : 'Add Details'}
-                    </Button>
+                      <Pencil className="w-4 h-4" />
+                    </button>
                   </div>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  <div className="grid gap-2 md:grid-cols-3">
                     <div>
                       <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Company Name</span>
                       <p className={cn('text-sm font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
@@ -2402,6 +2771,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       </p>
                     </div>
                     <div>
+                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Policy Date Valid Upto</span>
+                      <p className={cn('text-sm font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                        {shipmentDetails.insuranceValidUpto || 'Pending'}
+                      </p>
+                    </div>
+                    <div>
                       <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Premium Amount</span>
                       <p className={cn('text-sm font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
                         {shipmentDetails.insurancePremiumAmount
@@ -2409,51 +2784,60 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           : 'Not provided'}
                       </p>
                     </div>
-                    <div className="md:col-span-2">
+                    <div>
                       <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Document</span>
+                      <div className="flex items-center gap-1.5">
+                        {shipmentDetails.insuranceDocument && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (shipmentDetails.insuranceDocument) {
+                                const url = URL.createObjectURL(shipmentDetails.insuranceDocument);
+                                setDocumentPreviewUrl(url);
+                                setDocumentPreviewOpen(true);
+                              }
+                            }}
+                            className={cn(
+                              'p-1 rounded transition-colors flex-shrink-0',
+                              isDarkMode
+                                ? 'text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
+                                : 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'
+                            )}
+                            title="Preview document"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        )}
                       <p className={cn('text-sm font-medium break-words', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
                         {shipmentDetails.insuranceDocumentName || 'Pending'}
                       </p>
                     </div>
                   </div>
                 </div>
-              )}
               </div>
+              )}
+              </>
             )}
 
             {/* Risk Coverage */}
             {shipmentDetails.natureOfConsignment && shipmentDetails.insurance && (
-              <div
-                className={cn(
-                  'rounded-3xl border p-6 transition-all duration-300',
-                  isDarkMode
-                    ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
-                    : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
-                )}
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className={cn('text-base font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                      Risk Coverage
-                    </h4>
-                    <span className={cn('text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                      Decide who covers transit risks
-                    </span>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
                     {riskCoverageOptions.map((option) => {
                       const isSelected = shipmentDetails.riskCoverage === option.value;
                       const IconComponent = option.icon;
+                      const isDisabled = true; // Always disabled - risk coverage is auto-selected based on insurance
                       return (
                         <button
                           type="button"
                           key={option.value}
+                          disabled={isDisabled}
                           onClick={() =>
                             setShipmentDetails((prev) => ({
                               ...prev,
                               riskCoverage: option.value,
                               packagesCount: '',
                               materials: '',
+                              others: '',
                               description: '',
                               weight: '',
                               length: '',
@@ -2462,20 +2846,23 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                             }))
                           }
                           className={cn(
-                            'w-full text-left rounded-2xl border px-4 py-4 transition-all duration-200 focus:outline-none',
+                        'w-full text-left rounded-xl border px-3 py-3 transition-all duration-200 focus:outline-none',
+                            isDisabled
+                              ? 'cursor-not-allowed opacity-60'
+                              : '',
                             isSelected
                               ? isDarkMode
-                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_10px_30px_rgba(59,130,246,0.3)]'
-                                : 'border-blue-500 bg-blue-50/80 shadow-[0_10px_30px_rgba(59,130,246,0.18)]'
+                            ? 'border-blue-500 bg-blue-500/20 shadow-[0_8px_24px_rgba(59,130,246,0.25)]'
+                            : 'border-blue-500 bg-blue-50/80 shadow-[0_8px_24px_rgba(59,130,246,0.15)]'
                               : isDarkMode
                                 ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
                                 : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
                           )}
                         >
-                          <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2">
                             <div
                               className={cn(
-                                'mt-1 flex h-5 w-5 items-center justify-center rounded-full border text-xs transition-colors',
+                            'mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border text-xs transition-colors',
                                 isSelected
                                   ? 'border-blue-500 bg-blue-500 text-white'
                                   : isDarkMode
@@ -2483,12 +2870,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                     : 'border-slate-300 text-transparent'
                               )}
                             >
-                              <Check className="h-3 w-3" />
+                          <Check className="h-2.5 w-2.5" />
                             </div>
-                            <div className="space-y-1">
+                        <div className="space-y-0.5">
                               <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                                <span className="inline-flex items-center gap-2">
-                                  {IconComponent && <IconComponent className={cn('h-4 w-4', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />}
+                            <span className="inline-flex items-center gap-1.5">
+                              {IconComponent && <IconComponent className={cn('h-3.5 w-3.5', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />}
                                   {option.title}
                                 </span>
                               </p>
@@ -2500,23 +2887,21 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                         </button>
                       );
                     })}
-                  </div>
-                </div>
               </div>
             )}
           </div>
 
-          <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:justify-between">
+          <div className="flex flex-col gap-3 sm:gap-4 pt-2 sm:flex-row sm:justify-between">
             <Button
               onClick={handlePreviousStep}
-              variant="outline"
               className={cn(
-                'sm:w-auto',
+                'w-full sm:w-auto px-6',
                 isDarkMode
-                  ? 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700 hover:border-slate-600'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
               )}
             >
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
             <Button
@@ -2524,7 +2909,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               onClick={handleNextStep}
               disabled={!isShipmentStepComplete}
               className={cn(
-                'sm:w-auto px-6',
+                'w-full sm:w-auto px-6',
                 isDarkMode
                   ? 'bg-blue-500 hover:bg-blue-600 text-white'
                   : 'bg-blue-500 hover:bg-blue-600 text-white',
@@ -2543,51 +2928,31 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="space-y-4 sm:space-y-6 md:space-y-8"
         >
-          <div className="space-y-2">
-            <h3
-              className={cn(
-                'text-xl font-semibold',
-                isDarkMode ? 'text-slate-100' : 'text-slate-900'
-              )}
-            >
-              Package Information & Images
-            </h3>
-            <p
-              className={cn(
-                'text-sm',
-                isDarkMode ? 'text-slate-400' : 'text-slate-600'
-              )}
-            >
-              Provide package details and upload images of your shipment.
-            </p>
-          </div>
+          
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Package Information */}
             <div
               className={cn(
-                'rounded-3xl border p-6 transition-all duration-300',
+                'rounded-2xl sm:rounded-3xl  p-4 sm:p-6 transition-all duration-300',
                 isDarkMode
                   ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
                   : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
               )}
             >
               <div className="space-y-4">
-                <div>
-                  <h4 className={cn('text-base font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                    Package Information
-                  </h4>
-                  <p className={cn('text-xs mt-1', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                    Provide the package count, contents and approximate dimensions.
-                  </p>
-                </div>
                 <div className="space-y-4">
-                  {/* No. of Packages and Materials - 2 column layout */}
-                  <div className="grid gap-3 md:grid-cols-2">
+                  {/* No. of Packages and Materials - 2 column layout normally, 3 columns when Others is selected */}
+                  <div className={cn(
+                    "grid gap-3",
+                    shipmentDetails.materials === 'Others' 
+                      ? "grid-cols-1 md:grid-cols-3" 
+                      : "grid-cols-1 md:grid-cols-2"
+                  )}>
                     <FloatingInput
-                      label="No. of Packages"
+                      label="No. of Packages :"
                       value={shipmentDetails.packagesCount}
                       onChange={(value) =>
                         setShipmentDetails((prev) => ({ ...prev, packagesCount: sanitizeInteger(value) }))
@@ -2597,153 +2962,64 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       icon={<Package className="h-4 w-4" />}
                       isDarkMode={isDarkMode}
                     />
-                    <FloatingInput
-                      label="Materials"
+                    <FloatingSelectWithIcons
+                      label="Package Type :"
                       value={shipmentDetails.materials}
                       onChange={(value) =>
-                        setShipmentDetails((prev) => ({ ...prev, materials: value }))
+                        setShipmentDetails((prev) => ({ 
+                          ...prev, 
+                          materials: value,
+                          others: value === 'Others' ? prev.others : '' // Clear others if not Others
+                        }))
                       }
-                      type="text"
+                      options={packageTypeOptions}
                       required
                       icon={<Info className="h-4 w-4" />}
                       isDarkMode={isDarkMode}
                     />
+                    {shipmentDetails.materials === 'Others' && (
+                      <FloatingInput
+                        label="Others - Specify :"
+                        value={shipmentDetails.others}
+                        onChange={(value) =>
+                          setShipmentDetails((prev) => ({ ...prev, others: value }))
+                        }
+                        type="text"
+                        required
+                        isDarkMode={isDarkMode}
+                      />
+                    )}
                   </div>
                   
-                  {/* Description - Single column layout */}
-                  <FloatingInput
-                    label="Description"
-                    value={shipmentDetails.description}
-                    onChange={(value) =>
-                      setShipmentDetails((prev) => ({ ...prev, description: value }))
-                    }
-                    type="text"
-                    className="w-full"
-                    isDarkMode={isDarkMode}
-                  />
-                  
-                  {/* Length, Width, Height - 3 column layout */}
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <FloatingInput
-                      label="Length (cm)"
-                      value={shipmentDetails.length}
-                      onChange={(value) =>
-                        setShipmentDetails((prev) => ({ ...prev, length: sanitizeDecimal(value) }))
-                      }
-                      type="text"
-                    required={!hasActualWeight}
-                      icon={<Ruler className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                    <FloatingInput
-                      label="Width (cm)"
-                      value={shipmentDetails.width}
-                      onChange={(value) =>
-                        setShipmentDetails((prev) => ({ ...prev, width: sanitizeDecimal(value) }))
-                      }
-                      type="text"
-                    required={!hasActualWeight}
-                      icon={<Ruler className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                    <FloatingInput
-                      label="Height (cm)"
-                      value={shipmentDetails.height}
-                      onChange={(value) =>
-                        setShipmentDetails((prev) => ({ ...prev, height: sanitizeDecimal(value) }))
-                      }
-                      type="text"
-                    required={!hasActualWeight}
-                      icon={<Ruler className="h-4 w-4" />}
-                      isDarkMode={isDarkMode}
-                    />
-                  </div>
-                  
-                  {/* Actual Weight - Single column layout */}
-                  <FloatingInput
-                    label="Actual Weight (kg)"
-                    value={shipmentDetails.weight}
-                    onChange={(value) =>
-                      setShipmentDetails((prev) => ({ ...prev, weight: sanitizeDecimal(value) }))
-                    }
-                    type="text"
-                  required={!hasDimensions}
-                    icon={<Scale className="h-4 w-4" />}
-                    className="w-full"
-                    isDarkMode={isDarkMode}
-                  />
-                  <div className="grid gap-3 pt-2 md:grid-cols-3">
-                    {[
-                      {
-                        label: 'Volumetric',
-                        value: displayVolumetricWeight,
-                        description: 'Based on dimensions'
-                      },
-                      {
-                        label: 'Actual',
-                        value: displayActualWeight,
-                        description: 'Weight entered above'
-                      },
-                      {
-                        label: 'Chargeable',
-                        value: displayChargeableWeight,
-                        description: 'Higher of volumetric or actual'
-                      }
-                    ].map((card) => (
-                      <div
-                        key={card.label}
+                  {/* Package Images - Show when both packagesCount and materials are filled, and if Others is selected, also require others field */}
+                  {shipmentDetails.packagesCount && shipmentDetails.packagesCount.trim().length > 0 && 
+                   shipmentDetails.materials && shipmentDetails.materials.trim().length > 0 &&
+                   (shipmentDetails.materials !== 'Others' || (shipmentDetails.materials === 'Others' && shipmentDetails.others && shipmentDetails.others.trim().length > 0)) && (
+                    <div
                         className={cn(
-                          'rounded-2xl border px-4 py-3 transition-colors',
+                        'rounded-xl  transition-all duration-300',
                           isDarkMode
-                            ? 'border-slate-700/70 bg-slate-800/60'
-                            : 'border-slate-200 bg-white/80 shadow-sm'
-                        )}
-                      >
-                        <p className={cn('text-xs font-medium uppercase tracking-wide', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                          {card.label}
-                        </p>
-                        <p className={cn('mt-1 text-lg font-semibold', card.label === 'Chargeable' ? 'text-blue-500' : (isDarkMode ? 'text-slate-100' : 'text-slate-800'))}>
-                          {card.value}
-                        </p>
-                        <p className={cn('mt-1 text-xs', isDarkMode ? 'text-slate-500' : 'text-slate-500')}>
-                          {card.description}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Image Upload Section - Only show when package info is complete */}
-            {isPackageInfoComplete && (
+                          ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
+                          : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
+                      )}
+                    >
+                      <div className="space-y-2">
             <div
               className={cn(
-                'rounded-3xl border p-6 transition-all duration-300',
+                            'flex flex-wrap items-center gap-2 rounded-md border p-2',
                 isDarkMode
-                  ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
-                  : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
-              )}
-            >
-              <div className="space-y-4">
-                <div>
-                  <h4 className={cn('text-base font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                    Package Images
-                  </h4>
-                  <p className={cn('text-xs mt-1', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                    Upload images of your package (optional). Maximum 5 images.
-                  </p>
-                </div>
-
-                {/* Image Upload Area */}
-                <div className="space-y-4">
+                              ? 'border-slate-700 bg-slate-800/50'
+                              : 'border-slate-300 bg-slate-50'
+                          )}
+                        >
                   <input
+                            id="package-image-upload"
                     type="file"
-                    id="image-upload"
                     accept="image/*"
                     multiple
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || []);
+                            className="hidden"
+                            onChange={(event) => {
+                              const files = Array.from(event.target.files || []);
                       if (files.length + uploadedImages.length > 5) {
                         alert('Maximum 5 images allowed');
                         return;
@@ -2764,32 +3040,56 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                         reader.readAsDataURL(file);
                       });
                     }}
-                    className="hidden"
                   />
-                  
                   <label
-                    htmlFor="image-upload"
+                            htmlFor="package-image-upload"
                     className={cn(
-                      'flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all',
+                              'cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                       isDarkMode
-                        ? 'border-slate-700 bg-slate-800/40 hover:border-blue-500/50 hover:bg-slate-800/60'
-                        : 'border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50/30'
-                    )}
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className={cn('w-8 h-8 mb-2', isDarkMode ? 'text-slate-400' : 'text-slate-500')} />
-                      <p className={cn('text-sm font-medium', isDarkMode ? 'text-slate-300' : 'text-slate-700')}>
-                        Click to upload images
-                      </p>
-                      <p className={cn('text-xs mt-1', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                        PNG, JPG, JPEG up to 5MB each
+                                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                : 'bg-blue-500 text-white hover:bg-blue-600'
+                            )}
+                          >
+                            Select Images
+                          </label>
+                          <div className="min-w-0 flex-1 text-xs">
+                            <p className={cn('truncate', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                              {uploadedImages.length > 0 
+                                ? `${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''} selected`
+                                : 'No images selected'}
+                            </p>
+                            <p className={cn('text-[10px]', isDarkMode ? 'text-slate-500' : 'text-slate-500')}>
+                              Accepted formats: JPG, PNG. Max 5 images.
                       </p>
                     </div>
-                  </label>
+                          {uploadedImages.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setUploadedImages([]);
+                                setImagePreviews([]);
+                              }}
+                              className={cn(
+                                'rounded-md px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5',
+                                isDarkMode
+                                  ? 'bg-red-500/90 text-white hover:bg-red-600'
+                                  : 'bg-red-500 text-white hover:bg-red-600'
+                              )}
+                            >
+                              <XCircle className="w-3 h-3" />
+                              Remove All
+                            </button>
+                          )}
+                        </div>
 
-                  {/* Image Previews */}
+                        {/* Image Previews Grid */}
                   {imagePreviews.length > 0 && (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          <div className={cn(
+                            "grid gap-2 mt-2",
+                            imagePreviews.length === 3 ? "grid-cols-3" :
+                            imagePreviews.length === 4 ? "grid-cols-4" :
+                            "grid-cols-5"
+                          )}>
                       {imagePreviews.map((preview, index) => (
                         <div
                           key={index}
@@ -2801,7 +3101,11 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           <img
                             src={preview}
                             alt={`Preview ${index + 1}`}
-                            className="w-full h-32 object-cover"
+                                  className="w-full h-16 object-cover cursor-pointer"
+                                  onClick={() => {
+                                    setDocumentPreviewUrl(preview);
+                                    setDocumentPreviewOpen(true);
+                                  }}
                           />
                           <button
                             type="button"
@@ -2812,44 +3116,147 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                               setImagePreviews(newPreviews);
                             }}
                             className={cn(
-                              'absolute top-2 right-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity',
+                                    'absolute top-1 right-1 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity',
                               isDarkMode
                                 ? 'bg-red-500/80 text-white hover:bg-red-600'
                                 : 'bg-red-500 text-white hover:bg-red-600'
                             )}
                           >
-                            <XCircle className="w-4 h-4" />
+                                  <XCircle className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDocumentPreviewUrl(preview);
+                                    setDocumentPreviewOpen(true);
+                                  }}
+                                  className={cn(
+                                    'absolute top-1 left-1 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity',
+                                    isDarkMode
+                                      ? 'bg-blue-500/80 text-white hover:bg-blue-600'
+                                      : 'bg-blue-500 text-white hover:bg-blue-600'
+                                  )}
+                                  title="Preview image"
+                                >
+                                  <Eye className="w-3 h-3" />
                           </button>
                         </div>
                       ))}
                     </div>
                   )}
-
-                  {uploadedImages.length > 0 && (
-                    <div className={cn(
-                      'text-xs text-center',
-                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
-                    )}>
-                      {uploadedImages.length} image{uploadedImages.length !== 1 ? 's' : ''} selected
+                      </div>
                     </div>
                   )}
+                  
+                  {/* Description - Single column layout */}
+                  <FloatingInput
+                    label="Content Description :"
+                    value={shipmentDetails.description}
+                    onChange={(value) =>
+                      setShipmentDetails((prev) => ({ ...prev, description: value }))
+                    }
+                    type="text"
+                    className="w-full"
+                    isDarkMode={isDarkMode}
+                  />
+                  
+                  {/* Length, Width, Height - 3 column layout */}
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+                    <FloatingInput
+                      label="Length cm. :"
+                      value={shipmentDetails.length}
+                      onChange={(value) =>
+                        setShipmentDetails((prev) => ({ ...prev, length: sanitizeDecimal(value) }))
+                      }
+                      type="text"
+                    required={!hasActualWeight}
+                      icon={<Ruler className="h-4 w-4" />}
+                      isDarkMode={isDarkMode}
+                    />
+                    <FloatingInput
+                      label="Width cm. :"
+                      value={shipmentDetails.width}
+                      onChange={(value) =>
+                        setShipmentDetails((prev) => ({ ...prev, width: sanitizeDecimal(value) }))
+                      }
+                      type="text"
+                    required={!hasActualWeight}
+                      icon={<Ruler className="h-4 w-4" />}
+                      isDarkMode={isDarkMode}
+                    />
+                    <FloatingInput
+                      label="Height cm. :"
+                      value={shipmentDetails.height}
+                      onChange={(value) =>
+                        setShipmentDetails((prev) => ({ ...prev, height: sanitizeDecimal(value) }))
+                      }
+                      type="text"
+                    required={!hasActualWeight}
+                      icon={<Ruler className="h-4 w-4" />}
+                      isDarkMode={isDarkMode}
+                    />
+                </div>
+                  
+                  {/* Weight Inputs - Three column layout */}
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-3">
+                    {/* Volumetric Weight - Read-only */}
+                    <FloatingInput
+                      label="Volumetric Weight Kg. :"
+                      value={formattedVolumetricWeight || ''}
+                      onChange={() => {}}
+                      type="text"
+                      disabled={true}
+                      icon={<Scale className="h-4 w-4" />}
+                      isDarkMode={isDarkMode}
+                    />
+                    {/* Actual Weight - Editable */}
+                    <FloatingInput
+                      label="Actual Weight Kg. :"
+                      value={shipmentDetails.weight}
+                      onChange={(value) =>
+                        setShipmentDetails((prev) => ({ ...prev, weight: sanitizeDecimal(value) }))
+                      }
+                      type="text"
+                      required={!hasDimensions}
+                      icon={<Scale className="h-4 w-4" />}
+                      isDarkMode={isDarkMode}
+                    />
+                    {/* Chargeable Weight - Read-only */}
+                    <div className={cn(
+                      formattedChargeableWeight && parseFloat(formattedChargeableWeight) > 0
+                        ? isDarkMode
+                          ? 'bg-blue-500/20 shadow-[0_8px_24px_rgba(59,130,246,0.25)] rounded-xl p-1'
+                          : 'bg-blue-50/80 shadow-[0_8px_24px_rgba(59,130,246,0.15)] rounded-xl p-1'
+                        : ''
+                    )}>
+                      <FloatingInput
+                        label="Chargeable Weight Kg. :"
+                        value={formattedChargeableWeight || ''}
+                        onChange={() => {}}
+                        type="text"
+                        disabled={true}
+                        icon={<Scale className="h-4 w-4" />}
+                        isDarkMode={isDarkMode}
+                        noBorder={formattedChargeableWeight && parseFloat(formattedChargeableWeight) > 0}
+                      />
+                    </div>
                 </div>
               </div>
             </div>
-            )}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:justify-between">
+          <div className="flex flex-col gap-3 sm:gap-4 pt-2 sm:flex-row sm:justify-between">
             <Button
               onClick={handlePreviousStep}
-              variant="outline"
               className={cn(
-                'sm:w-auto',
+                'w-full sm:w-auto px-6',
                 isDarkMode
-                  ? 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700 hover:border-slate-600'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
               )}
             >
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
             <Button
@@ -2857,7 +3264,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               onClick={handleNextStep}
               disabled={!isPackageStepComplete}
               className={cn(
-                'sm:w-auto px-6',
+                'w-full sm:w-auto px-6',
                 isDarkMode
                   ? 'bg-blue-500 hover:bg-blue-600 text-white'
                   : 'bg-blue-500 hover:bg-blue-600 text-white',
@@ -2876,73 +3283,161 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          className="space-y-3"
         >
-          <div className="space-y-2">
-            <h3
-              className={cn(
-                'text-xl font-semibold',
-                isDarkMode ? 'text-slate-100' : 'text-slate-900'
-              )}
-            >
-            </h3>
-            <p
-              className={cn(
-                'text-sm',
-                isDarkMode ? 'text-slate-400' : 'text-slate-600'
-              )}
-            >
-            </p>
-          </div>
-
           {loadingPricing ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
             </div>
           ) : (
-            <div className="space-y-6">
-              {/* Mode Selection */}
-              {availableModes && (
+            <div className="space-y-3">
+              {/* Service Type Selection - Show First */}
+              {availableServiceTypes && (
                 <div
                   className={cn(
-                    'rounded-3xl border p-6 transition-all duration-300',
+                    'rounded-xl p-4 transition-all duration-300',
                     isDarkMode
                       ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
                       : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
                   )}
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className={cn('text-base font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                        Select Shipping Mode
+                  <div className="space-y-2">
+                    <h4 className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
+                        Select Service Type
                       </h4>
-                      <span className={cn('text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                        Choose your preferred mode
-                      </span>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-3">
-                      {availableModes.byAir && (
+                    <div className="grid gap-2 grid-cols-1 md:grid-cols-2">
+                      {availableServiceTypes.standard && (
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedMode('byAir');
-                            setSelectedServiceType(''); // Reset service type when mode changes
+                            setSelectedServiceType('standard');
+                            setSelectedMode(''); // Reset mode when service type changes
+                            setCalculatedPrice(null);
                           }}
                           className={cn(
-                            'w-full text-left rounded-2xl border px-4 py-4 transition-all duration-200 focus:outline-none',
-                            selectedMode === 'byAir'
+                            'w-full text-left rounded-lg border px-3 py-2.5 transition-all duration-200 focus:outline-none',
+                            selectedServiceType === 'standard'
                               ? isDarkMode
-                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_10px_30px_rgba(59,130,246,0.3)]'
-                                : 'border-blue-500 bg-blue-50/80 shadow-[0_10px_30px_rgba(59,130,246,0.18)]'
+                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.2)]'
+                                : 'border-blue-500 bg-blue-50/80 shadow-[0_4px_12px_rgba(59,130,246,0.15)]'
                               : isDarkMode
                                 ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
                                 : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
                           )}
                         >
-                          <div className="flex items-start gap-3">
+                          <div className="flex items-center gap-2">
                             <div
                               className={cn(
-                                'mt-1 flex h-5 w-5 items-center justify-center rounded-full border text-xs transition-colors',
+                                'flex h-4 w-4 items-center justify-center rounded-full border text-xs transition-colors',
+                                selectedServiceType === 'standard'
+                                  ? 'border-blue-500 bg-blue-500 text-white'
+                                  : isDarkMode
+                                    ? 'border-slate-600 bg-slate-700/50 text-transparent'
+                                    : 'border-slate-300 text-transparent'
+                              )}
+                            >
+                              <Check className="h-2.5 w-2.5" />
+                            </div>
+                              <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
+                              <span className="inline-flex items-center gap-1.5">
+                                <Package className={cn('h-3.5 w-3.5', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
+                                  Standard
+                                </span>
+                              </p>
+                          </div>
+                        </button>
+                      )}
+                      {availableServiceTypes.priority && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedServiceType('priority');
+                            setSelectedMode(''); // No mode needed for priority
+                            setCalculatedPrice(null);
+                          }}
+                          className={cn(
+                            'w-full text-left rounded-lg border px-3 py-2.5 transition-all duration-200 focus:outline-none',
+                            String(selectedServiceType) === 'priority'
+                              ? isDarkMode
+                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.2)]'
+                                : 'border-blue-500 bg-blue-50/80 shadow-[0_4px_12px_rgba(59,130,246,0.15)]'
+                              : isDarkMode
+                                ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
+                                : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                            <div
+                              className={cn(
+                                  'flex h-4 w-4 items-center justify-center rounded-full border text-xs transition-colors',
+                                String(selectedServiceType) === 'priority'
+                                  ? 'border-blue-500 bg-blue-500 text-white'
+                                  : isDarkMode
+                                    ? 'border-slate-600 bg-slate-700/50 text-transparent'
+                                    : 'border-slate-300 text-transparent'
+                              )}
+                            >
+                                <Check className="h-2.5 w-2.5" />
+                            </div>
+                                <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
+                                <span className="inline-flex items-center gap-1.5">
+                                  <ShieldCheck className={cn('h-3.5 w-3.5', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
+                                    Priority
+                                  </span>
+                                </p>
+                            </div>
+                                {calculatedPrice !== null && String(selectedServiceType) === 'priority' && (
+                              <span className={cn('text-base font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>
+                                    ₹{calculatedPrice.toFixed(2)}
+                                  </span>
+                                )}
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Mode Selection - Only show when Standard is selected */}
+              {selectedServiceType === 'standard' && availableModes && (
+                <div
+                  className={cn(
+                    'rounded-xl p-4 transition-all duration-300',
+                    isDarkMode
+                      ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
+                      : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
+                  )}
+                >
+                  <div className="space-y-2">
+                    <h4 className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
+                        Select Shipping Mode
+                      </h4>
+                    <div className="grid gap-2 grid-cols-1 md:grid-cols-3">
+                      {availableModes.byAir && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMode('byAir');
+                            setCalculatedPrice(null);
+                          }}
+                          className={cn(
+                            'w-full text-left rounded-lg border px-3 py-2.5 transition-all duration-200 focus:outline-none',
+                            selectedMode === 'byAir'
+                              ? isDarkMode
+                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.2)]'
+                                : 'border-blue-500 bg-blue-50/80 shadow-[0_4px_12px_rgba(59,130,246,0.15)]'
+                              : isDarkMode
+                                ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
+                                : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
+                          )}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                            <div
+                              className={cn(
+                                  'flex h-4 w-4 items-center justify-center rounded-full border text-xs transition-colors',
                                 selectedMode === 'byAir'
                                   ? 'border-blue-500 bg-blue-500 text-white'
                                   : isDarkMode
@@ -2950,19 +3445,20 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                     : 'border-slate-300 text-transparent'
                               )}
                             >
-                              <Check className="h-3 w-3" />
+                                <Check className="h-2.5 w-2.5" />
                             </div>
-                            <div className="space-y-1">
                               <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                                <span className="inline-flex items-center gap-2">
-                                  <Plane className={cn('h-4 w-4', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Plane className={cn('h-3.5 w-3.5', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
                                   Air
                                 </span>
                               </p>
-                              <p className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                                Fast delivery via air transport
-                              </p>
                             </div>
+                            {selectedMode === 'byAir' && calculatedPrice !== null && (
+                              <span className={cn('text-base font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>
+                                ₹{calculatedPrice.toFixed(2)}
+                              </span>
+                            )}
                           </div>
                         </button>
                       )}
@@ -2971,23 +3467,24 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           type="button"
                           onClick={() => {
                             setSelectedMode('byTrain');
-                            setSelectedServiceType(''); // Reset service type when mode changes
+                            setCalculatedPrice(null);
                           }}
                           className={cn(
-                            'w-full text-left rounded-2xl border px-4 py-4 transition-all duration-200 focus:outline-none',
+                            'w-full text-left rounded-lg border px-3 py-2.5 transition-all duration-200 focus:outline-none',
                             selectedMode === 'byTrain'
                               ? isDarkMode
-                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_10px_30px_rgba(59,130,246,0.3)]'
-                                : 'border-blue-500 bg-blue-50/80 shadow-[0_10px_30px_rgba(59,130,246,0.18)]'
+                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.2)]'
+                                : 'border-blue-500 bg-blue-50/80 shadow-[0_4px_12px_rgba(59,130,246,0.15)]'
                               : isDarkMode
                                 ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
                                 : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
                           )}
                         >
-                          <div className="flex items-start gap-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
                             <div
                               className={cn(
-                                'mt-1 flex h-5 w-5 items-center justify-center rounded-full border text-xs transition-colors',
+                                  'flex h-4 w-4 items-center justify-center rounded-full border text-xs transition-colors',
                                 selectedMode === 'byTrain'
                                   ? 'border-blue-500 bg-blue-500 text-white'
                                   : isDarkMode
@@ -2995,19 +3492,20 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                     : 'border-slate-300 text-transparent'
                               )}
                             >
-                              <Check className="h-3 w-3" />
+                                <Check className="h-2.5 w-2.5" />
                             </div>
-                            <div className="space-y-1">
                               <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                                <span className="inline-flex items-center gap-2">
-                                  <Train className={cn('h-4 w-4', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Train className={cn('h-3.5 w-3.5', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
                                   Train
                                 </span>
                               </p>
-                              <p className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                                Reliable delivery via train
-                              </p>
                             </div>
+                            {selectedMode === 'byTrain' && calculatedPrice !== null && (
+                              <span className={cn('text-base font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>
+                                ₹{calculatedPrice.toFixed(2)}
+                              </span>
+                            )}
                           </div>
                         </button>
                       )}
@@ -3016,23 +3514,24 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           type="button"
                           onClick={() => {
                             setSelectedMode('byRoad');
-                            setSelectedServiceType(''); // Reset service type when mode changes
+                            setCalculatedPrice(null);
                           }}
                           className={cn(
-                            'w-full text-left rounded-2xl border px-4 py-4 transition-all duration-200 focus:outline-none',
+                            'w-full text-left rounded-lg border px-3 py-2.5 transition-all duration-200 focus:outline-none',
                             selectedMode === 'byRoad'
                               ? isDarkMode
-                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_10px_30px_rgba(59,130,246,0.3)]'
-                                : 'border-blue-500 bg-blue-50/80 shadow-[0_10px_30px_rgba(59,130,246,0.18)]'
+                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_4px_12px_rgba(59,130,246,0.2)]'
+                                : 'border-blue-500 bg-blue-50/80 shadow-[0_4px_12px_rgba(59,130,246,0.15)]'
                               : isDarkMode
                                 ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
                                 : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
                           )}
                         >
-                          <div className="flex items-start gap-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
                             <div
                               className={cn(
-                                'mt-1 flex h-5 w-5 items-center justify-center rounded-full border text-xs transition-colors',
+                                  'flex h-4 w-4 items-center justify-center rounded-full border text-xs transition-colors',
                                 selectedMode === 'byRoad'
                                   ? 'border-blue-500 bg-blue-500 text-white'
                                   : isDarkMode
@@ -3040,19 +3539,20 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                     : 'border-slate-300 text-transparent'
                               )}
                             >
-                              <Check className="h-3 w-3" />
+                                <Check className="h-2.5 w-2.5" />
                             </div>
-                            <div className="space-y-1">
                               <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                                <span className="inline-flex items-center gap-2">
-                                  <Truck className={cn('h-4 w-4', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
+                                <span className="inline-flex items-center gap-1.5">
+                                  <Truck className={cn('h-3.5 w-3.5', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
                                   Road
                                 </span>
                               </p>
-                              <p className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                                Cost-effective delivery via road
-                              </p>
                             </div>
+                            {selectedMode === 'byRoad' && calculatedPrice !== null && (
+                              <span className={cn('text-base font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>
+                                ₹{calculatedPrice.toFixed(2)}
+                              </span>
+                            )}
                           </div>
                         </button>
                       )}
@@ -3061,155 +3561,32 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                 </div>
               )}
 
-              {/* Service Type Selection - Only show after mode is selected */}
-              {selectedMode && availableServiceTypes && (
-                <div
-                  className={cn(
-                    'rounded-3xl border p-6 transition-all duration-300',
-                    isDarkMode
-                      ? 'border-slate-800/60 bg-gradient-to-br from-slate-900/80 via-slate-900/60 to-slate-950/80'
-                      : 'border-slate-200/70 bg-gradient-to-br from-white via-slate-50 to-blue-50/30'
-                  )}
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className={cn('text-base font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                        Select Service Type
-                      </h4>
-                      <span className={cn('text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
-                        Choose your service preference
-                      </span>
-                    </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {availableServiceTypes.standard && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedServiceType('standard')}
-                          className={cn(
-                            'w-full text-left rounded-2xl border px-4 py-4 transition-all duration-200 focus:outline-none',
-                            selectedServiceType === 'standard'
-                              ? isDarkMode
-                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_10px_30px_rgba(59,130,246,0.3)]'
-                                : 'border-blue-500 bg-blue-50/80 shadow-[0_10px_30px_rgba(59,130,246,0.18)]'
-                              : isDarkMode
-                                ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
-                                : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
-                          )}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={cn(
-                                'mt-1 flex h-5 w-5 items-center justify-center rounded-full border text-xs transition-colors',
-                                selectedServiceType === 'standard'
-                                  ? 'border-blue-500 bg-blue-500 text-white'
-                                  : isDarkMode
-                                    ? 'border-slate-600 bg-slate-700/50 text-transparent'
-                                    : 'border-slate-300 text-transparent'
-                              )}
-                            >
-                              <Check className="h-3 w-3" />
-                            </div>
-                            <div className="flex-1 space-y-1">
-                              <div className="flex items-center justify-between">
-                                <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                                  <span className="inline-flex items-center gap-2">
-                                    <Package className={cn('h-4 w-4', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
-                                    Standard
-                                  </span>
-                                </p>
-                                {standardPrice !== null && (
-                                  <span className={cn('text-lg font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>
-                                    ₹{standardPrice.toFixed(2)}
-                                  </span>
-                                )}
-                              </div>
-                              <p className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                                Regular delivery service
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      )}
-                      {availableServiceTypes.priority && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedServiceType('priority')}
-                          className={cn(
-                            'w-full text-left rounded-2xl border px-4 py-4 transition-all duration-200 focus:outline-none',
-                            selectedServiceType === 'priority'
-                              ? isDarkMode
-                                ? 'border-blue-500 bg-blue-500/20 shadow-[0_10px_30px_rgba(59,130,246,0.3)]'
-                                : 'border-blue-500 bg-blue-50/80 shadow-[0_10px_30px_rgba(59,130,246,0.18)]'
-                              : isDarkMode
-                                ? 'border-slate-700/60 bg-slate-800/50 hover:border-blue-500/50 hover:bg-blue-500/10'
-                                : 'border-slate-200 hover:border-blue-400/60 hover:bg-blue-50/60'
-                          )}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={cn(
-                                'mt-1 flex h-5 w-5 items-center justify-center rounded-full border text-xs transition-colors',
-                                selectedServiceType === 'priority'
-                                  ? 'border-blue-500 bg-blue-500 text-white'
-                                  : isDarkMode
-                                    ? 'border-slate-600 bg-slate-700/50 text-transparent'
-                                    : 'border-slate-300 text-transparent'
-                              )}
-                            >
-                              <Check className="h-3 w-3" />
-                            </div>
-                            <div className="flex-1 space-y-1">
-                              <div className="flex items-center justify-between">
-                                <p className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                                  <span className="inline-flex items-center gap-2">
-                                    <ShieldCheck className={cn('h-4 w-4', isDarkMode ? 'text-blue-400' : 'text-blue-500')} />
-                                    Priority
-                                  </span>
-                                </p>
-                                {priorityPrice !== null && (
-                                  <span className={cn('text-lg font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>
-                                    ₹{priorityPrice.toFixed(2)}
-                                  </span>
-                                )}
-                              </div>
-                              <p className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                                Express delivery service
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      )}
-                    </div>
-                  </div>
                 </div>
               )}
 
-            </div>
-          )}
-
-          <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:justify-between">
+          <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-between">
             <Button
               onClick={handlePreviousStep}
-              variant="outline"
               className={cn(
-                'sm:w-auto',
+                'w-full sm:w-auto px-6',
                 isDarkMode
-                  ? 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700 hover:border-slate-600'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
               )}
             >
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
             <Button
               type="button"
               onClick={handleNextStep}
-              disabled={!selectedMode || !selectedServiceType}
+              disabled={!selectedServiceType || (selectedServiceType === 'standard' && !selectedMode)}
               className={cn(
-                'sm:w-auto px-6',
+                'w-full sm:w-auto px-6',
                 isDarkMode
                   ? 'bg-blue-500 hover:bg-blue-600 text-white'
                   : 'bg-blue-500 hover:bg-blue-600 text-white',
-                (!selectedMode || !selectedServiceType) && 'opacity-60 cursor-not-allowed'
+                (!selectedServiceType || (selectedServiceType === 'standard' && !selectedMode)) && 'opacity-60 cursor-not-allowed'
               )}
             >
               Next
@@ -3221,7 +3598,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
 
       {/* Step 5: Preview */}
       {currentStep === 5 && (() => {
-        const finalPrice = (selectedServiceType === 'priority' ? priorityPrice : standardPrice) ?? 0;
+        const finalPrice = calculatedPrice ?? 0;
         const formattedPrice = finalPrice ? `₹${finalPrice.toFixed(2)}` : '—';
         const originAlternates = originData.alternateNumbers?.filter((num) => num.trim());
         const destinationAlternates = destinationData.alternateNumbers?.filter((num) => num.trim());
@@ -3249,7 +3626,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
           byRoad: 'Road',
           '': ''
         };
-        const serviceLabel = selectedServiceType === 'priority' ? 'Priority' : 'Standard';
+        const serviceLabel = selectedServiceType === 'priority' ? 'PRIORITY' : 'STANDARD';
 
         // Edit handlers - toggle inline editing
         const handleEditOrigin = () => {
@@ -3303,32 +3680,13 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
           animate={{ opacity: 1, y: 0 }}
             className="space-y-2"
         >
-            <div>
-            <h3
-              className={cn(
-                'text-xl font-semibold',
-                isDarkMode ? 'text-slate-100' : 'text-slate-900'
-              )}
-            >
-                Preview
-            </h3>
-            <p
-              className={cn(
-                  'text-xs mt-0.5',
-                isDarkMode ? 'text-slate-400' : 'text-slate-600'
-              )}
-            >
-                Please review all details before submitting
-            </p>
-          </div>
-
             <div className="space-y-2.5">
               {/* Origin Address */}
               <div className={cn(
                 'rounded-lg border p-2.5 transition-all duration-200',
                 isDarkMode
-                  ? 'border-slate-800/50 bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-900/40 hover:border-blue-500/30'
-                  : 'border-slate-200/60 bg-gradient-to-br from-slate-50/60 via-blue-50/30 to-slate-50/60 hover:border-blue-400/50'
+                  ? 'border-slate-800/50 bg-gradient-to-br from-slate-800/80 via-slate-800/70 to-slate-800/80 hover:border-blue-500/30'
+                  : 'border-slate-200/60 bg-gradient-to-br from-slate-100/90 via-blue-50/70 to-slate-100/90 hover:border-blue-400/50'
               )}>
                 <div className={cn(
                   'flex items-center justify-between mb-2',
@@ -3339,8 +3697,20 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     isDarkMode ? 'text-slate-200' : 'text-slate-800'
                   )}>
                     <MapPin className="h-3.5 w-3.5" />
-                    Sender's (Consigner)
+                    Sender :
                   </h4>
+                  <div className="flex items-center gap-2">
+                    {originData.addressType && (
+                      <span className={cn(
+                        'text-xs font-semibold px-3 py-1.5 rounded-full border-2 shadow-sm',
+                        'uppercase tracking-wide',
+                        isDarkMode 
+                          ? 'text-blue-300 bg-blue-500/20 border-blue-400/40 shadow-blue-500/10' 
+                          : 'text-blue-700 bg-blue-50 border-blue-300 shadow-blue-200/50'
+                      )}>
+                        {originData.addressType}
+                      </span>
+                    )}
                   <button
                     onClick={handleEditOrigin}
               className={cn(
@@ -3354,47 +3724,73 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     Edit
                   </button>
             </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Concern Person:</span>
+            </div>
+                <div className="space-y-2 text-sm">
+                  {/* Line 1: Company name, Concern person */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                      {originData.companyName || ''}
+                    </p>
                     <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{originData.name}</p>
                   </div>
-                  {originData.addressType && (
-                    <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Type:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{originData.addressType}</p>
+                  
+                  {/* Line 2: Address */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div className="md:col-span-3">
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{renderAddress(originData)}</p>
                     </div>
-                  )}
-                  {originData.companyName && (
-                <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Company:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{originData.companyName}</p>
                 </div>
-                  )}
-                <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Phone:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>+91 {originData.mobileNumber}</p>
+                  
+                  {/* Line 3: Phone, Email, Website */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>+91 {originData.mobileNumber}</p>
+                    {originData.email && (
+                      <a 
+                        href={`mailto:${originData.email}`}
+                        className={cn(
+                          'text-[9px] sm:text-[10px] md:text-xs font-medium underline hover:opacity-80',
+                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                        )}
+                      >
+                        {originData.email}
+                      </a>
+                    )}
+                    {originData.website && (
+                      <a 
+                        href={originData.website.startsWith('http') ? originData.website : `https://${originData.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cn(
+                          'text-[9px] sm:text-[10px] md:text-xs font-medium underline hover:opacity-80',
+                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                        )}
+                      >
+                        {originData.website}
+                      </a>
+                    )}
                 </div>
-                  <div className="md:col-span-2">
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Address:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{renderAddress(originData)}</p>
+                  
+                  {/* Line 4: GST, Birthday and Anniversary */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {originData.gstNumber && (
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{originData.gstNumber}</p>
+                    )}
+                    {originData.birthday && (
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                        {formatDate(originData.birthday) || originData.birthday}
+                      </p>
+                    )}
+                    {originData.anniversary && (
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                        {formatDate(originData.anniversary) || originData.anniversary}
+                      </p>
+                    )}
                   </div>
-                  {originData.email && (
-                <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Email:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{originData.email}</p>
-                </div>
-                  )}
+                  
+                  {/* Alternate Numbers - if any */}
                   {originAlternates && originAlternates.length > 0 && (
-                    <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Alternate:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{originAlternates.join(', ')}</p>
-                    </div>
-                  )}
-                  {originData.gstNumber && (
-                    <div className="md:col-span-2">
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>GST:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{originData.gstNumber}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{originAlternates.join(', ')}</p>
                     </div>
                   )}
               </div>
@@ -3403,81 +3799,78 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               {/* Origin Address Edit Dialog */}
               <Dialog open={editingSection === 'origin'} onOpenChange={(open) => !open && setEditingSection(null)}>
                 <DialogContent className={cn(
-                  'max-w-3xl max-h-[90vh] overflow-y-auto',
+                  'max-w-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
                   isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                 )}>
                   <DialogHeader>
                     <DialogTitle className={cn(isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                      Edit Sender's (Consigner)
+                      Edit Sender :
                     </DialogTitle>
-                    <DialogDescription className={cn(isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                      Update the sender's (consigner) address details
-                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <SimpleInput
+                      <FloatingInput
                         label="Concern Person"
                         value={originData.name}
                         onChange={(value) => setOriginData((prev) => ({ ...prev, name: value }))}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleSelect
+                      <FloatingSelect
                         label="Address Type"
                         value={originData.addressType}
                         onChange={(value) => setOriginData((prev) => ({ ...prev, addressType: value }))}
                         options={addressTypeOptions}
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Company Name"
                         value={originData.companyName}
                         onChange={(value) => setOriginData((prev) => ({ ...prev, companyName: value }))}
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Phone"
                         value={`+91 ${originData.mobileNumber}`}
                         onChange={() => {}}
                         disabled
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Email"
                         value={originData.email}
                         onChange={(value) => setOriginData((prev) => ({ ...prev, email: value }))}
                         type="email"
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="GST Number"
                         value={originData.gstNumber}
                         onChange={(value) => setOriginData((prev) => ({ ...prev, gstNumber: value }))}
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Flat, Building"
                         value={originData.flatBuilding}
                         onChange={(value) => setOriginData((prev) => ({ ...prev, flatBuilding: value }))}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Locality"
                         value={originData.locality}
                         onChange={(value) => setOriginData((prev) => ({ ...prev, locality: value }))}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Landmark"
                         value={originData.landmark}
                         onChange={(value) => setOriginData((prev) => ({ ...prev, landmark: value }))}
                         isDarkMode={isDarkMode}
                       />
                       {originAreas.length > 0 ? (
-                        <SimpleSelect
+                        <FloatingSelect
                           label="Area"
                           value={originData.area}
                           onChange={(value) => setOriginData((prev) => ({ ...prev, area: value }))}
@@ -3486,7 +3879,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           isDarkMode={isDarkMode}
                         />
                       ) : (
-                        <SimpleInput
+                        <FloatingInput
                           label="Area"
                           value={originData.area}
                           onChange={(value) => setOriginData((prev) => ({ ...prev, area: value }))}
@@ -3494,6 +3887,33 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           isDarkMode={isDarkMode}
                         />
                       )}
+                      <FloatingInput
+                        label="District"
+                        value={originData.district}
+                        onChange={(_value) => {}}
+                        disabled
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
+                        label="Website"
+                        value={originData.website}
+                        onChange={(value) => setOriginData((prev) => ({ ...prev, website: value }))}
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
+                        label="Birthday"
+                        value={originData.birthday}
+                        onChange={(value) => setOriginData((prev) => ({ ...prev, birthday: value }))}
+                        type="date"
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
+                        label="Anniversary"
+                        value={originData.anniversary}
+                        onChange={(value) => setOriginData((prev) => ({ ...prev, anniversary: value }))}
+                        type="date"
+                        isDarkMode={isDarkMode}
+                      />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 mt-6">
@@ -3522,8 +3942,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               <div className={cn(
                 'rounded-lg border p-2.5 transition-all duration-200',
                 isDarkMode
-                  ? 'border-slate-800/50 bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-900/40 hover:border-blue-500/30'
-                  : 'border-slate-200/60 bg-gradient-to-br from-slate-50/60 via-blue-50/30 to-slate-50/60 hover:border-blue-400/50'
+                  ? 'border-slate-800/50 bg-gradient-to-br from-slate-800/80 via-slate-800/70 to-slate-800/80 hover:border-blue-500/30'
+                  : 'border-slate-200/60 bg-gradient-to-br from-slate-100/90 via-blue-50/70 to-slate-100/90 hover:border-blue-400/50'
               )}>
                 <div className={cn(
                   'flex items-center justify-between mb-2',
@@ -3534,8 +3954,20 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     isDarkMode ? 'text-slate-200' : 'text-slate-800'
                   )}>
                     <MapPin className="h-3.5 w-3.5" />
-                    Destination Address
+                    Recipient :
                   </h4>
+                  <div className="flex items-center gap-2">
+                    {destinationData.addressType && (
+                      <span className={cn(
+                        'text-xs font-semibold px-3 py-1.5 rounded-full border-2 shadow-sm',
+                        'uppercase tracking-wide',
+                        isDarkMode 
+                          ? 'text-blue-300 bg-blue-500/20 border-blue-400/40 shadow-blue-500/10' 
+                          : 'text-blue-700 bg-blue-50 border-blue-300 shadow-blue-200/50'
+                      )}>
+                        {destinationData.addressType}
+                      </span>
+                    )}
                   <button
                     onClick={handleEditDestination}
               className={cn(
@@ -3549,47 +3981,73 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     Edit
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Concern Person:</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  {/* Line 1: Company name, Concern person */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                      {destinationData.companyName || ''}
+                    </p>
                     <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{destinationData.name}</p>
                 </div>
-                  {destinationData.addressType && (
-                <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Type:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{destinationData.addressType}</p>
+                  
+                  {/* Line 2: Address */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div className="md:col-span-3">
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{renderAddress(destinationData)}</p>
                 </div>
-                  )}
-                  {destinationData.companyName && (
-                <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Company:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{destinationData.companyName}</p>
                 </div>
-                  )}
-                  <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Phone:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>+91 {destinationData.mobileNumber}</p>
+                  
+                  {/* Line 3: Phone, Email, Website */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>+91 {destinationData.mobileNumber}</p>
+                    {destinationData.email && (
+                      <a 
+                        href={`mailto:${destinationData.email}`}
+                        className={cn(
+                          'text-[9px] sm:text-[10px] md:text-xs font-medium underline hover:opacity-80',
+                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                        )}
+                      >
+                        {destinationData.email}
+                      </a>
+                    )}
+                    {destinationData.website && (
+                      <a 
+                        href={destinationData.website.startsWith('http') ? destinationData.website : `https://${destinationData.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cn(
+                          'text-[9px] sm:text-[10px] md:text-xs font-medium underline hover:opacity-80',
+                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                        )}
+                      >
+                        {destinationData.website}
+                      </a>
+                    )}
               </div>
-                  <div className="md:col-span-2">
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Address:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{renderAddress(destinationData)}</p>
-            </div>
-                  {destinationData.email && (
-                  <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Email:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{destinationData.email}</p>
+                  
+                  {/* Line 4: GST, Birthday and Anniversary */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    {destinationData.gstNumber && (
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{destinationData.gstNumber}</p>
+                    )}
+                    {destinationData.birthday && (
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                        {formatDate(destinationData.birthday) || destinationData.birthday}
+                      </p>
+                    )}
+                    {destinationData.anniversary && (
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                        {formatDate(destinationData.anniversary) || destinationData.anniversary}
+                      </p>
+                    )}
                   </div>
-                  )}
+                  
+                  {/* Alternate Numbers - if any */}
                   {destinationAlternates && destinationAlternates.length > 0 && (
-                  <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Alternate:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{destinationAlternates.join(', ')}</p>
-                  </div>
-                  )}
-                  {destinationData.gstNumber && (
-                  <div className="md:col-span-2">
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>GST:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{destinationData.gstNumber}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{destinationAlternates.join(', ')}</p>
                   </div>
                   )}
                 </div>
@@ -3598,81 +4056,78 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               {/* Destination Address Edit Dialog */}
               <Dialog open={editingSection === 'destination'} onOpenChange={(open) => !open && setEditingSection(null)}>
                 <DialogContent className={cn(
-                  'max-w-3xl max-h-[90vh] overflow-y-auto',
+                  'max-w-3xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
                   isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                 )}>
                   <DialogHeader>
                     <DialogTitle className={cn(isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                      Edit Destination Address
+                      Edit Destination 
                     </DialogTitle>
-                    <DialogDescription className={cn(isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                      Update the destination address details
-                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <SimpleInput
+                      <FloatingInput
                         label="Concern Person"
                         value={destinationData.name}
                         onChange={(value) => setDestinationData((prev) => ({ ...prev, name: value }))}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleSelect
+                      <FloatingSelect
                         label="Address Type"
                         value={destinationData.addressType}
                         onChange={(value) => setDestinationData((prev) => ({ ...prev, addressType: value }))}
                         options={addressTypeOptions}
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Company Name"
                         value={destinationData.companyName}
                         onChange={(value) => setDestinationData((prev) => ({ ...prev, companyName: value }))}
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Phone"
                         value={`+91 ${destinationData.mobileNumber}`}
                         onChange={() => {}}
                         disabled
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Email"
                         value={destinationData.email}
                         onChange={(value) => setDestinationData((prev) => ({ ...prev, email: value }))}
                         type="email"
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="GST Number"
                         value={destinationData.gstNumber}
                         onChange={(value) => setDestinationData((prev) => ({ ...prev, gstNumber: value }))}
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Flat, Building"
                         value={destinationData.flatBuilding}
                         onChange={(value) => setDestinationData((prev) => ({ ...prev, flatBuilding: value }))}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Locality"
                         value={destinationData.locality}
                         onChange={(value) => setDestinationData((prev) => ({ ...prev, locality: value }))}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Landmark"
                         value={destinationData.landmark}
                         onChange={(value) => setDestinationData((prev) => ({ ...prev, landmark: value }))}
                         isDarkMode={isDarkMode}
                       />
                       {destinationAreas.length > 0 ? (
-                        <SimpleSelect
+                        <FloatingSelect
                           label="Area"
                           value={destinationData.area}
                           onChange={(value) => setDestinationData((prev) => ({ ...prev, area: value }))}
@@ -3681,7 +4136,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           isDarkMode={isDarkMode}
                         />
                       ) : (
-                        <SimpleInput
+                        <FloatingInput
                           label="Area"
                           value={destinationData.area}
                           onChange={(value) => setDestinationData((prev) => ({ ...prev, area: value }))}
@@ -3689,6 +4144,33 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           isDarkMode={isDarkMode}
                         />
                       )}
+                      <FloatingInput
+                        label="District"
+                        value={destinationData.district}
+                        onChange={(_value) => {}}
+                        disabled
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
+                        label="Website"
+                        value={destinationData.website}
+                        onChange={(value) => setDestinationData((prev) => ({ ...prev, website: value }))}
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
+                        label="Birthday"
+                        value={destinationData.birthday}
+                        onChange={(value) => setDestinationData((prev) => ({ ...prev, birthday: value }))}
+                        type="date"
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
+                        label="Anniversary"
+                        value={destinationData.anniversary}
+                        onChange={(value) => setDestinationData((prev) => ({ ...prev, anniversary: value }))}
+                        type="date"
+                        isDarkMode={isDarkMode}
+                      />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2 mt-6">
@@ -3717,8 +4199,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               <div className={cn(
                 'rounded-lg border p-2.5 transition-all duration-200',
                 isDarkMode
-                  ? 'border-slate-800/50 bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-900/40 hover:border-blue-500/30'
-                  : 'border-slate-200/60 bg-gradient-to-br from-slate-50/60 via-blue-50/30 to-slate-50/60 hover:border-blue-400/50'
+                  ? 'border-slate-800/50 bg-gradient-to-br from-slate-800/80 via-slate-800/70 to-slate-800/80 hover:border-blue-500/30'
+                  : 'border-slate-200/60 bg-gradient-to-br from-slate-100/90 via-blue-50/70 to-slate-100/90 hover:border-blue-400/50'
               )}>
                 <div className={cn(
                   'flex items-center justify-between mb-2',
@@ -3729,7 +4211,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     isDarkMode ? 'text-slate-200' : 'text-slate-800'
                   )}>
                     <Package className="h-3.5 w-3.5" />
-                    Shipment Details
+                    Shipment Details :
               </h4>
                   <button
                     onClick={handleEditShipment}
@@ -3744,86 +4226,125 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     Edit
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                <div className="space-y-2 text-sm">
+                  {/* Line 1: Nature, Insurance, Risk Coverage */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                 <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Nature:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{shipmentDetails.natureOfConsignment}</p>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                        {shipmentDetails.natureOfConsignment === 'DOX' ? 'Document' : 
+                         shipmentDetails.natureOfConsignment === 'NON-DOX' ? 'Parcel' : 
+                         shipmentDetails.natureOfConsignment}
+                      </p>
                 </div>
                 <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Insurance:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{shipmentDetails.insurance}</p>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{shipmentDetails.insurance}</p>
                 </div>
                 <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Risk Coverage:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{shipmentDetails.riskCoverage}</p>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{shipmentDetails.riskCoverage}</p>
                 </div>
-                {shipmentDetails.insurance === 'With insurance' && (
-                  <>
+                  </div>
+                  
+                  {/* Line 2: Package, Material, Description */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Insurance Company:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{shipmentDetails.packagesCount}</p>
+                    </div>
+                    <div>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                        {shipmentDetails.materials}
+                        {shipmentDetails.materials === 'Others' && shipmentDetails.others && ` (${shipmentDetails.others})`}
+                      </p>
+                    </div>
+                    <div>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                        {shipmentDetails.description || '—'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Line 3: Actual Weight, Volumetric Weight, Chargeable Weight */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                      <span className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-gray-600')}>Actual Weight:</span>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{displayActualWeight}</p>
+                    </div>
+                    <div>
+                      <span className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-gray-600')}>Volumetric Weight:</span>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{displayVolumetricWeight}</p>
+                    </div>
+                    <div>
+                      <span className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-400' : 'text-gray-600')}>Chargeable Weight:</span>
+                      <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-blue-300' : 'text-blue-600')}>{displayChargeableWeight}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Insurance Details - if applicable */}
+                {shipmentDetails.insurance === 'With insurance' && (
+                    <div className={cn(
+                      "space-y-2 pt-2 border-t",
+                      isDarkMode ? "border-slate-700/30" : "border-slate-300/30"
+                    )}>
+                      {/* Line 1: Company, Policy Number, Premium Amount */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                          <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
                         {shipmentDetails.insuranceCompanyName || 'Pending'}
                       </p>
                     </div>
                     <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Policy Number:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                          <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
                         {shipmentDetails.insurancePolicyNumber || 'Pending'}
                       </p>
                     </div>
                     <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Policy Date:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
-                        {shipmentDetails.insurancePolicyDate || 'Pending'}
+                          <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                            {shipmentDetails.insurancePremiumAmount || 'Not provided'}
+                      </p>
+                    </div>
+                      </div>
+                      
+                      {/* Line 2: Policy Date, Policy Valid Upto, Document */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <div>
+                          <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                            {shipmentDetails.insurancePolicyDate || 'Pending'}
                       </p>
                     </div>
                     <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Premium Amount:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
-                        {shipmentDetails.insurancePremiumAmount || 'Not provided'}
+                          <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
+                            {shipmentDetails.insuranceValidUpto || 'Pending'}
                       </p>
                     </div>
-                    <div className="md:col-span-2">
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Document:</span>
-                      <p className={cn('font-medium break-words', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                            <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium break-words', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>
                         {shipmentDetails.insuranceDocumentName || 'Pending'}
                       </p>
+                        {shipmentDetails.insuranceDocument && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (shipmentDetails.insuranceDocument) {
+                                const url = URL.createObjectURL(shipmentDetails.insuranceDocument);
+                                setDocumentPreviewUrl(url);
+                                setDocumentPreviewOpen(true);
+                              }
+                            }}
+                            className={cn(
+                              'p-1 rounded transition-colors flex-shrink-0',
+                              isDarkMode
+                                ? 'text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
+                                : 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'
+                            )}
+                            title="Preview document"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </>
-                )}
-                <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Packages:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{shipmentDetails.packagesCount}</p>
                   </div>
-                  <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Materials:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{shipmentDetails.materials}</p>
-                  </div>
-                <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Actual Weight:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{displayActualWeight}</p>
-                  </div>
-                  <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Volumetric Weight:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{displayVolumetricWeight}</p>
-                  </div>
-                  <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Chargeable Weight:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-blue-300' : 'text-blue-600')}>{displayChargeableWeight}</p>
-                  </div>
-                  {shipmentDetails.length && shipmentDetails.width && shipmentDetails.height && (
-                    <div>
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Dimensions:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
-                    {shipmentDetails.length} × {shipmentDetails.width} × {shipmentDetails.height} cm
-                  </p>
                 </div>
-                  )}
-                  {shipmentDetails.description && (
-                    <div className="md:col-span-2">
-                      <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Description:</span>
-                      <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{shipmentDetails.description}</p>
-                    </div>
                   )}
               </div>
             </div>
@@ -3831,28 +4352,30 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               {/* Shipment Details Edit Dialog */}
               <Dialog open={editingSection === 'shipment'} onOpenChange={(open) => !open && setEditingSection(null)}>
                 <DialogContent className={cn(
-                  'max-w-2xl max-h-[90vh] overflow-y-auto',
+                  'max-w-2xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
                   isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                 )}>
                   <DialogHeader>
                     <DialogTitle className={cn(isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
                       Edit Shipment Details
                     </DialogTitle>
-                    <DialogDescription className={cn(isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                      Update the shipment details
-                    </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <SimpleSelect
+                      <FloatingSelect
                         label="Nature of Consignment"
-                        value={shipmentDetails.natureOfConsignment}
-                        onChange={(value) => setShipmentDetails((prev) => ({ ...prev, natureOfConsignment: value }))}
-                        options={natureOptions.map(opt => opt.value)}
+                        value={shipmentDetails.natureOfConsignment === 'DOX' ? 'Document' : 
+                               shipmentDetails.natureOfConsignment === 'NON-DOX' ? 'Parcel' : 
+                               shipmentDetails.natureOfConsignment}
+                        onChange={(value) => {
+                          const actualValue = value === 'Document' ? 'DOX' : value === 'Parcel' ? 'NON-DOX' : value;
+                          setShipmentDetails((prev) => ({ ...prev, natureOfConsignment: actualValue }));
+                        }}
+                        options={['Document', 'Parcel']}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleSelect
+                      <FloatingSelect
                         label="Insurance"
                         value={shipmentDetails.insurance}
                         onChange={(value) => handleInsuranceSelection(value)}
@@ -3860,29 +4383,162 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleSelect
+                      <FloatingSelect
                         label="Risk Coverage"
                         value={shipmentDetails.riskCoverage}
                         onChange={(value) => setShipmentDetails((prev) => ({ ...prev, riskCoverage: value }))}
                         options={riskCoverageOptions.map(opt => opt.value)}
                         required
+                        disabled={true}
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
-                        label="Materials"
-                        value={shipmentDetails.materials}
-                        onChange={(value) => setShipmentDetails((prev) => ({ ...prev, materials: value }))}
+                      
+                      {/* Insurance Details - shown when insurance is "With insurance" */}
+                      {shipmentDetails.insurance === 'With insurance' && (
+                        <>
+                          <FloatingInput
+                            label="Insurance Company Name"
+                            value={shipmentDetails.insuranceCompanyName}
+                            onChange={(value) => setShipmentDetails((prev) => ({ ...prev, insuranceCompanyName: value }))}
+                            required
+                            isDarkMode={isDarkMode}
+                          />
+                          <FloatingInput
+                            label="Policy Number"
+                            value={shipmentDetails.insurancePolicyNumber}
+                            onChange={(value) => setShipmentDetails((prev) => ({ ...prev, insurancePolicyNumber: value }))}
+                            required
+                            isDarkMode={isDarkMode}
+                          />
+                          <FloatingInput
+                            label="Policy Date"
+                            type="date"
+                            value={shipmentDetails.insurancePolicyDate}
+                            onChange={(value) => setShipmentDetails((prev) => ({ ...prev, insurancePolicyDate: value }))}
+                            required
+                            isDarkMode={isDarkMode}
+                          />
+                          <FloatingInput
+                            label="Policy Valid Upto"
+                            type="date"
+                            value={shipmentDetails.insuranceValidUpto}
+                            onChange={(value) => setShipmentDetails((prev) => ({ ...prev, insuranceValidUpto: value }))}
+                            required
+                            isDarkMode={isDarkMode}
+                          />
+                          <FloatingInput
+                            label="Premium Amount"
+                            value={shipmentDetails.insurancePremiumAmount}
+                            onChange={(value) => setShipmentDetails((prev) => ({ ...prev, insurancePremiumAmount: value }))}
+                            isDarkMode={isDarkMode}
+                          />
+                          <div className="md:col-span-2">
+                            <label
+                              className={cn(
+                                'text-xs font-normal block mb-2',
+                                isDarkMode ? 'text-slate-200' : 'text-slate-700'
+                              )}
+                            >
+                              Upload Policy Document :<span className="text-red-500 ml-1">*</span>
+                            </label>
+                            <div
+                              className={cn(
+                                'border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors',
+                                isDarkMode
+                                  ? 'border-slate-700 bg-slate-800/40 hover:border-blue-500/50'
+                                  : 'border-slate-300 bg-slate-50 hover:border-blue-400'
+                              )}
+                            >
+                              <input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                className="hidden"
+                                id="insurance-document-edit"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setShipmentDetails((prev) => ({
+                                      ...prev,
+                                      insuranceDocument: file,
+                                      insuranceDocumentName: file.name
+                                    }));
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor="insurance-document-edit"
+                                className="cursor-pointer"
+                              >
+                                {shipmentDetails.insuranceDocumentName ? (
+                                  <p className={cn('text-sm', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                                    {shipmentDetails.insuranceDocumentName}
+                                  </p>
+                                ) : (
+                                  <p className={cn('text-sm', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
+                                    Click to upload document
+                                  </p>
+                                )}
+                              </label>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      <FloatingInput
+                        label="No. of Packages"
+                        value={shipmentDetails.packagesCount}
+                        onChange={(value) => setShipmentDetails((prev) => ({ ...prev, packagesCount: sanitizeInteger(value) }))}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <div className="md:col-span-2">
+                        <FloatingSelect
+                          label="Package Type"
+                        value={shipmentDetails.materials}
+                          onChange={(value) => setShipmentDetails((prev) => ({ 
+                            ...prev, 
+                            materials: value,
+                            others: value === 'Others' ? prev.others : ''
+                          }))}
+                          options={packageTypeOptions.map(opt => opt.value)}
+                        required
+                        isDarkMode={isDarkMode}
+                      />
+                      </div>
+                      {shipmentDetails.materials === 'Others' && (
+                        <FloatingInput
+                          label="Others - Specify"
+                          value={shipmentDetails.others}
+                          onChange={(value) => setShipmentDetails((prev) => ({ ...prev, others: value }))}
+                          required
+                          isDarkMode={isDarkMode}
+                          className="md:col-span-2"
+                        />
+                      )}
+                      <FloatingInput
+                        label="Length (cm)"
+                        value={shipmentDetails.length}
+                        onChange={(value) => setShipmentDetails((prev) => ({ ...prev, length: sanitizeDecimal(value) }))}
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
+                        label="Width (cm)"
+                        value={shipmentDetails.width}
+                        onChange={(value) => setShipmentDetails((prev) => ({ ...prev, width: sanitizeDecimal(value) }))}
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
+                        label="Height (cm)"
+                        value={shipmentDetails.height}
+                        onChange={(value) => setShipmentDetails((prev) => ({ ...prev, height: sanitizeDecimal(value) }))}
+                        isDarkMode={isDarkMode}
+                      />
+                      <FloatingInput
                         label="Actual Weight (kg)"
                         value={shipmentDetails.weight}
                         onChange={(value) => setShipmentDetails((prev) => ({ ...prev, weight: sanitizeDecimal(value) }))}
-                        required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleInput
+                      <FloatingInput
                         label="Description"
                         value={shipmentDetails.description}
                         onChange={(value) => setShipmentDetails((prev) => ({ ...prev, description: value }))}
@@ -3917,8 +4573,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                 <div className={cn(
                   'rounded-lg border p-2.5 transition-all duration-200',
                   isDarkMode
-                    ? 'border-slate-800/50 bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-900/40 hover:border-blue-500/30'
-                    : 'border-slate-200/60 bg-gradient-to-br from-slate-50/60 via-blue-50/30 to-slate-50/60 hover:border-blue-400/50'
+                    ? 'border-slate-800/50 bg-gradient-to-br from-slate-800/80 via-slate-800/70 to-slate-800/80 hover:border-blue-500/30'
+                    : 'border-slate-200/60 bg-gradient-to-br from-slate-100/90 via-blue-50/70 to-slate-100/90 hover:border-blue-400/50'
                 )}>
                   <div className={cn(
                     'flex items-center justify-between mb-2',
@@ -3929,7 +4585,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode ? 'text-slate-200' : 'text-slate-800'
                     )}>
                       <Image className="h-3.5 w-3.5" />
-                  Package Images
+                  Package Images :
                 </h4>
                     <button
                       onClick={handleEditPackage}
@@ -3944,7 +4600,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       Edit
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className={cn(
+                    "grid gap-2",
+                    imagePreviews.length === 3 ? "grid-cols-3" :
+                    imagePreviews.length === 4 ? "grid-cols-4" :
+                    "grid-cols-5"
+                  )}>
                   {imagePreviews.map((preview, index) => (
                     <div
                       key={index}
@@ -3967,7 +4628,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
             {/* Package Images Edit Dialog */}
             <Dialog open={editingSection === 'package'} onOpenChange={(open) => !open && setEditingSection(null)}>
               <DialogContent className={cn(
-                'max-w-2xl max-h-[90vh] overflow-y-auto',
+                'max-w-2xl max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
                 isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
               )}>
                 <DialogHeader>
@@ -3975,15 +4636,24 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     Edit Package Images
                   </DialogTitle>
                   <DialogDescription className={cn(isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                    Add or remove package images (Maximum 5 images)
+                    (Maximum 5 images)
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 mt-4">
+                  <div
+                    className={cn(
+                      'flex flex-wrap items-center gap-2 rounded-md border p-2',
+                      isDarkMode
+                        ? 'border-slate-700 bg-slate-800/50'
+                        : 'border-slate-300 bg-slate-50'
+                    )}
+                  >
                   <input
-                    type="file"
                     id="image-upload-edit"
+                      type="file"
                     accept="image/*"
                     multiple
+                      className="hidden"
                     onChange={(e) => {
                       const files = Array.from(e.target.files || []);
                       if (files.length + uploadedImages.length > 5) {
@@ -4005,26 +4675,61 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                         reader.readAsDataURL(file);
                       });
                     }}
-                    className="hidden"
                   />
                   <label
                     htmlFor="image-upload-edit"
                     className={cn(
-                      'flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer transition-all',
+                        'cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
                       isDarkMode
-                        ? 'border-slate-700 bg-slate-800/40 hover:border-blue-500/50'
-                        : 'border-slate-300 bg-slate-50 hover:border-blue-400'
+                          ? 'bg-blue-500 text-white hover:bg-blue-600'
+                          : 'bg-blue-500 text-white hover:bg-blue-600'
                     )}
                   >
-                    <Upload className={cn('w-5 h-5 mb-1', isDarkMode ? 'text-slate-400' : 'text-slate-500')} />
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-300' : 'text-slate-600')}>Add more images</span>
+                      Select Images
                   </label>
-                  <div className="grid grid-cols-3 gap-2">
+                    <div className="min-w-0 flex-1 text-xs">
+                      <p className={cn('truncate', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                        {uploadedImages.length > 0 
+                          ? `${uploadedImages.length} image${uploadedImages.length !== 1 ? 's' : ''} selected`
+                          : 'No images selected'}
+                      </p>
+                      <p className={cn('text-[10px]', isDarkMode ? 'text-slate-500' : 'text-slate-500')}>
+                        Accepted formats: JPG, PNG. Max 5 images.
+                      </p>
+                    </div>
+                    {uploadedImages.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUploadedImages([]);
+                          setImagePreviews([]);
+                        }}
+                        className={cn(
+                          'rounded-md px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5',
+                          isDarkMode
+                            ? 'bg-red-500/90 text-white hover:bg-red-600'
+                            : 'bg-red-500 text-white hover:bg-red-600'
+                        )}
+                      >
+                        <XCircle className="w-3 h-3" />
+                        Remove All
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Image Previews Grid */}
+                  {imagePreviews.length > 0 && (
+                    <div className={cn(
+                      "grid gap-2 mt-2",
+                      imagePreviews.length === 3 ? "grid-cols-3" :
+                      imagePreviews.length === 4 ? "grid-cols-4" :
+                      "grid-cols-5"
+                    )}>
                     {imagePreviews.map((preview, index) => (
                       <div
                         key={index}
                         className={cn(
-                          'relative group overflow-hidden rounded border',
+                            'relative group rounded-lg overflow-hidden border',
                           isDarkMode ? 'border-slate-700' : 'border-slate-200'
                         )}
                       >
@@ -4053,6 +4758,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
           </div>
                     ))}
                   </div>
+                  )}
                 </div>
                 <div className="flex justify-end gap-2 mt-6">
                   <Button
@@ -4080,8 +4786,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               <div className={cn(
                 'rounded-lg border p-2.5 transition-all duration-200',
                 isDarkMode
-                  ? 'border-slate-800/50 bg-gradient-to-br from-slate-900/40 via-slate-900/30 to-slate-900/40 hover:border-blue-500/30'
-                  : 'border-slate-200/60 bg-gradient-to-br from-slate-50/60 via-blue-50/30 to-slate-50/60 hover:border-blue-400/50'
+                  ? 'border-slate-800/50 bg-gradient-to-br from-slate-800/80 via-slate-800/70 to-slate-800/80 hover:border-blue-500/30'
+                  : 'border-slate-200/60 bg-gradient-to-br from-slate-100/90 via-blue-50/70 to-slate-100/90 hover:border-blue-400/50'
               )}>
                 <div className={cn(
                   'flex items-center justify-between mb-2',
@@ -4092,7 +4798,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     isDarkMode ? 'text-slate-200' : 'text-slate-800'
                   )}>
                     <Truck className="h-3.5 w-3.5" />
-                    Shipping & Pricing
+                    Pricing :
                   </h4>
                   <button
                     onClick={handleEditShipping}
@@ -4107,17 +4813,14 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     Edit
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                  <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Mode:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{modeLabelMap[selectedMode]}</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm items-center">
+                  <div className="flex items-center">
+                    <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{modeLabelMap[selectedMode]}</p>
                   </div>
-                  <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Service:</span>
-                    <p className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>{serviceLabel}</p>
+                  <div className="flex items-center">
+                    <p className={cn('text-[9px] sm:text-[10px] md:text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-[#4B5563]')}>{serviceLabel}</p>
                   </div>
-                  <div>
-                    <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Price:</span>
+                  <div className="flex items-center">
                     <p className={cn('text-lg font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>{formattedPrice}</p>
                   </div>
                 </div>
@@ -4126,57 +4829,58 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               {/* Shipping & Pricing Edit Dialog */}
               <Dialog open={editingSection === 'shipping'} onOpenChange={(open) => !open && setEditingSection(null)}>
                 <DialogContent className={cn(
-                  'max-w-xl max-h-[90vh] overflow-y-auto',
+                  'max-w-md max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
                   isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
                 )}>
                   <DialogHeader>
                     <DialogTitle className={cn(isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
                       Edit Shipping & Pricing
                     </DialogTitle>
-                    <DialogDescription className={cn(isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-                      Update the shipping service type
-                    </DialogDescription>
                   </DialogHeader>
-                  <div className="space-y-4 mt-4">
-                    <div className="grid grid-cols-1 gap-4">
-                      <SimpleSelect
+                  <div className="space-y-3 mt-3">
+                    <div className="grid grid-cols-1 gap-3">
+                      <FloatingSelect
                         label="Shipping Mode"
-                        value={selectedMode}
+                        value={selectedMode === 'byAir' ? 'By Air' : selectedMode === 'byTrain' ? 'By Train' : selectedMode === 'byRoad' ? 'By Road' : selectedMode}
                         onChange={(value) => {
-                          setSelectedMode(value as 'byAir' | 'byTrain' | 'byRoad');
+                          const actualValue = value === 'By Air' ? 'byAir' : value === 'By Train' ? 'byTrain' : value === 'By Road' ? 'byRoad' : value;
+                          setSelectedMode(actualValue as 'byAir' | 'byTrain' | 'byRoad');
                           setSelectedServiceType(''); // Reset service type when mode changes
                         }}
                         options={[
-                          ...(availableModes?.byAir ? ['byAir'] : []),
-                          ...(availableModes?.byTrain ? ['byTrain'] : []),
-                          ...(availableModes?.byRoad ? ['byRoad'] : [])
+                          ...(availableModes?.byAir ? ['By Air'] : []),
+                          ...(availableModes?.byTrain ? ['By Train'] : []),
+                          ...(availableModes?.byRoad ? ['By Road'] : [])
                         ]}
                         required
                         isDarkMode={isDarkMode}
                       />
-                      <SimpleSelect
+                      <FloatingSelect
                         label="Service Type"
-                        value={selectedServiceType}
-                        onChange={(value) => setSelectedServiceType(value as 'standard' | 'priority')}
+                        value={selectedServiceType === 'priority' ? 'PRIORITY' : selectedServiceType === 'standard' ? 'STANDARD' : selectedServiceType}
+                        onChange={(value) => {
+                          const actualValue = value === 'PRIORITY' ? 'priority' : value === 'STANDARD' ? 'standard' : value;
+                          setSelectedServiceType(actualValue as 'standard' | 'priority');
+                        }}
                         options={[
-                          ...(availableServiceTypes?.standard ? ['standard'] : []),
-                          ...(availableServiceTypes?.priority ? ['priority'] : [])
+                          ...(availableServiceTypes?.standard ? ['STANDARD'] : []),
+                          ...(availableServiceTypes?.priority ? ['PRIORITY'] : [])
                         ]}
                         required
                         isDarkMode={isDarkMode}
                       />
                       <div className={cn(
-                        'p-4 rounded-lg border',
+                        'p-3 rounded-lg border flex items-center gap-2',
                         isDarkMode
                           ? 'border-slate-700 bg-slate-800/50'
                           : 'border-slate-200 bg-slate-50'
                       )}>
-                        <span className={cn('text-xs block mb-1', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Price:</span>
-                        <p className={cn('text-2xl font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>{formattedPrice}</p>
+                        <span className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>Price:</span>
+                        <p className={cn('text-base font-bold', isDarkMode ? 'text-green-400' : 'text-green-600')}>{formattedPrice}</p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2 mt-6">
+                  <div className="flex justify-end gap-2 mt-4">
                     <Button
                       variant="outline"
                       onClick={() => setEditingSection(null)}
@@ -4199,23 +4903,23 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               </Dialog>
           </div>
 
-            <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-between">
+            <div className="flex flex-col gap-3 sm:gap-4 pt-2 sm:flex-row sm:justify-between">
             <Button
               onClick={handlePreviousStep}
-              variant="outline"
               className={cn(
-                'sm:w-auto',
+                'w-full sm:w-auto px-6',
                 isDarkMode
-                  ? 'border-slate-700 bg-slate-800/50 text-slate-200 hover:bg-slate-700 hover:border-slate-600'
-                  : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  : 'bg-blue-500 hover:bg-blue-600 text-white'
               )}
             >
+              <ArrowLeft className="mr-2 h-4 w-4" />
               Back
             </Button>
             <Button
               onClick={handleNextStep}
               className={cn(
-                'sm:w-auto px-6',
+                'w-full sm:w-auto px-6',
                 isDarkMode
                   ? 'bg-green-500 hover:bg-green-600 text-white'
                   : 'bg-green-500 hover:bg-green-600 text-white'
@@ -4242,21 +4946,15 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       >
         <DialogContent
           className={cn(
-            'max-w-xl',
+            'max-w-xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
             isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
           )}
         >
           <DialogHeader>
-            <DialogTitle className={cn(isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-              Insurance Details
-            </DialogTitle>
-            <DialogDescription className={cn(isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
-              Provide the insurance policy information for this shipment.
-            </DialogDescription>
           </DialogHeader>
           <div className="mt-4 space-y-4">
-            <SimpleInput
-              label="Company Name"
+            <FloatingInput
+              label="Company Name :"
               value={insuranceForm.companyName}
               onChange={(value) => {
                 setInsuranceForm((prev) => ({ ...prev, companyName: value }));
@@ -4265,8 +4963,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               required
               isDarkMode={isDarkMode}
             />
-            <SimpleInput
-              label="Policy Number"
+            <FloatingInput
+              label="Policy No. :"
               value={insuranceForm.policyNumber}
               onChange={(value) => {
                 setInsuranceForm((prev) => ({ ...prev, policyNumber: value }));
@@ -4275,8 +4973,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               required
               isDarkMode={isDarkMode}
             />
-            <SimpleInput
-              label="Policy Date"
+            <FloatingInput
+              label="Policy Date :"
               type="date"
               value={insuranceForm.policyDate}
               onChange={(value) => {
@@ -4286,23 +4984,90 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               required
               isDarkMode={isDarkMode}
             />
-            <SimpleInput
-              label="Premium Amount (Optional)"
-              value={insuranceForm.premiumAmount}
+            <FloatingInput
+              label="Policy Date Valid Upto :"
+              type="date"
+              value={insuranceForm.validUpto}
               onChange={(value) => {
-                setInsuranceForm((prev) => ({ ...prev, premiumAmount: sanitizeDecimal(value) }));
+                setInsuranceForm((prev) => ({ ...prev, validUpto: value }));
+                if (insuranceFormError) setInsuranceFormError('');
               }}
-              placeholder="Enter amount if applicable"
+              required
               isDarkMode={isDarkMode}
             />
+            <div className="relative">
+              <div className="relative">
+                {isPremiumAmountFocused && (
+                  <div className={cn(
+                    "absolute left-3 top-1/2 transform -translate-y-1/2 z-10 text-sm font-medium",
+                    isDarkMode ? "text-slate-300" : "text-slate-700"
+                  )}>
+                    ₹
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={insuranceForm.premiumAmount}
+                  onChange={(e) => {
+                    const value = sanitizeDecimal(e.target.value);
+                    setInsuranceForm((prev) => ({ ...prev, premiumAmount: value }));
+                  }}
+                  onFocus={() => setIsPremiumAmountFocused(true)}
+                  onBlur={(e) => {
+                    setIsPremiumAmountFocused(false);
+                    // Add .00 if number doesn't have decimal places
+                    const value = insuranceForm.premiumAmount.trim();
+                    if (value && !value.includes('.')) {
+                      setInsuranceForm((prev) => ({ ...prev, premiumAmount: `${value}.00` }));
+                    }
+                  }}
+                  className={cn(
+                    "w-full h-10 border rounded-xl transition-all duration-200 ease-in-out text-xs",
+                    isPremiumAmountFocused ? "pl-8" : "pl-3",
+                    "pr-3",
+                    isDarkMode 
+                      ? "bg-slate-800/60 border-slate-700 text-slate-100 placeholder:text-slate-400" 
+                      : "bg-white/90 border-gray-300/60 text-[#4B5563] placeholder:text-[#4B5563]",
+                    isPremiumAmountFocused 
+                      ? isDarkMode
+                        ? "border-blue-500 ring-2 ring-blue-500/20 shadow-lg"
+                        : "border-blue-500 ring-2 ring-blue-200 shadow-md"
+                      : isDarkMode
+                        ? "hover:border-blue-400/50"
+                        : "hover:border-blue-400/50 hover:shadow-sm",
+                    "focus:outline-none"
+                  )}
+                  placeholder=""
+                />
+                <label
+                  className={cn(
+                    "absolute transition-all duration-200 ease-in-out pointer-events-none select-none",
+                    isPremiumAmountFocused ? "left-8" : "left-4",
+                    (isPremiumAmountFocused || insuranceForm.premiumAmount.length > 0)
+                      ? "top-0 -translate-y-1/2 text-xs px-2"
+                      : "top-1/2 -translate-y-1/2 text-xs",
+                    (isPremiumAmountFocused || insuranceForm.premiumAmount.length > 0)
+                      ? isDarkMode 
+                        ? "bg-slate-900 text-blue-400" 
+                        : "bg-white text-blue-600"
+                      : isDarkMode 
+                        ? "text-slate-400" 
+                        : "text-gray-500",
+                    isPremiumAmountFocused && insuranceForm.premiumAmount.length === 0 && (isDarkMode ? "text-blue-400" : "text-blue-600")
+                  )}
+                >
+                  Premium Amount :
+                </label>
+              </div>
+            </div>
             <div className="space-y-2">
               <label
                 className={cn(
-                  'text-sm font-normal block',
+                  'text-xs font-normal block',
                   isDarkMode ? 'text-slate-200' : 'text-slate-700'
                 )}
               >
-                Upload Document<span className="text-red-500 ml-1">*</span>
+                Upload Policy Document :<span className="text-red-500 ml-1">*</span>
               </label>
               <div
                 className={cn(
@@ -4340,16 +5105,41 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                 </label>
                 <div className="min-w-0 flex-1 text-sm">
                   <p className={cn('truncate', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
-                    {insuranceForm.documentName || 'No file selected'}
+                    {insuranceForm.documentName || 'No file selected !'}
                   </p>
                   <p className={cn('text-xs', isDarkMode ? 'text-slate-500' : 'text-slate-500')}>
-                    Accepted formats: PDF, JPG, PNG
+                    Accepted formats: PDF, JPG, PNG.
                   </p>
                 </div>
                 {insuranceForm.document && (
+                  <>
                   <button
                     type="button"
                     onClick={() => {
+                        if (insuranceForm.document) {
+                          const url = URL.createObjectURL(insuranceForm.document);
+                          setDocumentPreviewUrl(url);
+                          setDocumentPreviewOpen(true);
+                        }
+                      }}
+                      className={cn(
+                        'rounded-md px-3 py-2 text-sm font-medium transition-colors flex items-center gap-2',
+                        isDarkMode
+                          ? 'bg-blue-500/90 text-white hover:bg-blue-600'
+                          : 'bg-blue-500 text-white hover:bg-blue-600'
+                      )}
+                    >
+                      <Eye className="w-4 h-4" />
+                      Preview
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (documentPreviewUrl) {
+                          URL.revokeObjectURL(documentPreviewUrl);
+                          setDocumentPreviewUrl(null);
+                        }
+                        setDocumentPreviewOpen(false);
                       setInsuranceForm((prev) => ({
                         ...prev,
                         document: null,
@@ -4365,6 +5155,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                   >
                     Remove
                   </button>
+                  </>
                 )}
               </div>
             </div>
@@ -4402,63 +5193,166 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         </DialogContent>
       </Dialog>
 
+      {/* Document Preview Dialog */}
+      <Dialog open={documentPreviewOpen} onOpenChange={handleClosePreview}>
+        <DialogContent className={cn(
+          'max-w-4xl max-h-[90vh] overflow-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]',
+          isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        )}>
+          <DialogHeader>
+            <DialogTitle className={cn(isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
+              Preview
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-4 max-h-[70vh] overflow-auto">
+            {documentPreviewUrl && (() => {
+              const document = insuranceForm.document || shipmentDetails.insuranceDocument;
+              // Check if it's a document (File object) or an image URL string
+              if (document) {
+                // It's a document file
+                return document.type === 'application/pdf' ? (
+                  <iframe
+                    src={documentPreviewUrl}
+                    className="w-full h-[600px] border rounded-lg"
+                    title="Document Preview"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <img
+                      src={documentPreviewUrl}
+                      alt="Document Preview"
+                      className="max-w-full max-h-[600px] object-contain rounded-lg"
+                    />
+                  </div>
+                );
+              } else {
+                // It's an image URL string (from imagePreviews)
+                return (
+                  <div className="flex items-center justify-center">
+                    <img
+                      src={documentPreviewUrl}
+                      alt="Image Preview"
+                      className="max-w-full max-h-[600px] object-contain rounded-lg"
+                    />
+                  </div>
+                );
+              }
+            })()}
+          </div>
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={handleClosePreview}
+              className={cn(
+                isDarkMode
+                  ? 'border-slate-700 text-slate-300 hover:bg-slate-800'
+                  : 'border-slate-300 text-slate-700 hover:bg-slate-50'
+              )}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Phone Modal */}
       <Dialog open={phoneModalOpen.type !== null} onOpenChange={() => {}}>
         <DialogContent 
           className={cn(
-            "max-w-2xl [&>button]:hidden",
-          isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
+            "w-[95vw] sm:w-auto max-w-[400px] sm:max-w-[460px] md:max-w-[530px] [&>button]:hidden px-3 sm:px-4 md:px-4 py-3 sm:py-4 md:py-5 mx-auto rounded-2xl sm:rounded-xl md:rounded-lg [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
+            isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
           )}
           onInteractOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
-          <DialogHeader>
+          <DialogHeader className="pb-0 px-0">
             <DialogTitle className={cn(
+              "text-sm sm:text-base md:text-lg font-semibold text-left leading-tight mb-0",
               isDarkMode ? "text-slate-100" : "text-slate-900"
             )}>
-              {phoneModalOpen.type === 'origin' ? 'Origin' : 'Destination'} - Phone Number
+              {phoneModalOpen.type === 'origin' ? 'Sender' : 'Recipient'} - Phone No.
             </DialogTitle>
-            <DialogDescription className={cn(
-              isDarkMode ? "text-slate-400" : "text-slate-600"
-            )}>
-              Enter Phone No. to proceed with Your Consignment details.
-            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 mt-6">
-            <div className="space-y-4">
-              <div className="text-center">
-                <label className={cn(
-                  "text-base font-semibold block mb-1",
-                  isDarkMode ? "text-slate-200" : "text-slate-800"
-                )}>
-                </label>
-                <p className={cn(
-                  "text-xs mt-1",
-                  isDarkMode ? "text-slate-400" : "text-slate-500"
-                )}>
-                  Enter Your 10-digit Mobile No.
-                </p>
-              </div>
-              
-              <div className="flex items-center justify-center gap-2 px-4 py-4">
+          <div className="flex items-center justify-start gap-0.5 sm:gap-2 md:gap-1.5 px-0 py-1.5 sm:py-3 md:py-2 w-full overflow-hidden">
                 {/* Country Code */}
                 <div className={cn(
-                  "flex items-center justify-center h-12 w-14 rounded-lg border-2 transition-all duration-200 flex-shrink-0",
+                  "flex items-center justify-center gap-1 h-8 sm:h-11 md:h-10 w-auto sm:w-auto md:w-auto px-1.5 sm:px-2 md:px-2.5 rounded-md border-2 transition-all duration-200 flex-shrink-0",
                   isDarkMode
                     ? "border-slate-700 bg-slate-800/60 text-slate-300"
                     : "border-slate-200 bg-slate-50 text-slate-700 shadow-sm"
                 )}>
-                  <span className="text-sm font-bold">+91</span>
+                  <svg 
+                    className="w-3 h-2 sm:w-4 sm:h-3 md:w-5 md:h-3.5 flex-shrink-0" 
+                    viewBox="0 0 122.88 85.48" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <style>{`.st0{fill:#128807;}.st1{fill:#FF9933;}.st2{fill:#FFFFFF;}.st3{fill:#000088;}`}</style>
+                    <path className="st1" d="M6.71,0h109.46c3.7,0.02,6.71,3.05,6.71,6.75v71.98c0,3.71-3.04,6.75-6.75,6.75l-109.42,0 C3.02,85.46,0,82.43,0,78.73V6.75C0,3.05,3.01,0.02,6.71,0L6.71,0z"/>
+                    <polygon className="st2" points="0,28.49 122.88,28.49 122.88,56.99 0,56.99 0,28.49"/>
+                    <path className="st0" d="M0,56.99h122.88v21.74c0,3.71-3.04,6.75-6.75,6.75l-109.42,0C3.02,85.46,0,82.43,0,78.73V56.99L0,56.99z"/>
+                    <path className="st3" d="M72.84,42.74c0-6.3-5.1-11.4-11.4-11.4s-11.4,5.1-11.4,11.4c0,6.29,5.1,11.4,11.4,11.4 S72.84,49.04,72.84,42.74L72.84,42.74z"/>
+                    <path className="st2" d="M71.41,42.74c0-5.51-4.46-9.97-9.97-9.97s-9.97,4.46-9.97,9.97c0,5.51,4.46,9.97,9.97,9.97 S71.41,48.25,71.41,42.74L71.41,42.74z"/>
+                    <path className="st3" d="M63.43,42.74c0-1.1-0.89-2-1.99-2s-1.99,0.89-1.99,2c0,1.1,0.89,1.99,1.99,1.99S63.43,43.84,63.43,42.74 L63.43,42.74z"/>
+                    <path className="st3" d="M71.82,44.11c0.04-0.27-0.16-0.52-0.43-0.56c-0.27-0.04-0.52,0.16-0.56,0.43s0.16,0.52,0.43,0.56 C71.54,44.57,71.79,44.38,71.82,44.11L71.82,44.11z"/>
+                    <polygon className="st3" points="61.44,52.71 61.78,46.73 61.44,43.88 61.1,46.73 61.44,52.71"/>
+                    <path d="M71.11,46.75c0.11-0.25-0.02-0.55-0.27-0.65c-0.25-0.11-0.55,0.02-0.65,0.27c-0.11,0.25,0.02,0.55,0.27,0.65 C70.72,47.12,71.01,47,71.11,46.75L71.11,46.75z"/>
+                    <polygon points="58.86,52.37 60.74,46.68 61.15,43.84 60.08,46.51 58.86,52.37"/>
+                    <path d="M69.75,49.12c0.17-0.22,0.13-0.53-0.09-0.7c-0.22-0.17-0.53-0.13-0.7,0.09c-0.17,0.22-0.13,0.53,0.09,0.7 C69.27,49.38,69.58,49.33,69.75,49.12L69.75,49.12z"/>
+                    <polygon points="56.45,51.38 59.74,46.37 60.87,43.73 59.15,46.02 56.45,51.38"/>
+                    <path d="M67.81,51.05c0.22-0.17,0.26-0.48,0.09-0.7c-0.17-0.22-0.48-0.26-0.7-0.09c-0.22,0.17-0.26,0.48-0.09,0.7 C67.28,51.17,67.6,51.22,67.81,51.05L67.81,51.05z"/>
+                    <polygon points="54.39,49.79 58.86,45.8 60.63,43.55 58.38,45.32 54.39,49.79"/>
+                    <path d="M65.45,52.42c0.25-0.11,0.38-0.4,0.27-0.65c-0.11-0.25-0.4-0.38-0.65-0.27c-0.25,0.1-0.38,0.4-0.27,0.65 C64.9,52.4,65.19,52.52,65.45,52.42L65.45,52.42z"/>
+                    <polygon points="52.8,47.73 58.16,45.03 60.45,43.31 57.81,44.44 52.8,47.73"/>
+                    <path d="M62.81,53.12c0.27-0.04,0.46-0.29,0.43-0.56c-0.04-0.27-0.29-0.46-0.56-0.43c-0.27,0.04-0.46,0.29-0.43,0.56 C62.28,52.97,62.53,53.16,62.81,53.12L62.81,53.12z"/>
+                    <polygon points="51.81,45.32 57.68,44.1 60.34,43.04 57.5,43.44 51.81,45.32"/>
+                    <path d="M60.07,53.12c0.27,0.04,0.52-0.16,0.56-0.43c0.04-0.27-0.16-0.52-0.43-0.56c-0.27-0.04-0.52,0.16-0.56,0.43 C59.61,52.84,59.8,53.09,60.07,53.12L60.07,53.12z"/>
+                    <polygon points="51.47,42.74 57.45,43.08 60.3,42.74 57.45,42.4 51.47,42.74"/>
+                    <path d="M57.43,52.42c0.25,0.11,0.55-0.02,0.65-0.27s-0.02-0.55-0.27-0.65c-0.25-0.11-0.55,0.02-0.65,0.27 C57.06,52.02,57.18,52.31,57.43,52.42L57.43,52.42z"/>
+                    <polygon points="51.81,40.16 57.5,42.04 60.34,42.45 57.68,41.38 51.81,40.16"/>
+                    <path d="M55.06,51.05c0.22,0.17,0.53,0.13,0.7-0.09c0.17-0.22,0.13-0.53-0.09-0.7c-0.22-0.17-0.53-0.13-0.7,0.09 C54.81,50.57,54.85,50.88,55.06,51.05L55.06,51.05z"/>
+                    <polygon points="52.8,37.75 57.81,41.04 60.45,42.17 58.16,40.45 52.8,37.75"/>
+                    <path d="M53.13,49.12c0.17,0.22,0.48,0.26,0.7,0.09c0.22-0.17,0.26-0.48,0.09-0.7c-0.17-0.22-0.48-0.26-0.7-0.09 C53.01,48.58,52.96,48.9,53.13,49.12L53.13,49.12z"/>
+                    <polygon points="54.39,35.69 58.38,40.16 60.63,41.94 58.86,39.68 54.39,35.69"/>
+                    <path d="M51.76,46.75c0.11,0.25,0.4,0.38,0.65,0.27c0.25-0.11,0.38-0.4,0.27-0.65c-0.11-0.25-0.4-0.38-0.65-0.27 C51.78,46.2,51.66,46.49,51.76,46.75L51.76,46.75z"/>
+                    <polygon points="56.45,34.1 59.15,39.46 60.87,41.75 59.74,39.12 56.45,34.1"/>
+                    <path d="M51.06,44.11c0.04,0.27,0.29,0.46,0.56,0.43c0.27-0.04,0.46-0.29,0.43-0.56c-0.04-0.27-0.29-0.46-0.56-0.43 C51.21,43.58,51.02,43.83,51.06,44.11L51.06,44.11z"/>
+                    <polygon points="58.86,33.11 60.08,38.98 61.15,41.64 60.74,38.8 58.86,33.11"/>
+                    <path d="M51.06,41.37c-0.04,0.27,0.16,0.52,0.43,0.56c0.27,0.04,0.52-0.16,0.56-0.43c0.04-0.27-0.16-0.52-0.43-0.56 C51.34,40.91,51.09,41.1,51.06,41.37L51.06,41.37z"/>
+                    <polygon points="61.44,32.77 61.1,38.75 61.44,41.6 61.78,38.75 61.44,32.77"/>
+                    <path d="M51.77,38.73c-0.11,0.25,0.02,0.55,0.27,0.65c0.25,0.1,0.55-0.02,0.65-0.27c0.11-0.25-0.02-0.55-0.27-0.65 C52.16,38.36,51.87,38.48,51.77,38.73L51.77,38.73z"/>
+                    <polygon points="64.02,33.11 62.14,38.8 61.73,41.64 62.8,38.98 64.02,33.11"/>
+                    <path d="M53.13,36.37c-0.17,0.22-0.13,0.53,0.09,0.7c0.22,0.17,0.53,0.13,0.7-0.09c0.17-0.22,0.13-0.53-0.09-0.7 C53.61,36.11,53.3,36.15,53.13,36.37L53.13,36.37z"/>
+                    <polygon points="66.43,34.1 63.14,39.12 62.01,41.75 63.73,39.46 66.43,34.1"/>
+                    <path d="M55.07,34.43c-0.22,0.17-0.26,0.48-0.09,0.7c0.17,0.22,0.48,0.26,0.7,0.09c0.22-0.17,0.26-0.48,0.09-0.7 S55.28,34.27,55.07,34.43L55.07,34.43z"/>
+                    <polygon points="68.49,35.69 64.02,39.68 62.25,41.94 64.5,40.16 68.49,35.69"/>
+                    <path d="M57.43,33.07c-0.25,0.11-0.37,0.4-0.27,0.65c0.11,0.25,0.4,0.38,0.65,0.27c0.25-0.11,0.38-0.4,0.27-0.65 C57.98,33.08,57.69,32.96,57.43,33.07L57.43,33.07z"/>
+                    <polygon points="70.08,37.75 64.72,40.45 62.43,42.17 65.07,41.04 70.08,37.75"/>
+                    <path d="M60.07,32.36c-0.27,0.04-0.46,0.29-0.43,0.56c0.04,0.27,0.29,0.46,0.56,0.43c0.27-0.04,0.47-0.29,0.43-0.56 C60.6,32.52,60.35,32.32,60.07,32.36L60.07,32.36z"/>
+                    <polygon points="71.07,40.16 65.2,41.38 62.54,42.45 65.38,42.04 71.07,40.16"/>
+                    <path d="M62.81,32.36c-0.27-0.04-0.52,0.16-0.56,0.43c-0.04,0.27,0.16,0.52,0.43,0.56c0.27,0.04,0.52-0.16,0.56-0.43 C63.27,32.65,63.08,32.39,62.81,32.36L62.81,32.36z"/>
+                    <polygon points="71.41,42.74 65.43,42.4 62.58,42.74 65.43,43.08 71.41,42.74"/>
+                    <path d="M65.45,33.07c-0.25-0.11-0.55,0.02-0.65,0.27c-0.11,0.25,0.02,0.55,0.27,0.65c0.25,0.1,0.55-0.02,0.65-0.27 C65.82,33.46,65.7,33.17,65.45,33.07L65.45,33.07z"/>
+                    <polygon points="71.07,45.32 65.38,43.44 62.54,43.04 65.2,44.1 71.07,45.32"/>
+                    <path d="M67.81,34.43c-0.22-0.17-0.53-0.13-0.7,0.09c-0.17,0.22-0.13,0.53,0.09,0.7c0.22,0.17,0.53,0.13,0.7-0.09 C68.07,34.91,68.03,34.6,67.81,34.43L67.81,34.43z"/>
+                    <polygon points="70.08,47.73 65.07,44.44 62.43,43.31 64.72,45.03 70.08,47.73"/>
+                    <path d="M69.75,36.37c-0.17-0.22-0.48-0.26-0.7-0.09s-0.26,0.48-0.09,0.7c0.17,0.22,0.48,0.26,0.7,0.09 C69.87,36.9,69.92,36.58,69.75,36.37L69.75,36.37z"/>
+                    <polygon points="68.49,49.79 64.5,45.32 62.25,43.55 64.02,45.8 68.49,49.79"/>
+                    <path d="M71.12,38.73c-0.11-0.25-0.4-0.38-0.65-0.27s-0.38,0.4-0.27,0.65c0.11,0.25,0.4,0.37,0.65,0.27 C71.1,39.28,71.22,38.99,71.12,38.73L71.12,38.73z"/>
+                    <polygon points="66.43,51.38 63.73,46.02 62.01,43.73 63.14,46.37 66.43,51.38"/>
+                    <path d="M71.82,41.37c-0.04-0.27-0.29-0.46-0.56-0.43c-0.27,0.04-0.46,0.29-0.43,0.56c0.04,0.27,0.29,0.46,0.56,0.43 C71.67,41.9,71.86,41.65,71.82,41.37L71.82,41.37z"/>
+                    <polygon points="64.02,52.37 62.8,46.51 61.73,43.84 62.14,46.68 64.02,52.37"/>
+                  </svg>
+                  <span className="text-[10px] sm:text-base md:text-base font-bold">+91</span>
                 </div>
                 
                 {/* Divider */}
                 <div className={cn(
-                  "h-8 w-px flex-shrink-0",
+                  "h-6 sm:h-9 md:h-8 w-[1px] flex-shrink-0",
                   isDarkMode ? "bg-slate-700" : "bg-slate-200"
                 )} />
                 
                 {/* Phone Number Inputs */}
-                <div className="flex items-center gap-1.5 flex-nowrap">
+                <div className="flex items-center gap-0.5 sm:gap-1.5 md:gap-1 flex-shrink-0 overflow-hidden">
                   {(phoneModalOpen.type === 'origin' ? originMobileDigits : destinationMobileDigits).map((digit, index) => (
                     <input
                       key={index}
@@ -4491,8 +5385,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       }}
                       onFocus={(e) => e.target.select()}
                       className={cn(
-                        "h-12 w-10 rounded-lg border-2 text-center text-lg font-bold transition-all duration-200 flex-shrink-0",
-                        "focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200",
+                        "h-8 sm:h-11 md:h-10 w-7 sm:w-10 md:w-9 rounded-md border-2 text-center text-[10px] sm:text-base md:text-base font-bold transition-all duration-200 flex-shrink-0",
+                        "focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-200",
                         isDarkMode
                           ? digit
                             ? "border-blue-500 bg-blue-500/20 text-blue-200"
@@ -4503,20 +5397,6 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       )}
                     />
                   ))}
-                </div>
-              </div>
-              
-              {/* Helper Text */}
-              <div className={cn(
-                "text-center px-4 py-3 rounded-lg",
-                isDarkMode ? "bg-slate-800/40" : "bg-slate-50"
-              )}>
-                <p className={cn(
-                  "text-xs font-medium",
-                  isDarkMode ? "text-slate-300" : "text-slate-600"
-                )}>
-                </p>
-              </div>
             </div>
           </div>
         </DialogContent>
@@ -4526,7 +5406,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       <Dialog open={formModalOpen.type !== null} onOpenChange={() => {}}>
         <DialogContent 
           className={cn(
-            "max-w-3xl max-h-[90vh] overflow-y-auto p-0 [&>button]:hidden",
+            "w-[90%] sm:w-full max-w-3xl max-h-[90vh] overflow-y-auto p-0 rounded-[15px] [&>button]:hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]",
           isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"
           )}
           onInteractOutside={(e) => e.preventDefault()}
@@ -4535,10 +5415,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
           {!showPreviewInModal ? (
             <>
           {/* Simple Header */}
-          <div className={cn(
-            "px-6 pt-6 pb-4 border-b",
-            isDarkMode ? "border-slate-800" : "border-slate-200"
-          )}>
+          <div className="px-6 pt-6 pb-2">
             <DialogTitle className={cn(
               "text-xl font-bold",
               isDarkMode ? "text-slate-100" : "text-slate-900"
@@ -4558,7 +5435,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                 <>
                   <div className="grid gap-3 md:grid-cols-2">
                     <FloatingInput
-                      label="Concern Person"
+                      label="Concern Person :"
                       value={data.name}
                       onChange={(value) =>
                         isOrigin
@@ -4569,7 +5446,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Mobile Number"
+                      label="Mobile No. :"
                       value={`+91 ${isOrigin ? originMobileDigits.join('') : destinationMobileDigits.join('')}`}
                       onChange={() => {}}
                       disabled
@@ -4577,7 +5454,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Email Address"
+                      label="Email ID :"
                       value={data.email}
                       onChange={(value) =>
                         isOrigin
@@ -4589,7 +5466,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Company Name"
+                      label="Company Name :"
                       value={data.companyName}
                       onChange={(value) =>
                         isOrigin
@@ -4599,7 +5476,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="GST Number"
+                      label="GST No. :"
                       value={data.gstNumber}
                       onChange={(value) =>
                         isOrigin
@@ -4609,7 +5486,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Flat, Housing no., Building, Apartment"
+                      label="Building / Flat No. :"
                       value={data.flatBuilding}
                       onChange={(value) =>
                         isOrigin
@@ -4620,7 +5497,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Area, street, sector"
+                      label="Locality / Street :"
                       value={data.locality}
                       onChange={(value) =>
                         isOrigin
@@ -4631,7 +5508,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Landmark"
+                      label="Landmark :"
                       value={data.landmark}
                       onChange={(value) =>
                         isOrigin
@@ -4697,7 +5574,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Website"
+                      label="Website :"
                       value={data.website}
                       onChange={(value) =>
                         isOrigin
@@ -4707,7 +5584,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Birthday"
+                      label="BirthDay :"
                       value={data.birthday}
                       onChange={(value) =>
                         isOrigin
@@ -4718,7 +5595,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       isDarkMode={isDarkMode}
                     />
                     <FloatingInput
-                      label="Anniversary"
+                      label="Anniversary :"
                       value={data.anniversary}
                       onChange={(value) =>
                         isOrigin
@@ -4766,24 +5643,27 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
             {formModalOpen.type && (() => {
               const isOrigin = formModalOpen.type === 'origin';
               const data = isOrigin ? originData : destinationData;
-              
+
               return (
-                <div className="pt-3 border-t">
+                <div className="pt-3">
                   <div className="flex items-center justify-between mb-3">
+                    <div />
+                    {/* Push to right: justify-end and border styles for button */}
                     <button
                       type="button"
                       onClick={() => addAlternateNumber(formModalOpen.type!)}
                       className={cn(
-                        'h-7 rounded-md border-dashed px-3 text-xs font-medium transition-colors',
+                        'h-7 rounded-md border border-dashed px-4 text-xs font-medium transition-colors flex items-center justify-center ml-auto',
                         isDarkMode
-                          ? 'border-slate-600 text-slate-300 hover:bg-slate-800 hover:border-slate-500'
-                          : 'border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400'
+                          ? 'border-blue-500 text-blue-200 hover:bg-blue-500/20 hover:border-blue-400'
+                          : 'border-blue-400 text-blue-600 hover:bg-blue-50 hover:border-blue-500'
                       )}
+                      style={{ minWidth: 'fit-content' }}
                     >
                       + Add Alternate Number
                     </button>
                   </div>
-                  <div className="space-y-2.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {(data.alternateNumbers || ['']).map((number, index) => (
                       <div key={index} className="flex items-center gap-2">
                         <FloatingInput
@@ -4817,10 +5697,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
           </div>
 
           {/* Footer with Full-Width Button */}
-          <div className={cn(
-            "px-6 py-5 border-t",
-            isDarkMode ? "border-slate-800" : "border-slate-200"
-          )}>
+          <div className="px-6 pt-2 pb-5">
             <Button
               type="button"
               disabled={formModalOpen.type === 'origin' ? !isOriginFormComplete : !isDestinationFormComplete}
@@ -4844,89 +5721,80 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     : "bg-blue-500 hover:bg-blue-600 text-white shadow-sm"
               )}
             >
-              {formModalOpen.type === 'origin' ? "Save Sender's (Consigner)" : 'Save Destination Address'}
+              {formModalOpen.type === 'origin' ? "SAVE " : 'SAVE '}
             </Button>
           </div>
             </>
           ) : (
             // Preview Card View
-            <div className="p-6">
+            <div className="p-3 sm:p-6">
               {formModalOpen.type && (() => {
                 const isOrigin = formModalOpen.type === 'origin';
                 const data = isOrigin ? originData : destinationData;
-                const cardTitle = isOrigin ? 'SELECT PICKUP ADDRESS' : 'SELECT DELIVERY ADDRESS';
+                const cardTitle = isOrigin ? 'Select Sender Add :' : 'Select Recipient Add :';
                 
                 return (
-                  <div className="space-y-4">
-                    {/* Preview Card - Compact Design */}
-                    <div
-                      className={cn(
-                        'rounded-xl border overflow-hidden transition-all duration-300',
-                        isDarkMode
-                          ? 'border-slate-800/60 bg-slate-900/80'
-                          : 'border-slate-200 bg-white'
-                      )}
-                    >
-                      {/* Header */}
-                      <div
+                  <div className="space-y-2 sm:space-y-3">
+                    {/* Title - Outside the box */}
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className={cn(
+                        'text-xs sm:text-sm font-semibold',
+                        isDarkMode ? 'text-slate-200' : 'text-slate-800'
+                      )}>
+                        {cardTitle}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowPreviewInModal(false);
+                        }}
                         className={cn(
-                          'px-4 py-2.5 border-b flex items-center justify-between',
-                          isDarkMode 
-                            ? 'bg-slate-800/60 border-slate-800/60' 
-                            : 'bg-slate-50/80 border-slate-200/60'
+                          'p-1.5 rounded-md transition-colors flex-shrink-0',
+                          isDarkMode
+                            ? 'text-slate-300 hover:bg-slate-700 hover:text-slate-100'
+                            : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                         )}
                       >
-                        <h3 className={cn(
-                          'text-sm font-semibold uppercase tracking-wide',
-                          isDarkMode ? 'text-slate-200' : 'text-slate-800'
-                        )}>
-                          {cardTitle}
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowPreviewInModal(false);
-                          }}
-                          className={cn(
-                            'p-1.5 rounded-md transition-colors',
-                            isDarkMode
-                              ? 'text-slate-300 hover:bg-slate-700 hover:text-slate-100'
-                              : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
-                          )}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                      </div>
-                      
-                      {/* Address Content - Compact */}
-                      <div className="p-4">
-                        <div className="flex items-start gap-3">
+                        <Pencil className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      </button>
+                    </div>
+                    
+                    {/* Address Content - Box Design */}
+                    <div
+                      className={cn(
+                        'rounded-xl border overflow-hidden transition-all duration-300 p-2.5 sm:p-4',
+                        isDarkMode
+                          ? 'border-slate-800/60 bg-slate-900/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)]'
+                          : 'border-slate-200 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.25)]'
+                      )}
+                    >
+                        <div className="flex items-start gap-1.5 sm:gap-3">
                           {/* Radio button */}
                           <div className="mt-0.5 flex-shrink-0">
                             <div className={cn(
-                              'w-4 h-4 rounded-full border-2 flex items-center justify-center',
+                              'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 flex items-center justify-center',
                               isDarkMode ? 'border-blue-500/50' : 'border-blue-400'
                             )}>
                               <div className={cn(
-                                'w-2 h-2 rounded-full',
+                                'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full',
                                 isDarkMode ? 'bg-blue-400' : 'bg-blue-600'
                               )} />
                             </div>
                           </div>
                           
                           {/* Details */}
-                          <div className="flex-1 space-y-2 min-w-0">
+                          <div className="flex-1 space-y-1 sm:space-y-2 min-w-0">
                             {/* Name and Type */}
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
                               <h4 className={cn(
-                                'text-sm font-semibold',
+                                'text-xs sm:text-sm font-semibold break-words',
                                 isDarkMode ? 'text-slate-100' : 'text-slate-900'
                               )}>
                                 {data.name}
                               </h4>
                               {data.addressType && (
                                 <span className={cn(
-                                  'px-2 py-0.5 rounded-full text-xs font-medium uppercase',
+                                  'px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium uppercase flex-shrink-0',
                                   isDarkMode
                                     ? 'bg-blue-500/20 text-blue-200'
                                     : 'bg-blue-100 text-blue-700'
@@ -4939,22 +5807,22 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                             {/* Company */}
                             {data.companyName && (
                               <p className={cn(
-                                'text-xs',
+                                'text-[10px] sm:text-xs break-words',
                                 isDarkMode ? 'text-slate-400' : 'text-slate-600'
                               )}>
-                                <Building className="h-3 w-3 inline mr-1" />
+                                <Building className="h-2.5 w-2.5 sm:h-3 sm:w-3 inline mr-1" />
                                 {data.companyName}
                               </p>
                             )}
                             
                             {/* Address */}
-                            <div className="flex items-start gap-1.5">
+                            <div className="flex items-start gap-1 sm:gap-1.5">
                               <MapPin className={cn(
-                                'h-3.5 w-3.5 mt-0.5 flex-shrink-0',
+                                'h-3 w-3 sm:h-3.5 sm:w-3.5 mt-0.5 flex-shrink-0',
                                 isDarkMode ? 'text-blue-400' : 'text-blue-600'
                               )} />
                               <p className={cn(
-                                'text-xs leading-relaxed',
+                                'text-[10px] sm:text-xs leading-relaxed break-words',
                                 isDarkMode ? 'text-slate-300' : 'text-slate-700'
                               )}>
                                 {data.flatBuilding}, {data.locality}, {data.area}, {data.city}, {data.state} - {data.pincode}
@@ -4963,13 +5831,14 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                             </div>
                             
                             {/* Contact */}
-                            <div className="flex items-center gap-3 flex-wrap text-xs">
-                              <div className="flex items-center gap-1.5">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs">
+                              <div className="flex items-center gap-1 sm:gap-1.5">
                                 <Phone className={cn(
-                                  'h-3 w-3',
+                                  'h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0',
                                   isDarkMode ? 'text-green-400' : 'text-green-600'
                                 )} />
                                 <span className={cn(
+                                  'break-all',
                                   isDarkMode ? 'text-slate-300' : 'text-slate-700'
                                 )}>
                                   +91 {data.mobileNumber}
@@ -4978,16 +5847,18 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                               {data.email && (
                                 <>
                                   <span className={cn(
+                                    'hidden sm:inline',
                                     isDarkMode ? 'text-slate-500' : 'text-slate-400'
                                   )}>
                                     •
                                   </span>
-                                  <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center gap-1 sm:gap-1.5">
                                     <Mail className={cn(
-                                      'h-3 w-3',
+                                      'h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0',
                                       isDarkMode ? 'text-blue-400' : 'text-blue-600'
                                     )} />
                                     <span className={cn(
+                                      'break-all',
                                       isDarkMode ? 'text-slate-300' : 'text-slate-700'
                                     )}>
                                       {data.email}
@@ -4999,9 +5870,10 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                             
                             {/* Additional Info - Inline */}
                             {(data.gstNumber || data.website || data.alternateNumbers?.filter(n => n.trim()).length > 0) && (
-                              <div className="flex items-center gap-3 flex-wrap text-xs pt-1 border-t">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs pt-1">
                                 {data.gstNumber && (
                                   <span className={cn(
+                                    'break-words',
                                     isDarkMode ? 'text-slate-400' : 'text-slate-500'
                                   )}>
                                     GST: <span className={cn(isDarkMode ? 'text-slate-300' : 'text-slate-700')}>{data.gstNumber}</span>
@@ -5009,13 +5881,13 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                 )}
                                 {data.website && (
                                   <>
-                                    {data.gstNumber && <span className={cn(isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
+                                    {data.gstNumber && <span className={cn('hidden sm:inline', isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
                                     <a 
                                       href={data.website.startsWith('http') ? data.website : `https://${data.website}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className={cn(
-                                        'underline hover:opacity-80',
+                                        'underline hover:opacity-80 break-all',
                                         isDarkMode ? 'text-blue-400' : 'text-blue-600'
                                       )}
                                     >
@@ -5025,8 +5897,9 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                 )}
                                 {data.alternateNumbers && data.alternateNumbers.filter(n => n.trim()).length > 0 && (
                                   <>
-                                    {(data.gstNumber || data.website) && <span className={cn(isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
+                                    {(data.gstNumber || data.website) && <span className={cn('hidden sm:inline', isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
                                     <span className={cn(
+                                      'break-words',
                                       isDarkMode ? 'text-slate-400' : 'text-slate-500'
                                     )}>
                                       Alt: {data.alternateNumbers.filter(n => n.trim()).join(', ')}
@@ -5037,11 +5910,10 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                             )}
                           </div>
                         </div>
-                      </div>
                     </div>
                     
                     {/* Action Buttons - Compact */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pt-1">
                       <Button
                         type="button"
                         onClick={() => {
@@ -5061,7 +5933,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           }
                         }}
                         className={cn(
-                          "flex-1 h-9 rounded-md text-sm font-medium",
+                          "flex-1 h-9 sm:h-10 rounded-md text-xs sm:text-sm font-medium",
                           isDarkMode
                             ? "bg-blue-500 hover:bg-blue-600 text-white"
                             : "bg-blue-500 hover:bg-blue-600 text-white"
@@ -5075,6 +5947,573 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               })()}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Checkout Dialog */}
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent className={cn(
+          'max-w-7xl w-[95vw] max-h-[95vh] overflow-hidden p-0 [&>button]:hidden',
+          isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'
+        )}>
+          <div className="flex h-[95vh]">
+            {/* Left Sidebar */}
+            <div className={cn(
+              'w-80 flex-shrink-0 p-6 flex flex-col',
+              isDarkMode ? 'bg-slate-800/50' : 'bg-slate-50'
+            )}>
+              {/* Branding */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={cn(
+                    'text-2xl font-bold',
+                    isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                  )}>
+                    OCL
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <span className={cn(isDarkMode ? 'text-slate-300' : 'text-slate-700')}>
+                    Trusted Business
+                  </span>
+                </div>
+              </div>
+
+              {/* Price Summary Card */}
+              <div className={cn(
+                'rounded-lg border p-4 mb-4',
+                isDarkMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
+              )}>
+                <p className={cn('text-sm font-medium mb-2', isDarkMode ? 'text-slate-700' : 'text-slate-700')}>
+                  Price Summary
+                </p>
+                <p className={cn('text-2xl font-bold', isDarkMode ? 'text-slate-900' : 'text-slate-900')}>
+                  {(() => {
+                    const baseAmount = calculatedPrice ? calculatedPrice * 1.18 : 0;
+                    const codCharges = selectedPaymentMethod === 'cod' ? 50 : 0;
+                    return `₹${(baseAmount + codCharges).toFixed(2)}`;
+                  })()}
+                </p>
+              </div>
+
+              {/* User Info Card */}
+              <div className={cn(
+                'rounded-lg border p-4 mb-4 cursor-pointer hover:bg-slate-100 transition-colors',
+                isDarkMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
+              )}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <User className={cn('h-5 w-5', isDarkMode ? 'text-slate-600' : 'text-slate-600')} />
+                    <div>
+                      <p className={cn('text-xs', isDarkMode ? 'text-slate-500' : 'text-slate-500')}>
+                        Using as
+                      </p>
+                      <p className={cn('text-sm font-medium', isDarkMode ? 'text-slate-900' : 'text-slate-900')}>
+                        +91 {originData.mobileNumber || '99999 99999'}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight className={cn('h-4 w-4', isDarkMode ? 'text-slate-400' : 'text-slate-400')} />
+                </div>
+              </div>
+
+              {/* Offers Card */}
+              <div className={cn(
+                'rounded-lg border p-4 mb-4 cursor-pointer hover:bg-slate-100 transition-colors',
+                isDarkMode ? 'bg-white border-slate-200' : 'bg-white border-slate-200'
+              )}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Gift className={cn('h-5 w-5', isDarkMode ? 'text-slate-600' : 'text-slate-600')} />
+                    <p className={cn('text-sm font-medium', isDarkMode ? 'text-slate-900' : 'text-slate-900')}>
+                      Offers on UPI, Card and...
+                    </p>
+                  </div>
+                  <ArrowRight className={cn('h-4 w-4', isDarkMode ? 'text-slate-400' : 'text-slate-400')} />
+                </div>
+              </div>
+
+              {/* Secured by Footer */}
+              <div className="mt-auto pt-4">
+                <p className={cn('text-xs mb-2', isDarkMode ? 'text-slate-400' : 'text-slate-500')}>
+                  Secured by
+                </p>
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 text-green-600" />
+                  <span className={cn('text-sm font-medium', isDarkMode ? 'text-slate-300' : 'text-slate-700')}>
+                    Secure Payment Gateway
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className={cn(
+                'flex items-center justify-between p-6 border-b',
+                isDarkMode ? 'border-slate-700' : 'border-slate-200'
+              )}>
+                <h2 className={cn('text-xl font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
+                  Payment Options
+                </h2>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => setCheckoutOpen(false)}
+                    className={cn(
+                      'p-2 rounded-full hover:bg-slate-100 transition-colors',
+                      isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
+                    )}
+                  >
+                    <X className={cn('h-5 w-5', isDarkMode ? 'text-slate-400' : 'text-slate-600')} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left Column - Payment Methods */}
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className={cn('text-sm font-semibold mb-4', isDarkMode ? 'text-slate-300' : 'text-slate-700')}>
+                        Recommended
+                      </h3>
+                      
+                      {/* UPI Section */}
+                      <div className={cn(
+                        'rounded-lg border p-4 mb-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <Smartphone className={cn('h-5 w-5', isDarkMode ? 'text-slate-300' : 'text-slate-700')} />
+                            <span className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>UPI</span>
+                          </div>
+                          <button className={cn(
+                            'text-xs px-2 py-1 rounded border',
+                            isDarkMode ? 'border-slate-600 text-slate-300' : 'border-slate-300 text-slate-600'
+                          )}>
+                            3 Offers
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className={cn('w-8 h-8 rounded flex items-center justify-center bg-blue-100 text-blue-600 text-xs font-bold')}>P</div>
+                          <div className={cn('w-8 h-8 rounded flex items-center justify-center bg-green-100 text-green-600 text-xs font-bold')}>G</div>
+                          <div className={cn('w-8 h-8 rounded flex items-center justify-center bg-blue-100 text-blue-600 text-xs font-bold')}>P</div>
+                          <div className={cn('w-8 h-8 rounded flex items-center justify-center bg-indigo-100 text-indigo-600 text-xs font-bold')}>B</div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedPaymentMethod('upi')}
+                          className={cn(
+                            'w-full py-2 px-4 rounded-lg border-2 transition-all text-left',
+                            selectedPaymentMethod === 'upi'
+                              ? 'border-blue-500 bg-blue-50'
+                              : isDarkMode
+                                ? 'border-slate-600 bg-slate-800/50 hover:border-blue-500/50'
+                                : 'border-slate-200 hover:border-blue-300'
+                          )}
+                        >
+                          <span className={cn('text-sm font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                            Enter UPI ID
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Cards Section */}
+                      <div className={cn(
+                        'rounded-lg border p-4 mb-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <CreditCard className={cn('h-5 w-5', isDarkMode ? 'text-slate-300' : 'text-slate-700')} />
+                          <span className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>Cards</span>
+                        </div>
+                        <p className={cn('text-xs mb-3', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
+                          Upto 1.5% savings on credit cards
+                        </p>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-10 h-6 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">VISA</div>
+                          <div className="w-10 h-6 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold">MC</div>
+                          <div className="w-10 h-6 bg-blue-500 rounded text-white text-xs flex items-center justify-center font-bold">R</div>
+                          <div className="w-10 h-6 bg-blue-800 rounded text-white text-xs flex items-center justify-center font-bold">AE</div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedPaymentMethod('card')}
+                          className={cn(
+                            'w-full py-2 px-4 rounded-lg border-2 transition-all text-left',
+                            selectedPaymentMethod === 'card'
+                              ? 'border-blue-500 bg-blue-50'
+                              : isDarkMode
+                                ? 'border-slate-600 bg-slate-800/50 hover:border-blue-500/50'
+                                : 'border-slate-200 hover:border-blue-300'
+                          )}
+                        >
+                          <span className={cn('text-sm font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                            Enter Card Details
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Net Banking Section */}
+                      <div className={cn(
+                        'rounded-lg border p-4 mb-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Building className={cn('h-5 w-5', isDarkMode ? 'text-slate-300' : 'text-slate-700')} />
+                          <span className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>Netbanking</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-10 h-10 rounded bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">SBI</div>
+                          <div className="w-10 h-10 rounded bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">HDFC</div>
+                          <div className="w-10 h-10 rounded bg-orange-100 flex items-center justify-center text-xs font-bold text-orange-700">ICICI</div>
+                          <div className="w-10 h-10 rounded bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">AXIS</div>
+                        </div>
+                        <button
+                          onClick={() => setSelectedPaymentMethod('netbanking')}
+                          className={cn(
+                            'w-full py-2 px-4 rounded-lg border-2 transition-all text-left',
+                            selectedPaymentMethod === 'netbanking'
+                              ? 'border-blue-500 bg-blue-50'
+                              : isDarkMode
+                                ? 'border-slate-600 bg-slate-800/50 hover:border-blue-500/50'
+                                : 'border-slate-200 hover:border-blue-300'
+                          )}
+                        >
+                          <span className={cn('text-sm font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                            Select Bank
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* COD Section */}
+                      <div className={cn(
+                        'rounded-lg border p-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <Truck className={cn('h-5 w-5', isDarkMode ? 'text-slate-300' : 'text-slate-700')} />
+                          <span className={cn('font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>Cash on Delivery</span>
+                        </div>
+                        <button
+                          onClick={() => setSelectedPaymentMethod('cod')}
+                          className={cn(
+                            'w-full py-2 px-4 rounded-lg border-2 transition-all',
+                            selectedPaymentMethod === 'cod'
+                              ? 'border-blue-500 bg-blue-50'
+                              : isDarkMode
+                                ? 'border-slate-600 bg-slate-800/50 hover:border-blue-500/50'
+                                : 'border-slate-200 hover:border-blue-300'
+                          )}
+                        >
+                          <span className={cn('text-sm font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                            Pay on Delivery
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column - Offers & QR Code */}
+                  <div className="space-y-6">
+                    {/* Available Offers */}
+                    <div>
+                      <h3 className={cn('text-sm font-semibold mb-4', isDarkMode ? 'text-slate-300' : 'text-slate-700')}>
+                        Available Offers
+                      </h3>
+                      <div className="space-y-3">
+                        <div className={cn(
+                          'rounded-lg border p-3 flex items-center gap-3',
+                          isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                        )}>
+                          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center">
+                            <span className="text-purple-600 font-bold text-xs">N</span>
+                          </div>
+                          <div className="flex-1">
+                            <p className={cn('text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                              Win up to ₹100 cashback on every transaction
+                            </p>
+                          </div>
+                        </div>
+                        <div className={cn(
+                          'rounded-lg border p-3 flex items-center gap-3',
+                          isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                        )}>
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                            <span className="text-blue-600 font-bold text-xs">P</span>
+                          </div>
+                          <div className="flex-1">
+                            <p className={cn('text-xs font-medium', isDarkMode ? 'text-slate-200' : 'text-slate-800')}>
+                              PhonePe Offers
+                            </p>
+                            <p className={cn('text-xs', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
+                              +2 more offers
+                            </p>
+                          </div>
+                          <button className={cn('text-xs text-blue-600 hover:underline', isDarkMode ? 'text-blue-400' : 'text-blue-600')}>
+                            View all
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* UPI QR Code Section */}
+                    {selectedPaymentMethod === 'upi' && (
+                      <div className={cn(
+                        'rounded-lg border p-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className={cn('text-sm font-semibold', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>
+                            UPI QR
+                          </h3>
+                          <div className="flex items-center gap-1 text-xs text-slate-500">
+                            <Calendar className="h-3 w-3" />
+                            <span>{new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg border-2 border-dashed border-slate-300 flex items-center justify-center mb-3">
+                          <div className="w-48 h-48 bg-slate-100 rounded flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="w-32 h-32 bg-black rounded mx-auto mb-2 flex items-center justify-center">
+                                <div className="w-28 h-28 bg-white grid grid-cols-8 gap-0.5 p-1">
+                                  {Array.from({ length: 64 }).map((_, i) => (
+                                    <div key={i} className={Math.random() > 0.5 ? 'bg-black' : 'bg-white'} />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className={cn('text-xs', isDarkMode ? 'text-slate-600' : 'text-slate-600')}>
+                                QR Code Placeholder
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <p className={cn('text-xs text-center mb-3', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
+                          Scan the QR using any UPI App
+                        </p>
+                        <div className="flex items-center justify-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 text-xs flex items-center justify-center font-bold">P</div>
+                          <div className="w-8 h-8 rounded bg-green-100 text-green-600 text-xs flex items-center justify-center font-bold">G</div>
+                          <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 text-xs flex items-center justify-center font-bold">P</div>
+                          <div className="w-8 h-8 rounded bg-indigo-100 text-indigo-600 text-xs flex items-center justify-center font-bold">B</div>
+                        </div>
+                        <button className={cn(
+                          'w-full py-2 px-4 rounded-lg border text-xs',
+                          isDarkMode ? 'border-slate-600 text-slate-300' : 'border-slate-300 text-slate-600'
+                        )}>
+                          3 Offers
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Payment Form for Card */}
+                    {selectedPaymentMethod === 'card' && (
+                      <div className={cn(
+                        'rounded-lg border p-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <h3 className={cn('text-sm font-semibold mb-4', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>
+                          Card Details
+                        </h3>
+                        <div className="space-y-4">
+                          <FloatingInput
+                            label="Card Number"
+                            value={paymentDetails.cardNumber.length > 0 
+                              ? paymentDetails.cardNumber.match(/.{1,4}/g)?.join(' ') || paymentDetails.cardNumber
+                              : ''}
+                            onChange={(value) => {
+                              const sanitized = value.replace(/\D/g, '').slice(0, 16);
+                              setPaymentDetails(prev => ({ ...prev, cardNumber: sanitized }));
+                            }}
+                            type="text"
+                            maxLength={19}
+                            isDarkMode={isDarkMode}
+                          />
+                          <FloatingInput
+                            label="Cardholder Name"
+                            value={paymentDetails.cardName}
+                            onChange={(value) => setPaymentDetails(prev => ({ ...prev, cardName: value }))}
+                            type="text"
+                            isDarkMode={isDarkMode}
+                          />
+                          <div className="grid grid-cols-2 gap-4">
+                            <FloatingInput
+                              label="Expiry Date"
+                              value={paymentDetails.expiryDate}
+                              onChange={(value) => {
+                                const sanitized = value.replace(/\D/g, '').slice(0, 4);
+                                const formatted = sanitized.length >= 2 
+                                  ? `${sanitized.slice(0, 2)}/${sanitized.slice(2)}`
+                                  : sanitized;
+                                setPaymentDetails(prev => ({ ...prev, expiryDate: formatted }));
+                              }}
+                              type="text"
+                              maxLength={5}
+                              isDarkMode={isDarkMode}
+                            />
+                            <FloatingInput
+                              label="CVV"
+                              value={paymentDetails.cvv}
+                              onChange={(value) => {
+                                const sanitized = value.replace(/\D/g, '').slice(0, 3);
+                                setPaymentDetails(prev => ({ ...prev, cvv: sanitized }));
+                              }}
+                              type="text"
+                              maxLength={3}
+                              isDarkMode={isDarkMode}
+                            />
+                          </div>
+                          <Button
+                            onClick={() => {
+                              const totalAmount = calculatedPrice ? (calculatedPrice * 1.18) : 0;
+                              alert('Payment processing... (This is a test checkout page)');
+                              console.log('Payment Details:', {
+                                method: selectedPaymentMethod,
+                                details: paymentDetails,
+                                amount: totalAmount
+                              });
+                              setTimeout(() => {
+                                setCheckoutOpen(false);
+                              }, 1000);
+                            }}
+                            className={cn(
+                              'w-full py-3 text-base font-semibold',
+                              isDarkMode
+                                ? 'bg-green-500 hover:bg-green-600 text-white'
+                                : 'bg-green-500 hover:bg-green-600 text-white'
+                            )}
+                          >
+                            <Lock className="mr-2 h-5 w-5" />
+                            Pay ₹{calculatedPrice 
+                              ? (calculatedPrice * 1.18).toFixed(2)
+                              : '0.00'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* UPI ID Input */}
+                    {selectedPaymentMethod === 'upi' && (
+                      <div className={cn(
+                        'rounded-lg border p-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <h3 className={cn('text-sm font-semibold mb-4', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>
+                          Enter UPI ID
+                        </h3>
+                        <FloatingInput
+                          label="UPI ID"
+                          value={paymentDetails.upiId}
+                          onChange={(value) => setPaymentDetails(prev => ({ ...prev, upiId: value }))}
+                          type="text"
+                          isDarkMode={isDarkMode}
+                        />
+                        <Button
+                          onClick={() => {
+                            alert('Payment processing... (This is a test checkout page)');
+                            setTimeout(() => {
+                              setCheckoutOpen(false);
+                            }, 1000);
+                          }}
+                          className={cn(
+                            'w-full py-3 mt-4 text-base font-semibold',
+                            isDarkMode
+                              ? 'bg-green-500 hover:bg-green-600 text-white'
+                              : 'bg-green-500 hover:bg-green-600 text-white'
+                          )}
+                        >
+                          <Lock className="mr-2 h-5 w-5" />
+                          Pay ₹{calculatedPrice 
+                            ? (calculatedPrice * 1.18).toFixed(2)
+                            : '0.00'}
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Net Banking Selection */}
+                    {selectedPaymentMethod === 'netbanking' && (
+                      <div className={cn(
+                        'rounded-lg border p-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <h3 className={cn('text-sm font-semibold mb-4', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>
+                          Select Bank
+                        </h3>
+                        <FloatingSelect
+                          label="Select Bank"
+                          value={paymentDetails.netBankingBank}
+                          onChange={(value) => setPaymentDetails(prev => ({ ...prev, netBankingBank: value }))}
+                          options={['State Bank of India', 'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'Kotak Mahindra Bank', 'Punjab National Bank', 'Bank of Baroda', 'Canara Bank']}
+                          isDarkMode={isDarkMode}
+                        />
+                        <Button
+                          onClick={() => {
+                            alert('Payment processing... (This is a test checkout page)');
+                            setTimeout(() => {
+                              setCheckoutOpen(false);
+                            }, 1000);
+                          }}
+                          className={cn(
+                            'w-full py-3 mt-4 text-base font-semibold',
+                            isDarkMode
+                              ? 'bg-green-500 hover:bg-green-600 text-white'
+                              : 'bg-green-500 hover:bg-green-600 text-white'
+                          )}
+                        >
+                          <Lock className="mr-2 h-5 w-5" />
+                          Pay ₹{calculatedPrice 
+                            ? (calculatedPrice * 1.18).toFixed(2)
+                            : '0.00'}
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* COD Confirmation */}
+                    {selectedPaymentMethod === 'cod' && (
+                      <div className={cn(
+                        'rounded-lg border p-4',
+                        isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                      )}>
+                        <h3 className={cn('text-sm font-semibold mb-4', isDarkMode ? 'text-slate-200' : 'text-slate-900')}>
+                          Cash on Delivery
+                        </h3>
+                        <p className={cn('text-sm mb-4', isDarkMode ? 'text-slate-300' : 'text-slate-700')}>
+                          Pay cash on delivery when your shipment arrives. Additional charges may apply.
+                        </p>
+                        <Button
+                          onClick={() => {
+                            alert('Order confirmed! (This is a test checkout page)');
+                            setTimeout(() => {
+                              setCheckoutOpen(false);
+                            }, 1000);
+                          }}
+                          className={cn(
+                            'w-full py-3 text-base font-semibold',
+                            isDarkMode
+                              ? 'bg-green-500 hover:bg-green-600 text-white'
+                              : 'bg-green-500 hover:bg-green-600 text-white'
+                          )}
+                        >
+                          <CheckCircle className="mr-2 h-5 w-5" />
+                          Confirm Order
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className={cn(
+                'p-4 border-t text-xs text-center',
+                isDarkMode ? 'border-slate-700 text-slate-400' : 'border-slate-200 text-slate-500'
+              )}>
+                By proceeding, I agree to OCL's Privacy Notice • Edit Preferences
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
