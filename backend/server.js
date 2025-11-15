@@ -22,6 +22,9 @@ import otpRoutes from "./routes/otp.js";
 import imageProxyRoutes from "./routes/image-proxy.js";
 import medicineRoutes from "./routes/medicine.js";
 import medicineSettlementRoutes from "./routes/medicine-settlement.js";
+import customerBookingRoutes from "./routes/customer-booking.js";
+import paymentRoutes from "./routes/payment.js";
+import onlineCustomerRoutes from "./routes/online-customer.js";
 import FormData from "./models/FormData.js";
 import PinCodeArea from "./models/PinCodeArea.js";
 import CorporateData from "./models/CorporateData.js";
@@ -112,6 +115,9 @@ app.use("/api/otp", otpRoutes);
 app.use("/api/images", imageProxyRoutes);
 app.use("/api/medicine", medicineRoutes);
 app.use("/api/medicine", medicineSettlementRoutes);
+app.use("/api/customer-booking", customerBookingRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api/online-customer", onlineCustomerRoutes);
 
 // Serve corporate logos
 app.use('/uploads/corporate-logos', express.static(path.join(__dirname, 'uploads/corporate-logos')));

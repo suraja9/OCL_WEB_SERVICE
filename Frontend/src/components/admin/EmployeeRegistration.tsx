@@ -26,9 +26,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getStoredToken } from '@/utils/auth';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-
 import userIcon from '@/Icon-images/user.png';
 import addressIcon from '@/Icon-images/address.png';
 import buildingIcon from '@/Icon-images/Building.png';
@@ -390,7 +387,7 @@ const EmployeeRegistration = () => {
     if (numericPincode.length === 6) {
       setIsLoadingPermanentPincode(true);
       try {
-        const response = await fetch(`${API_BASE}/api/pincode/${numericPincode}/simple`);
+        const response = await fetch(`http://localhost:5000/api/pincode/${numericPincode}/simple`);
         if (response.ok) {
           const data = await response.json();
           setFormData(prev => ({
@@ -507,7 +504,7 @@ const EmployeeRegistration = () => {
         throw new Error("No authentication token found. Please log in again.");
       }
       
-      const response = await axios.get(`${API_BASE}/api/employee/next-id`, {
+      const response = await axios.get('http://localhost:5000/api/employee/next-id', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -554,7 +551,7 @@ const EmployeeRegistration = () => {
   const handleSendMobileOtp = async () => {
     if (formData.primeMobileNumbers[0] && formData.primeMobileNumbers[0].length === 10) {
       try {
-        const response = await fetch(`${API_BASE}/api/otp/send`, {
+        const response = await fetch('http://localhost:5000/api/otp/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -608,7 +605,7 @@ const EmployeeRegistration = () => {
     }
 
     try {
-      const response = await fetch(`${API_BASE}/api/otp/verify`, {
+      const response = await fetch('http://localhost:5000/api/otp/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -934,7 +931,7 @@ const EmployeeRegistration = () => {
       console.log('Submitting employee data:', submissionData);
       
       // Submit to backend API with authentication token
-      const response = await axios.post(`${API_BASE}/api/employee/register`, submissionData, {
+      const response = await axios.post('http://localhost:5000/api/employee/register', submissionData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -1104,7 +1101,7 @@ const EmployeeRegistration = () => {
 
     setIsLoadingPincode(true);
     try {
-      const response = await fetch(`${API_BASE}/api/pincode/${pincode}/simple`);
+      const response = await fetch(`http://localhost:5000/api/pincode/${pincode}/simple`);
       if (response.ok) {
         const data = await response.json();
         setFormData(prev => ({

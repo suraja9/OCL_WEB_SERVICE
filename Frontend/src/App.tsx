@@ -20,6 +20,9 @@ import Vision from "./pages/Vision";
 import GST from "./pages/GST";
 import HSN from "./pages/HSN";
 import Clients from "./pages/Clients";
+import TermsAndConditions from "./pages/TermsAndConditions";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import ShippingAndReturnPolicy from "./pages/ShippingAndReturnPolicy";
 import SignUp from "./pages/auth/SignUp";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -60,6 +63,7 @@ import MedicineViewSettlement from "./pages/medicine/MedicineViewSettlement";
 import MedicineColoaderRegistration from "./pages/medicine/MedicineColoaderRegistration";
 import UserDashboard from "./pages/user/UserDashboard";
 import MedicineReceivedScan from "./pages/medicine/MedicineReceivedScan";
+import { UserAuthProvider } from "./contexts/UserAuthContext";
 
 const queryClient = new QueryClient();
 
@@ -70,11 +74,12 @@ const App = () => {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || 'test-client-id'}>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-          <GlobalStickyTabs>
+        <UserAuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+            <GlobalStickyTabs>
             <Routes>
             <Route path="/" element={<Index />} />
           <Route path="/track" element={<Track />} />
@@ -91,6 +96,11 @@ const App = () => {
           <Route path="/gst" element={<GST />} />
           <Route path="/hsn" element={<HSN />} />
           <Route path="/clients" element={<Clients />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/shipping-and-return-policy" element={<ShippingAndReturnPolicy />} />
+          <Route path="/shipping-policy" element={<ShippingAndReturnPolicy />} />
+          <Route path="/return-policy" element={<ShippingAndReturnPolicy />} />
           <Route path="/auth/signup" element={<SignUp />} />
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
@@ -269,6 +279,7 @@ const App = () => {
           </GlobalStickyTabs>
         </BrowserRouter>
       </TooltipProvider>
+      </UserAuthProvider>
     </QueryClientProvider>
     </GoogleOAuthProvider>
   );

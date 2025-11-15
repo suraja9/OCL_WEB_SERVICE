@@ -13,9 +13,13 @@ import {
   Sun,
   Headphones,
   Menu,
+  LogOut,
 } from "lucide-react";
+import { useUserAuth } from "@/contexts/UserAuthContext";
+import { useToast } from "@/hooks/use-toast";
 import BookNow from "@/components/user/BookNow";
 import ContactSupport from "@/components/user/ContactSupport";
+import MyBooking from "@/components/user/MyBooking";
 import {
   Sheet,
   SheetContent,
@@ -23,11 +27,14 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type SidebarItem = {
-  id: "home" | "booknow" | "contactsupport";
+  id: "home" | "booknow" | "mybooking" | "contactsupport";
   label: string;
 };
 
 const UserDashboard: React.FC = () => {
+  const { isAuthenticated, customer, logout } = useUserAuth();
+  const { toast } = useToast();
+
   const sidebarItems: SidebarItem[] = useMemo(
     () => [
       {
@@ -37,6 +44,10 @@ const UserDashboard: React.FC = () => {
       {
         id: "booknow",
         label: "Book now",
+      },
+      {
+        id: "mybooking",
+        label: "My Booking",
       },
       {
         id: "contactsupport",
@@ -50,6 +61,15 @@ const UserDashboard: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isMobile = useIsMobile();
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out"
+    });
+    setActiveItem("home");
+  };
 
   const pageBackground = isDarkMode
     ? "bg-slate-950 text-slate-50"
@@ -115,6 +135,8 @@ const UserDashboard: React.FC = () => {
                   <LayoutDashboard size={18} />
                 ) : item.id === "booknow" ? (
                   <CalendarDays size={18} />
+                ) : item.id === "mybooking" ? (
+                  <PackageSearch size={18} />
                 ) : item.id === "contactsupport" ? (
                   <Headphones size={18} />
                 ) : (
@@ -169,6 +191,25 @@ const UserDashboard: React.FC = () => {
           Share Feedback
         </Button>
       </div>
+
+      {/* Logout Button - Only show if logged in */}
+      {isAuthenticated && (
+        <div className="mt-4">
+          <Button
+            variant="outline"
+            onClick={handleLogout}
+            className={cn(
+              "w-full text-sm transition",
+              isDarkMode
+                ? "border-red-500/40 bg-transparent text-red-200 hover:bg-red-500/10"
+                : "border-red-500/40 bg-red-500/10 text-red-700 hover:bg-red-500/20"
+            )}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      )}
     </div>
   );
 
@@ -668,6 +709,18 @@ const UserDashboard: React.FC = () => {
                 )}
               >
                 <BookNow isDarkMode={isDarkMode} />
+              </section>
+            )}
+            {activeItem === "mybooking" && (
+              <section
+                className={cn(
+                  "relative overflow-hidden rounded-2xl border p-4 shadow-[0_25px_80px_rgba(15,23,42,0.15)] transition sm:rounded-3xl sm:p-6 lg:p-8",
+                  isDarkMode
+                    ? "border-slate-800/60 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90"
+                    : "border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-blue-50/20"
+                )}
+              >
+                <MyBooking isDarkMode={isDarkMode} />
               </section>
             )}
             {activeItem === "contactsupport" && (

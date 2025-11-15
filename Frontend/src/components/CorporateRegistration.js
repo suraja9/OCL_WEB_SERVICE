@@ -11,8 +11,6 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import LogoUpload from "./LogoUpload";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-
 const CorporateRegistration = () => {
   const [formData, setFormData] = useState({
     companyName: "",
@@ -104,7 +102,7 @@ const CorporateRegistration = () => {
       const startTime = performance.now();
       
       try {
-        const res = await axios.get(`${API_BASE}/api/pincode/${pin}`, {
+        const res = await axios.get(`http://localhost:5000/api/pincode/${pin}`, {
           timeout: 10000
         });
         
@@ -251,7 +249,7 @@ const CorporateRegistration = () => {
         formDataToSend.append('logo', logoFile);
       }
       
-      const response = await axios.post(`${API_BASE}/api/corporate/register`, formDataToSend, {
+      const response = await axios.post('http://localhost:5000/api/corporate/register', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

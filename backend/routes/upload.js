@@ -1,5 +1,5 @@
 import express from 'express';
-import { uploadPackageImages, uploadInvoiceImages, uploadScreenshots, handleUploadError } from '../middleware/upload.js';
+import { uploadPackageImages, uploadInvoiceImages, uploadScreenshots, uploadBookNowImages, uploadBookNowInsurance, handleUploadError } from '../middleware/upload.js';
 import S3Service from '../services/s3Service.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -253,6 +253,74 @@ router.delete('/delete-s3', async (req, res) => {
     res.status(500).json({
       error: 'Delete failed',
       message: 'Failed to delete file from S3'
+    });
+  }
+});
+
+// Upload BookNow package images
+router.post('/booknow/package-images', uploadBookNowImages, handleUploadError, async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        error: 'No files uploaded',
+        message: 'Please select at least one package image'
+      });
+    }
+
+    // Upload files to S3 in OnlineCustomer/booking folder
+    const uploadResult = await S3Service.uploadMultipleFiles(req.files, 'uploads/OnlineCustomer/booking');
+    
+    if (!uploadResult.success) {
+      return res.status(500).json({
+        error: 'Upload failed',
+        message: 'Failed to upload package images to S3'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `${req.files.length} package image(s) uploaded successfully`,
+      files: uploadResult.files
+    });
+  } catch (error) {
+    console.error('Error uploading BookNow package images:', error);
+    res.status(500).json({
+      error: 'Upload failed',
+      message: 'Failed to upload package images'
+    });
+  }
+});
+
+// Upload BookNow insurance document
+router.post('/booknow/insurance-document', uploadBookNowInsurance, handleUploadError, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        error: 'No file uploaded',
+        message: 'Please select an insurance document'
+      });
+    }
+
+    // Upload file to S3 in OnlineCustomer/booking folder
+    const uploadResult = await S3Service.uploadFile(req.file, 'uploads/OnlineCustomer/booking');
+    
+    if (!uploadResult.success) {
+      return res.status(500).json({
+        error: 'Upload failed',
+        message: 'Failed to upload insurance document to S3'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Insurance document uploaded successfully',
+      file: uploadResult
+    });
+  } catch (error) {
+    console.error('Error uploading BookNow insurance document:', error);
+    res.status(500).json({
+      error: 'Upload failed',
+      message: 'Failed to upload insurance document'
     });
   }
 });

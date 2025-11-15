@@ -58,6 +58,12 @@ export const uploadScreenshots = upload.fields([
   { name: 'invoiceImages', maxCount: 10 }
 ]);
 
+// Middleware for BookNow online customer booking images
+export const uploadBookNowImages = upload.array('packageImages', 5);
+
+// Middleware for BookNow insurance document
+export const uploadBookNowInsurance = upload.single('insuranceDocument');
+
 // Error handling middleware
 export const handleUploadError = (err, req, res, next) => {
   if (err instanceof multer.MulterError) {

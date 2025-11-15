@@ -1,7 +1,4 @@
 import React from 'react';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -76,7 +73,7 @@ const CorporateSidebar: React.FC<CorporateSidebarProps> = ({
           <div className="p-3 rounded-xl bg-white shadow-inner">
             {corporate?.logo ? (
               <img 
-                src={`${API_BASE}${corporate.logo}`} 
+                src={`http://localhost:5000${corporate.logo}`} 
                 alt={`${corporate.companyName} Logo`}
                 className="h-6 w-6 object-contain"
                 onError={(e) => {

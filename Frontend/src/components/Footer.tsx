@@ -1,4 +1,4 @@
-import { Mail, Phone, MapPin, ArrowRight } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import navData from "@/data/nav.json";
@@ -25,8 +25,8 @@ const Footer = () => {
     <footer className="bg-black border-t-2 border-brand-red text-white">
 
       {/* Main Footer Content */}
-      <div className="ocl-container px-4" style={{ paddingTop: '30px', paddingBottom: '40px' }}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+      <div className="ocl-container px-2" style={{ paddingTop: '30px', paddingBottom: '40px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-6">
           
           {/* About / Brand Summary Column */}
           <div className="space-y-5">
@@ -47,7 +47,7 @@ const Footer = () => {
             <div className="space-y-3 pt-2">
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-[#FFC043] flex-shrink-0 mt-0.5" />
-                <span className="text-[#D4D9DE] text-xs sm:text-sm"> House No. 22, Piyali Phukan Road, Rehabari,
+                <span className="text-[#D4D9DE] text-xs sm:text-sm"> Piyali Phukan Road, Rehabari,
                 Guwahati, 781008</span>
               </div>
               <div className="flex items-center space-x-3">
@@ -59,15 +59,6 @@ const Footer = () => {
                 <span className="text-[#D4D9DE] text-xs sm:text-sm">info@oclservices.com</span>
               </div>
             </div>
-
-            {/* View More Link */}
-            <a 
-              href="/about" 
-              className="inline-flex items-center text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-xs sm:text-sm font-medium mt-4 group"
-            >
-              View More
-              <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
-            </a>
           </div>
 
           {/* Services Column */}
@@ -111,6 +102,50 @@ const Footer = () => {
                   </a>
                 </li>
               ))}
+              <li>
+                <a 
+                  href="/clients" 
+                  className="text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-xs sm:text-sm md:text-base block"
+                >
+                  Our Client
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Policies Column */}
+          <div className="space-y-5">
+            <h4 
+              className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold mb-4"
+              style={{ color: '#FFC043', fontFamily: 'Poppins, ui-sans-serif' }}
+            >
+              Policies
+            </h4>
+            <ul className="space-y-3">
+              <li>
+                <a 
+                  href="/terms-and-conditions" 
+                  className="text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-xs sm:text-sm md:text-base block"
+                >
+                  Terms and Conditions
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/privacy-policy" 
+                  className="text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-xs sm:text-sm md:text-base block"
+                >
+                  Privacy Policy
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/shipping-and-return-policy" 
+                  className="text-[#D4D9DE] hover:text-[#FFC043] transition-colors duration-300 text-xs sm:text-sm md:text-base block"
+                >
+                  Shipping & Return Policy
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -198,13 +233,13 @@ const Footer = () => {
 
       {/* Copyright Bar */}
       <div className="bg-[#FFA019] border-t border-black/20">
-        <div className="ocl-container px-4 py-3">
+        <div className="ocl-container px-2 py-3">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
             <p className="text-black text-[10px] sm:text-xs md:text-sm text-center md:text-left">
               © {currentYear} OCL Services. All rights reserved.
             </p>
             <p className="text-black text-[10px] sm:text-xs md:text-sm text-center md:text-right">
-              Powered by OCL Services.
+              Powered by OCL.
             </p>
           </div>
         </div>

@@ -37,6 +37,7 @@ import {
   Book,
   CreditCard,
   Gift,
+  Clock,
   Shirt,
   Monitor,
   Briefcase,
@@ -57,7 +58,8 @@ import {
   Gamepad2,
   Wallet,
   Smartphone,
-  Lock
+  Lock,
+  Plus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -69,6 +71,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useUserAuth } from '@/contexts/UserAuthContext';
+import UserLogin from './UserLogin';
 
 const API_BASE: string = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
 const VOLUMETRIC_DIVISOR = 5000; // Standard volumetric conversion factor (cm³ to kg)
@@ -948,6 +952,9 @@ const ReviewField: React.FC<ReviewFieldProps> = ({ label, value, icon, isDarkMod
 };
 
 const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
+  const { isAuthenticated, customer } = useUserAuth();
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
+
   // Step management
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<boolean[]>([false, false, false, false, false, false]);
@@ -1017,6 +1024,18 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   const [phoneModalOpen, setPhoneModalOpen] = useState<{ type: 'origin' | 'destination' | null }>({ type: null });
   const [formModalOpen, setFormModalOpen] = useState<{ type: 'origin' | 'destination' | null }>({ type: null });
   const [showPreviewInModal, setShowPreviewInModal] = useState(false);
+  const [selectedRecordIndex, setSelectedRecordIndex] = useState<number>(0);
+  
+  // Phone number search states
+  const [phoneSearchResults, setPhoneSearchResults] = useState<any[]>([]);
+  const [phoneSearchModalOpen, setPhoneSearchModalOpen] = useState<{ type: 'origin' | 'destination' | null; phoneNumber: string }>({ type: null, phoneNumber: '' });
+  const [searchingPhone, setSearchingPhone] = useState(false);
+  
+  // Add another address states
+  const [isAddingAnotherAddress, setIsAddingAnotherAddress] = useState(false);
+  const [previousAddressData, setPreviousAddressData] = useState<any>(null);
+  const [newAddressData, setNewAddressData] = useState<any>(null);
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState<number>(0); // 0 for previous, 1 for new
   const [shipmentDetails, setShipmentDetails] = useState<ShipmentDetails>({
     natureOfConsignment: '',
     insurance: '',
@@ -1054,6 +1073,8 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   
   // Checkout states
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false); // New state for Pay Now/Pay Later choice
+  const [currentBookingId, setCurrentBookingId] = useState<string | null>(null); // Store booking ID
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'upi' | 'netbanking' | 'cod'>('card');
   const [paymentDetails, setPaymentDetails] = useState({
     cardNumber: '',
@@ -1065,6 +1086,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     walletProvider: ''
   });
   const [showInvoice, setShowInvoice] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
   
   // Generate AWB and Order ID
   const generateAWB = () => {
@@ -1096,6 +1118,179 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       setDocumentPreviewUrl(null);
     }
     setDocumentPreviewOpen(false);
+  };
+
+  // Razorpay payment handler
+  const handleRazorpayPayment = async () => {
+    if (!currentBookingId) {
+      alert('Booking ID not found. Please try again.');
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      const totalAmount = calculatedPrice ? (calculatedPrice * 1.18) : 0;
+      
+      if (totalAmount <= 0) {
+        alert('Invalid amount. Please check your booking details.');
+        setProcessingPayment(false);
+        return;
+      }
+
+      // Step 1: Create order on backend
+      const orderResponse = await fetch(`${API_BASE}/api/payment/create-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: totalAmount,
+          currency: 'INR',
+          receipt: `receipt_${Date.now()}`,
+          bookingId: currentBookingId,
+        }),
+      });
+      
+      const orderData = await orderResponse.json();
+      
+      if (!orderData.success) {
+        throw new Error(orderData.error || 'Failed to create payment order');
+      }
+      
+      // Step 2: Initialize Razorpay Checkout
+      const options = {
+        key: 'rzp_test_RfwLbChhytqnt1', // Razorpay test key
+        amount: orderData.amount, // Amount in paise
+        currency: orderData.currency,
+        name: 'OCL Courier',
+        description: 'Shipment Payment',
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          try {
+            // Step 3: Verify payment on backend
+            const verifyResponse = await fetch(`${API_BASE}/api/payment/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                orderId: response.razorpay_order_id,
+                paymentId: response.razorpay_payment_id,
+                signature: response.razorpay_signature,
+                bookingId: currentBookingId,
+              }),
+            });
+            
+            const verifyResult = await verifyResponse.json();
+            
+            if (verifyResult.success) {
+              // Update booking with payment information
+              const updateResponse = await fetch(`${API_BASE}/api/customer-booking/${currentBookingId}/payment`, {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  paymentStatus: 'paid',
+                  paymentMethod: 'razorpay',
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                }),
+              });
+
+              const updateResult = await updateResponse.json();
+              
+              if (updateResult.success) {
+                // Payment successful - show invoice
+                setShowInvoice(true);
+                alert('Payment successful! Your booking is confirmed.');
+              } else {
+                throw new Error('Failed to update booking payment status');
+              }
+            } else {
+              throw new Error(verifyResult.error || 'Payment verification failed');
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            alert('Payment verification failed. Please contact support.');
+          } finally {
+            setProcessingPayment(false);
+          }
+        },
+        prefill: {
+          name: originData.name || '',
+          email: originData.email || '',
+          contact: originData.mobileNumber || '',
+        },
+        theme: {
+          color: '#10b981', // Green color
+        },
+        modal: {
+          ondismiss: function() {
+            console.log('Payment cancelled');
+            setProcessingPayment(false);
+          },
+        },
+      };
+      
+      // Load Razorpay script if not already loaded
+      if (!(window as any).Razorpay) {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => {
+          const razorpay = new (window as any).Razorpay(options);
+          razorpay.open();
+        };
+        script.onerror = () => {
+          alert('Failed to load payment gateway. Please try again.');
+          setProcessingPayment(false);
+        };
+        document.body.appendChild(script);
+      } else {
+        const razorpay = new (window as any).Razorpay(options);
+        razorpay.open();
+      }
+      
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert(error instanceof Error ? error.message : 'Payment failed. Please try again.');
+      setProcessingPayment(false);
+    }
+  };
+
+  // Handle Pay Later option
+  const handlePayLater = async () => {
+    if (!currentBookingId) {
+      alert('Booking ID not found. Please try again.');
+      return;
+    }
+
+    try {
+      // Update booking with pay_later status
+      const updateResponse = await fetch(`${API_BASE}/api/customer-booking/${currentBookingId}/payment`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          paymentStatus: 'pending',
+          paymentMethod: 'pay_later',
+        }),
+      });
+
+      const updateResult = await updateResponse.json();
+      
+      if (updateResult.success) {
+        setShowInvoice(true);
+        alert('Booking confirmed! You can pay later.');
+      } else {
+        throw new Error('Failed to update booking');
+      }
+    } catch (error) {
+      console.error('Pay later error:', error);
+      alert('Failed to process. Please try again.');
+    }
   };
 
   const openInsuranceModal = () => {
@@ -1277,6 +1472,9 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]); // S3 URLs for uploaded images
+  const [uploadedInsuranceDocumentUrl, setUploadedInsuranceDocumentUrl] = useState<string | null>(null); // S3 URL for insurance document
+  const [savingBooking, setSavingBooking] = useState(false); // Loading state for saving booking
   
   // Track current section being worked on (origin or destination)
   const [currentSection, setCurrentSection] = useState<'origin' | 'destination'>('origin');
@@ -1433,6 +1631,130 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
 
   const getDigitInputId = (type: 'origin' | 'destination', index: number) => `${type}-modal-digit-${index}`;
 
+  // Search by phone number
+  const searchByPhoneNumber = async (phoneNumber: string, type: 'origin' | 'destination') => {
+    if (phoneNumber.length !== 10) return;
+    
+    // Prevent duplicate searches for the same phone number
+    if (phoneSearchModalOpen.type === type && phoneSearchModalOpen.phoneNumber === phoneNumber) {
+      return;
+    }
+    
+    try {
+      setSearchingPhone(true);
+      const response = await fetch(`${API_BASE}/api/customer-booking/search-by-phone?phoneNumber=${phoneNumber}&type=${type}`);
+      const data = await response.json();
+      
+      if (data.success && data.data && data.data.length > 0) {
+        // Phone number found - show preview modal directly with records
+        setPhoneSearchResults(data.data);
+        setPhoneSearchModalOpen({ type, phoneNumber }); // Set this so we can track which type has results
+        setSelectedRecordIndex(0); // Select first record by default
+        // Auto-fill with first record (don't close modals, we'll handle that)
+        handleSelectPhoneRecord(data.data[0], type, false);
+        // Close phone modal and open form modal in preview mode
+        setPhoneModalOpen({ type: null });
+        setTimeout(() => {
+          setFormModalOpen({ type });
+          setShowPreviewInModal(true);
+        }, 300);
+      } else {
+        // No results found - open blank form
+        setPhoneSearchResults([]);
+        setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+        // Close phone modal and open form modal
+        setPhoneModalOpen({ type: null });
+        setTimeout(() => {
+          setFormModalOpen({ type });
+        }, 300);
+      }
+    } catch (error) {
+      console.error('Error searching by phone number:', error);
+      // On error, open blank form
+      setPhoneSearchResults([]);
+      setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+      // Close phone modal and open form modal
+      setPhoneModalOpen({ type: null });
+      setTimeout(() => {
+        setFormModalOpen({ type });
+      }, 300);
+    } finally {
+      setSearchingPhone(false);
+    }
+  };
+
+  // Auto-fill form with selected record (used internally, not for closing modals)
+  const handleSelectPhoneRecord = (record: any, type: 'origin' | 'destination', closeModals: boolean = true) => {
+    if (type === 'origin') {
+      setOriginData(prev => ({
+        ...prev,
+        name: record.name || '',
+        email: record.email || '',
+        companyName: record.companyName || '',
+        flatBuilding: record.flatBuilding || '',
+        locality: record.locality || '',
+        landmark: record.landmark || '',
+        pincode: record.pincode || '',
+        area: record.area || '',
+        city: record.city || '',
+        district: record.district || '',
+        state: record.state || '',
+        gstNumber: record.gstNumber || '',
+        alternateNumbers: record.alternateNumbers || [''],
+        addressType: record.addressType || 'Home',
+        birthday: record.birthday || '',
+        anniversary: record.anniversary || '',
+        website: record.website || '',
+        otherAlternateNumber: record.otherAlternateNumber || ''
+      }));
+      
+      // Set pincode for serviceability check
+      if (record.pincode) {
+        setOriginPincode(record.pincode);
+      }
+    } else {
+      setDestinationData(prev => ({
+        ...prev,
+        name: record.name || '',
+        email: record.email || '',
+        companyName: record.companyName || '',
+        flatBuilding: record.flatBuilding || '',
+        locality: record.locality || '',
+        landmark: record.landmark || '',
+        pincode: record.pincode || '',
+        area: record.area || '',
+        city: record.city || '',
+        district: record.district || '',
+        state: record.state || '',
+        gstNumber: record.gstNumber || '',
+        alternateNumbers: record.alternateNumbers || [''],
+        addressType: record.addressType || 'Home',
+        birthday: record.birthday || '',
+        anniversary: record.anniversary || '',
+        website: record.website || '',
+        otherAlternateNumber: record.otherAlternateNumber || ''
+      }));
+      
+      // Set pincode for serviceability check
+      if (record.pincode) {
+        setDestinationPincode(record.pincode);
+      }
+    }
+    
+    // Only close modals if explicitly requested (when called from search results modal)
+    if (closeModals) {
+      // Close the search modal and phone modal
+      setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+      setPhoneSearchResults([]);
+      setPhoneModalOpen({ type: null });
+      
+      // If origin is complete, automatically move to destination section
+      if (type === 'origin') {
+        setCurrentSection('destination');
+      }
+    }
+  };
+
   // Handle origin mobile digit change
   const handleOriginDigitChange = (index: number, value: string) => {
     // Handle paste - if value is longer than 1, it might be a paste
@@ -1472,6 +1794,15 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     
     const mobileNumber = newDigits.filter(digit => digit !== '').join('');
     setOriginData(prev => ({ ...prev, mobileNumber }));
+    
+    // Trigger search when phone number is complete (10 digits)
+    if (mobileNumber.length === 10) {
+      searchByPhoneNumber(mobileNumber, 'origin');
+    } else {
+      // Clear search results if phone number is incomplete
+      setPhoneSearchResults([]);
+      setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+    }
   };
 
   const handleOriginDigitKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -1486,6 +1817,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         setOriginMobileDigits(newDigits);
         const mobileNumber = newDigits.filter(digit => digit !== '').join('');
         setOriginData(prev => ({ ...prev, mobileNumber }));
+        
+        // Clear search results if phone number becomes incomplete
+        if (mobileNumber.length < 10) {
+          setPhoneSearchResults([]);
+          setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+        }
       } else if (originMobileDigits[index]) {
         // Clear current digit
         const newDigits = [...originMobileDigits];
@@ -1493,6 +1830,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         setOriginMobileDigits(newDigits);
         const mobileNumber = newDigits.filter(digit => digit !== '').join('');
         setOriginData(prev => ({ ...prev, mobileNumber }));
+        
+        // Clear search results if phone number becomes incomplete
+        if (mobileNumber.length < 10) {
+          setPhoneSearchResults([]);
+          setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+        }
       }
     } else if (e.key === 'ArrowLeft' && index > 0) {
       e.preventDefault();
@@ -1516,6 +1859,15 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     setOriginMobileDigits(newDigits);
     const mobileNumber = newDigits.filter(digit => digit !== '').join('');
     setOriginData(prev => ({ ...prev, mobileNumber }));
+    
+    // Trigger search when phone number is complete (10 digits)
+    if (mobileNumber.length === 10) {
+      searchByPhoneNumber(mobileNumber, 'origin');
+    } else {
+      // Clear search results if phone number is incomplete
+      setPhoneSearchResults([]);
+      setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+    }
     
     // Focus the next empty input or the last one
     const nextEmptyIndex = newDigits.findIndex(d => d === '');
@@ -1565,6 +1917,15 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     
     const mobileNumber = newDigits.filter(digit => digit !== '').join('');
     setDestinationData(prev => ({ ...prev, mobileNumber }));
+    
+    // Trigger search when phone number is complete (10 digits)
+    if (mobileNumber.length === 10) {
+      searchByPhoneNumber(mobileNumber, 'destination');
+    } else {
+      // Clear search results if phone number is incomplete
+      setPhoneSearchResults([]);
+      setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+    }
   };
 
   const handleDestinationDigitKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -1579,6 +1940,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         setDestinationMobileDigits(newDigits);
         const mobileNumber = newDigits.filter(digit => digit !== '').join('');
         setDestinationData(prev => ({ ...prev, mobileNumber }));
+        
+        // Clear search results if phone number becomes incomplete
+        if (mobileNumber.length < 10) {
+          setPhoneSearchResults([]);
+          setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+        }
       } else if (destinationMobileDigits[index]) {
         // Clear current digit
         const newDigits = [...destinationMobileDigits];
@@ -1586,6 +1953,12 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         setDestinationMobileDigits(newDigits);
         const mobileNumber = newDigits.filter(digit => digit !== '').join('');
         setDestinationData(prev => ({ ...prev, mobileNumber }));
+        
+        // Clear search results if phone number becomes incomplete
+        if (mobileNumber.length < 10) {
+          setPhoneSearchResults([]);
+          setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+        }
       }
     } else if (e.key === 'ArrowLeft' && index > 0) {
       e.preventDefault();
@@ -1609,6 +1982,15 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     setDestinationMobileDigits(newDigits);
     const mobileNumber = newDigits.filter(digit => digit !== '').join('');
     setDestinationData(prev => ({ ...prev, mobileNumber }));
+    
+    // Trigger search when phone number is complete (10 digits)
+    if (mobileNumber.length === 10) {
+      searchByPhoneNumber(mobileNumber, 'destination');
+    } else {
+      // Clear search results if phone number is incomplete
+      setPhoneSearchResults([]);
+      setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+    }
     
     // Focus the next empty input or the last one
     const nextEmptyIndex = newDigits.findIndex(d => d === '');
@@ -2103,18 +2485,36 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
   };
 
   // Handle phone complete - close phone modal and open form modal
+  // BUT only if there are no search results to show
+  // Note: searchByPhoneNumber now handles opening the form modal when no results are found
+  // This useEffect only handles the case when phone modal is opened manually (e.g., clicking card) 
+  // and phone is already complete but search hasn't been triggered yet
   useEffect(() => {
     if (phoneModalOpen.type) {
       const isPhoneComplete = phoneModalOpen.type === 'origin' ? isOriginPhoneComplete : isDestinationPhoneComplete;
       if (isPhoneComplete) {
-        const currentType = phoneModalOpen.type;
-        setPhoneModalOpen({ type: null });
-        setTimeout(() => {
-          setFormModalOpen({ type: currentType });
-        }, 300);
+        // Don't auto-open form modal if we have search results to show
+        const hasSearchResults = phoneSearchModalOpen.type === phoneModalOpen.type && phoneSearchResults.length > 0;
+        
+        // If phone is complete and no search results, trigger search
+        // searchByPhoneNumber will handle opening form modal if no results found
+        if (!hasSearchResults && !searchingPhone) {
+          const phoneNumber = phoneModalOpen.type === 'origin' 
+            ? originData.mobileNumber 
+            : destinationData.mobileNumber;
+          
+          // Check if search was already done for this phone number
+          const searchAlreadyDone = phoneSearchModalOpen.phoneNumber === phoneNumber && 
+            phoneSearchModalOpen.type === phoneModalOpen.type;
+          
+          if (phoneNumber && phoneNumber.length === 10 && !searchAlreadyDone) {
+            // Trigger search - it will handle opening form if no results
+            searchByPhoneNumber(phoneNumber, phoneModalOpen.type);
+          }
+        }
       }
     }
-  }, [isOriginPhoneComplete, isDestinationPhoneComplete, phoneModalOpen.type]);
+  }, [isOriginPhoneComplete, isDestinationPhoneComplete, phoneModalOpen.type, phoneSearchModalOpen.type, phoneSearchModalOpen.phoneNumber, phoneSearchResults.length, searchingPhone, originData.mobileNumber, destinationData.mobileNumber]);
 
   // Auto-advance from origin to destination when origin form is complete (only for section tracking)
   useEffect(() => {
@@ -2348,11 +2748,82 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     }
   }, [phoneModalOpen.type]);
 
+  // Upload images to S3
+  const uploadImagesToS3 = async () => {
+    try {
+      setUploadingImages(true);
+      const imageUrls: string[] = [];
+      
+      // Upload package images if any
+      if (uploadedImages.length > 0) {
+        const formData = new FormData();
+        uploadedImages.forEach((file) => {
+          formData.append('packageImages', file);
+        });
+
+        const response = await fetch(`${API_BASE}/api/upload/booknow/package-images`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to upload package images');
+        }
+
+        const result = await response.json();
+        if (result.success && result.files) {
+          result.files.forEach((file: any) => {
+            imageUrls.push(file.url);
+          });
+        }
+      }
+
+      // Upload insurance document if exists
+      let insuranceDocUrl: string | null = null;
+      if (shipmentDetails.insuranceDocument) {
+        const formData = new FormData();
+        formData.append('insuranceDocument', shipmentDetails.insuranceDocument);
+
+        const response = await fetch(`${API_BASE}/api/upload/booknow/insurance-document`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to upload insurance document');
+        }
+
+        const result = await response.json();
+        if (result.success && result.file) {
+          insuranceDocUrl = result.file.url;
+        }
+      }
+
+      setUploadedImageUrls(imageUrls);
+      setUploadedInsuranceDocumentUrl(insuranceDocUrl);
+      
+      return { imageUrls, insuranceDocUrl };
+    } catch (error) {
+      console.error('Error uploading images to S3:', error);
+      alert(error instanceof Error ? error.message : 'Failed to upload images. Please try again.');
+      throw error;
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
   // Navigate to next step
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (currentStep === 0) {
       // Check if both pincodes are serviceable
       if (originServiceable === true && destinationServiceable === true) {
+        // Check if user is authenticated
+        if (!isAuthenticated) {
+          setShowLoginDialog(true);
+          return;
+        }
         const newCompleted = [...completedSteps];
         newCompleted[0] = true;
         setCompletedSteps(newCompleted);
@@ -2389,20 +2860,103 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         setCurrentStep(5);
       }
     } else if (currentStep === 5) {
-      // Open checkout page
-      const newCompleted = [...completedSteps];
-      newCompleted[5] = true;
-      setCompletedSteps(newCompleted);
-      setCheckoutOpen(true);
-      console.log('User dashboard booking draft:', {
-        originData,
-        destinationData,
-        shipmentDetails,
-        uploadedImages: uploadedImages.length,
-        selectedMode,
-        selectedServiceType,
-        price: calculatedPrice,
-      });
+      // Step 5 is Preview - Upload images to S3 and save booking data to database
+      try {
+        console.log('📦 Starting booking submission from Preview step...');
+        
+        // Step 1: Upload images to S3 first
+        await uploadImagesToS3();
+        console.log('✅ Images uploaded to S3:', {
+          packageImages: uploadedImageUrls.length,
+          insuranceDocument: uploadedInsuranceDocumentUrl ? 'Yes' : 'No'
+        });
+        
+        // Step 2: Save booking data to database
+        setSavingBooking(true);
+        try {
+          const bookingPayload = {
+            origin: {
+              ...originData,
+              alternateNumbers: originData.alternateNumbers.filter(num => num.trim() !== '')
+            },
+            destination: {
+              ...destinationData,
+              alternateNumbers: destinationData.alternateNumbers.filter(num => num.trim() !== '')
+            },
+            shipment: {
+              ...shipmentDetails,
+              insuranceDocument: uploadedInsuranceDocumentUrl || ''
+            },
+            packageImages: uploadedImageUrls,
+            shippingMode: selectedMode,
+            serviceType: selectedServiceType,
+            calculatedPrice: calculatedPrice,
+            actualWeight: actualWeight > 0 ? actualWeight : null,
+            volumetricWeight: volumetricWeight > 0 ? volumetricWeight : null,
+            chargeableWeight: chargeableWeight > 0 ? chargeableWeight : null,
+            originServiceable: originServiceable,
+            destinationServiceable: destinationServiceable,
+            originAddressInfo: originAddressInfo,
+            destinationAddressInfo: destinationAddressInfo,
+            onlineCustomerId: customer?._id || null
+          };
+
+          console.log('💾 Saving booking data to database...', {
+            origin: bookingPayload.origin.name,
+            destination: bookingPayload.destination.name,
+            packageImages: bookingPayload.packageImages.length,
+            shippingMode: bookingPayload.shippingMode,
+            serviceType: bookingPayload.serviceType,
+            price: bookingPayload.calculatedPrice
+          });
+
+          const response = await fetch(`${API_BASE}/api/customer-booking/create`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bookingPayload),
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to save booking');
+          }
+
+          const result = await response.json();
+          console.log('✅ Booking saved successfully to database:', {
+            bookingId: result.data.bookingId,
+            bookingReference: result.data.bookingReference,
+            status: result.data.status
+          });
+          
+          // Store booking ID for payment processing
+          setCurrentBookingId(result.data.bookingId);
+          
+          // Mark step as completed
+          const newCompleted = [...completedSteps];
+          newCompleted[5] = true;
+          setCompletedSteps(newCompleted);
+          
+          // Open checkout page with Pay Now/Pay Later options (not payment gateway yet)
+          setCheckoutOpen(true);
+          setShowPaymentOptions(false); // Show payment choice first
+          
+          // Show success message
+          alert(`Booking created successfully! Reference: ${result.data.bookingReference}`);
+          
+        } catch (error) {
+          console.error('❌ Failed to save booking to database:', error);
+          alert(error instanceof Error ? error.message : 'Failed to save booking. Please try again.');
+          // Don't open checkout if save fails
+          throw error; // Re-throw to prevent checkout from opening
+        } finally {
+          setSavingBooking(false);
+        }
+      } catch (error) {
+        console.error('❌ Failed to complete booking submission:', error);
+        // Don't open checkout if upload or save fails
+      }
     }
   };
 
@@ -4933,15 +5487,30 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
             </Button>
             <Button
               onClick={handleNextStep}
+              disabled={uploadingImages || savingBooking}
               className={cn(
                 'w-full sm:w-auto px-6',
                 isDarkMode
-                  ? 'bg-green-500 hover:bg-green-600 text-white'
-                  : 'bg-green-500 hover:bg-green-600 text-white'
+                  ? 'bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed'
               )}
             >
-              Submit Booking
-              <Check className="ml-2 h-4 w-4" />
+              {uploadingImages ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading Images...
+                </>
+              ) : savingBooking ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving Booking...
+                </>
+              ) : (
+                <>
+                  Submit Booking
+                  <Check className="ml-2 h-4 w-4" />
+                </>
+              )}
             </Button>
           </div>
         </motion.div>
@@ -5417,6 +5986,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
         </DialogContent>
       </Dialog>
 
+
       {/* Form Modal */}
       <Dialog open={formModalOpen.type !== null} onOpenChange={() => {}}>
         <DialogContent 
@@ -5721,8 +6291,15 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                 const isFormComplete = currentType === 'origin' ? isOriginFormComplete : isDestinationFormComplete;
                 
                 if (isFormComplete) {
-                  // Show preview card in modal
+                  // If in "add another address" mode, save new address and show two previews
+                  if (isAddingAnotherAddress && previousAddressData) {
+                    const currentData = currentType === 'origin' ? originData : destinationData;
+                    setNewAddressData({ ...currentData });
+                    setShowPreviewInModal(true);
+                  } else {
+                    // Normal flow - show preview card in modal
                   setShowPreviewInModal(true);
+                  }
                 }
               }}
               className={cn(
@@ -5747,6 +6324,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                 const isOrigin = formModalOpen.type === 'origin';
                 const data = isOrigin ? originData : destinationData;
                 const cardTitle = isOrigin ? 'Select Sender Add :' : 'Select Recipient Add :';
+                const hasMultipleRecords = phoneSearchResults.length > 1 && phoneSearchModalOpen.type === formModalOpen.type;
                 
                 return (
                   <div className="space-y-2 sm:space-y-3">
@@ -5774,15 +6352,561 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       </button>
                     </div>
                     
-                    {/* Address Content - Box Design */}
-                    <div
-                      className={cn(
-                        'rounded-xl border overflow-hidden transition-all duration-300 p-2.5 sm:p-4',
-                        isDarkMode
-                          ? 'border-slate-800/60 bg-slate-900/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)]'
-                          : 'border-slate-200 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.25)]'
-                      )}
-                    >
+                    {/* Show two address cards if in "add another address" mode */}
+                    {isAddingAnotherAddress && previousAddressData && newAddressData ? (
+                      <div className="space-y-3 max-h-[50vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {/* Previous Address Card */}
+                        <div
+                          onClick={() => {
+                            setSelectedAddressIndex(0);
+                            // Update the form data with previous address
+                            if (formModalOpen.type === 'origin') {
+                              setOriginData({ ...previousAddressData });
+                              if (previousAddressData.pincode) {
+                                setOriginPincode(previousAddressData.pincode);
+                              }
+                            } else {
+                              setDestinationData({ ...previousAddressData });
+                              if (previousAddressData.pincode) {
+                                setDestinationPincode(previousAddressData.pincode);
+                              }
+                            }
+                          }}
+                          className={cn(
+                            'rounded-xl border overflow-hidden transition-all duration-300 p-2.5 sm:p-4 cursor-pointer',
+                            selectedAddressIndex === 0
+                              ? isDarkMode
+                                ? 'border-blue-500 bg-blue-500/10 shadow-lg'
+                                : 'border-blue-500 bg-blue-50 shadow-lg'
+                              : isDarkMode
+                                ? 'border-slate-800/60 bg-slate-900/80 hover:border-slate-700'
+                                : 'border-slate-200 bg-white hover:border-slate-300'
+                          )}
+                        >
+                          <div className="flex items-start gap-1.5 sm:gap-3">
+                            {/* Radio button */}
+                            <div className="mt-0.5 flex-shrink-0">
+                              <div className={cn(
+                                'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 flex items-center justify-center',
+                                selectedAddressIndex === 0
+                                  ? isDarkMode ? 'border-blue-400' : 'border-blue-500'
+                                  : isDarkMode ? 'border-slate-600' : 'border-slate-400'
+                              )}>
+                                {selectedAddressIndex === 0 && (
+                                  <div className={cn(
+                                    'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full',
+                                    isDarkMode ? 'bg-blue-400' : 'bg-blue-600'
+                                  )} />
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Details */}
+                            <div className="flex-1 space-y-1 sm:space-y-2 min-w-0">
+                              {/* Name and Type */}
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <h4 className={cn(
+                                  'text-xs sm:text-sm font-semibold break-words',
+                                  isDarkMode ? 'text-slate-100' : 'text-slate-900'
+                                )}>
+                                  {previousAddressData.name || 'N/A'}
+                                </h4>
+                                {previousAddressData.addressType && (
+                                  <span className={cn(
+                                    'px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium uppercase flex-shrink-0',
+                                    isDarkMode
+                                      ? 'bg-blue-500/20 text-blue-200'
+                                      : 'bg-blue-100 text-blue-700'
+                                  )}>
+                                    {previousAddressData.addressType}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Company */}
+                              {previousAddressData.companyName && (
+                                <p className={cn(
+                                  'text-[10px] sm:text-xs break-words',
+                                  isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                                )}>
+                                  <Building className="h-2.5 w-2.5 sm:h-3 sm:w-3 inline mr-1" />
+                                  {previousAddressData.companyName}
+                                </p>
+                              )}
+                              
+                              {/* Address */}
+                              <div className="flex items-start gap-1 sm:gap-1.5">
+                                <MapPin className={cn(
+                                  'h-3 w-3 sm:h-3.5 sm:w-3.5 mt-0.5 flex-shrink-0',
+                                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                )} />
+                                <p className={cn(
+                                  'text-[10px] sm:text-xs leading-relaxed break-words',
+                                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                )}>
+                                  {[
+                                    previousAddressData.flatBuilding,
+                                    previousAddressData.locality,
+                                    previousAddressData.area,
+                                    previousAddressData.city,
+                                    previousAddressData.state,
+                                    previousAddressData.pincode
+                                  ].filter(Boolean).join(', ')}
+                                  {previousAddressData.landmark && ` (${previousAddressData.landmark})`}
+                                </p>
+                              </div>
+                              
+                              {/* Contact */}
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs">
+                                <div className="flex items-center gap-1 sm:gap-1.5">
+                                  <Phone className={cn(
+                                    'h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0',
+                                    isDarkMode ? 'text-green-400' : 'text-green-600'
+                                  )} />
+                                  <span className={cn(
+                                    'break-all',
+                                    isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                  )}>
+                                    +91 {previousAddressData.mobileNumber}
+                                  </span>
+                                </div>
+                                {previousAddressData.email && (
+                                  <>
+                                    <span className={cn(
+                                      'hidden sm:inline',
+                                      isDarkMode ? 'text-slate-500' : 'text-slate-400'
+                                    )}>
+                                      •
+                                    </span>
+                                    <div className="flex items-center gap-1 sm:gap-1.5">
+                                      <Mail className={cn(
+                                        'h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0',
+                                        isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                      )} />
+                                      <span className={cn(
+                                        'break-all',
+                                        isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                      )}>
+                                        {previousAddressData.email}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              
+                              {/* Additional Info */}
+                              {(previousAddressData.gstNumber || previousAddressData.website || previousAddressData.alternateNumbers?.filter((n: string) => n.trim()).length > 0) && (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs pt-1">
+                                  {previousAddressData.gstNumber && (
+                                    <span className={cn(
+                                      'break-words',
+                                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                                    )}>
+                                      GST: <span className={cn(isDarkMode ? 'text-slate-300' : 'text-slate-700')}>{previousAddressData.gstNumber}</span>
+                                    </span>
+                                  )}
+                                  {previousAddressData.website && (
+                                    <>
+                                      {previousAddressData.gstNumber && <span className={cn('hidden sm:inline', isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
+                                      <a 
+                                        href={previousAddressData.website.startsWith('http') ? previousAddressData.website : `https://${previousAddressData.website}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={cn(
+                                          'underline hover:opacity-80 break-all',
+                                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                        )}
+                                      >
+                                        {previousAddressData.website}
+                                      </a>
+                                    </>
+                                  )}
+                                  {previousAddressData.alternateNumbers && previousAddressData.alternateNumbers.filter((n: string) => n.trim()).length > 0 && (
+                                    <>
+                                      {(previousAddressData.gstNumber || previousAddressData.website) && <span className={cn('hidden sm:inline', isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
+                                      <span className={cn(
+                                        'break-words',
+                                        isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                                      )}>
+                                        Alt: {previousAddressData.alternateNumbers.filter((n: string) => n.trim()).join(', ')}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* New Address Card */}
+                        <div
+                          onClick={() => {
+                            setSelectedAddressIndex(1);
+                            // Update the form data with new address
+                            if (formModalOpen.type === 'origin') {
+                              setOriginData({ ...newAddressData });
+                              if (newAddressData.pincode) {
+                                setOriginPincode(newAddressData.pincode);
+                              }
+                            } else {
+                              setDestinationData({ ...newAddressData });
+                              if (newAddressData.pincode) {
+                                setDestinationPincode(newAddressData.pincode);
+                              }
+                            }
+                          }}
+                          className={cn(
+                            'rounded-xl border overflow-hidden transition-all duration-300 p-2.5 sm:p-4 cursor-pointer',
+                            selectedAddressIndex === 1
+                              ? isDarkMode
+                                ? 'border-blue-500 bg-blue-500/10 shadow-lg'
+                                : 'border-blue-500 bg-blue-50 shadow-lg'
+                              : isDarkMode
+                                ? 'border-slate-800/60 bg-slate-900/80 hover:border-slate-700'
+                                : 'border-slate-200 bg-white hover:border-slate-300'
+                          )}
+                        >
+                          <div className="flex items-start gap-1.5 sm:gap-3">
+                            {/* Radio button */}
+                            <div className="mt-0.5 flex-shrink-0">
+                              <div className={cn(
+                                'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 flex items-center justify-center',
+                                selectedAddressIndex === 1
+                                  ? isDarkMode ? 'border-blue-400' : 'border-blue-500'
+                                  : isDarkMode ? 'border-slate-600' : 'border-slate-400'
+                              )}>
+                                {selectedAddressIndex === 1 && (
+                                  <div className={cn(
+                                    'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full',
+                                    isDarkMode ? 'bg-blue-400' : 'bg-blue-600'
+                                  )} />
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Details */}
+                            <div className="flex-1 space-y-1 sm:space-y-2 min-w-0">
+                              {/* Name and Type */}
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <h4 className={cn(
+                                  'text-xs sm:text-sm font-semibold break-words',
+                                  isDarkMode ? 'text-slate-100' : 'text-slate-900'
+                                )}>
+                                  {newAddressData.name || 'N/A'}
+                                </h4>
+                                {newAddressData.addressType && (
+                                  <span className={cn(
+                                    'px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium uppercase flex-shrink-0',
+                                    isDarkMode
+                                      ? 'bg-blue-500/20 text-blue-200'
+                                      : 'bg-blue-100 text-blue-700'
+                                  )}>
+                                    {newAddressData.addressType}
+                                  </span>
+                                )}
+                              </div>
+                              
+                              {/* Company */}
+                              {newAddressData.companyName && (
+                                <p className={cn(
+                                  'text-[10px] sm:text-xs break-words',
+                                  isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                                )}>
+                                  <Building className="h-2.5 w-2.5 sm:h-3 sm:w-3 inline mr-1" />
+                                  {newAddressData.companyName}
+                                </p>
+                              )}
+                              
+                              {/* Address */}
+                              <div className="flex items-start gap-1 sm:gap-1.5">
+                                <MapPin className={cn(
+                                  'h-3 w-3 sm:h-3.5 sm:w-3.5 mt-0.5 flex-shrink-0',
+                                  isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                )} />
+                                <p className={cn(
+                                  'text-[10px] sm:text-xs leading-relaxed break-words',
+                                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                )}>
+                                  {[
+                                    newAddressData.flatBuilding,
+                                    newAddressData.locality,
+                                    newAddressData.area,
+                                    newAddressData.city,
+                                    newAddressData.state,
+                                    newAddressData.pincode
+                                  ].filter(Boolean).join(', ')}
+                                  {newAddressData.landmark && ` (${newAddressData.landmark})`}
+                                </p>
+                              </div>
+                              
+                              {/* Contact */}
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs">
+                                <div className="flex items-center gap-1 sm:gap-1.5">
+                                  <Phone className={cn(
+                                    'h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0',
+                                    isDarkMode ? 'text-green-400' : 'text-green-600'
+                                  )} />
+                                  <span className={cn(
+                                    'break-all',
+                                    isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                  )}>
+                                    +91 {newAddressData.mobileNumber}
+                                  </span>
+                                </div>
+                                {newAddressData.email && (
+                                  <>
+                                    <span className={cn(
+                                      'hidden sm:inline',
+                                      isDarkMode ? 'text-slate-500' : 'text-slate-400'
+                                    )}>
+                                      •
+                                    </span>
+                                    <div className="flex items-center gap-1 sm:gap-1.5">
+                                      <Mail className={cn(
+                                        'h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0',
+                                        isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                      )} />
+                                      <span className={cn(
+                                        'break-all',
+                                        isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                      )}>
+                                        {newAddressData.email}
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              
+                              {/* Additional Info */}
+                              {(newAddressData.gstNumber || newAddressData.website || newAddressData.alternateNumbers?.filter((n: string) => n.trim()).length > 0) && (
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs pt-1">
+                                  {newAddressData.gstNumber && (
+                                    <span className={cn(
+                                      'break-words',
+                                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                                    )}>
+                                      GST: <span className={cn(isDarkMode ? 'text-slate-300' : 'text-slate-700')}>{newAddressData.gstNumber}</span>
+                                    </span>
+                                  )}
+                                  {newAddressData.website && (
+                                    <>
+                                      {newAddressData.gstNumber && <span className={cn('hidden sm:inline', isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
+                                      <a 
+                                        href={newAddressData.website.startsWith('http') ? newAddressData.website : `https://${newAddressData.website}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={cn(
+                                          'underline hover:opacity-80 break-all',
+                                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                        )}
+                                      >
+                                        {newAddressData.website}
+                                      </a>
+                                    </>
+                                  )}
+                                  {newAddressData.alternateNumbers && newAddressData.alternateNumbers.filter((n: string) => n.trim()).length > 0 && (
+                                    <>
+                                      {(newAddressData.gstNumber || newAddressData.website) && <span className={cn('hidden sm:inline', isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
+                                      <span className={cn(
+                                        'break-words',
+                                        isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                                      )}>
+                                        Alt: {newAddressData.alternateNumbers.filter((n: string) => n.trim()).join(', ')}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : hasMultipleRecords ? (
+                      <div className="space-y-3 max-h-[50vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {phoneSearchResults.map((record, index) => (
+                          <div
+                            key={index}
+                            onClick={() => {
+                              setSelectedRecordIndex(index);
+                              handleSelectPhoneRecord(record, formModalOpen.type!, false);
+                            }}
+                            className={cn(
+                              'rounded-xl border overflow-hidden transition-all duration-300 p-2.5 sm:p-4 cursor-pointer',
+                              selectedRecordIndex === index
+                                ? isDarkMode
+                                  ? 'border-blue-500 bg-blue-500/10 shadow-lg'
+                                  : 'border-blue-500 bg-blue-50 shadow-lg'
+                                : isDarkMode
+                                  ? 'border-slate-800/60 bg-slate-900/80 hover:border-slate-700'
+                                  : 'border-slate-200 bg-white hover:border-slate-300'
+                            )}
+                          >
+                            <div className="flex items-start gap-1.5 sm:gap-3">
+                              {/* Radio button */}
+                              <div className="mt-0.5 flex-shrink-0">
+                                <div className={cn(
+                                  'w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 flex items-center justify-center',
+                                  selectedRecordIndex === index
+                                    ? isDarkMode ? 'border-blue-400' : 'border-blue-500'
+                                    : isDarkMode ? 'border-slate-600' : 'border-slate-400'
+                                )}>
+                                  {selectedRecordIndex === index && (
+                                    <div className={cn(
+                                      'w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full',
+                                      isDarkMode ? 'bg-blue-400' : 'bg-blue-600'
+                                    )} />
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Details */}
+                              <div className="flex-1 space-y-1 sm:space-y-2 min-w-0">
+                                {/* Name and Type */}
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <h4 className={cn(
+                                    'text-xs sm:text-sm font-semibold break-words',
+                                    isDarkMode ? 'text-slate-100' : 'text-slate-900'
+                                  )}>
+                                    {record.name || 'N/A'}
+                                  </h4>
+                                  {record.addressType && (
+                                    <span className={cn(
+                                      'px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium uppercase flex-shrink-0',
+                                      isDarkMode
+                                        ? 'bg-blue-500/20 text-blue-200'
+                                        : 'bg-blue-100 text-blue-700'
+                                    )}>
+                                      {record.addressType}
+                                    </span>
+                                  )}
+                                </div>
+                                
+                                {/* Company */}
+                                {record.companyName && (
+                                  <p className={cn(
+                                    'text-[10px] sm:text-xs break-words',
+                                    isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                                  )}>
+                                    <Building className="h-2.5 w-2.5 sm:h-3 sm:w-3 inline mr-1" />
+                                    {record.companyName}
+                                  </p>
+                                )}
+                                
+                                {/* Address */}
+                                <div className="flex items-start gap-1 sm:gap-1.5">
+                                  <MapPin className={cn(
+                                    'h-3 w-3 sm:h-3.5 sm:w-3.5 mt-0.5 flex-shrink-0',
+                                    isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                  )} />
+                                  <p className={cn(
+                                    'text-[10px] sm:text-xs leading-relaxed break-words',
+                                    isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                  )}>
+                                    {[
+                                      record.flatBuilding,
+                                      record.locality,
+                                      record.area,
+                                      record.city,
+                                      record.state,
+                                      record.pincode
+                                    ].filter(Boolean).join(', ')}
+                                    {record.landmark && ` (${record.landmark})`}
+                                  </p>
+                                </div>
+                                
+                                {/* Contact */}
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs">
+                                  <div className="flex items-center gap-1 sm:gap-1.5">
+                                    <Phone className={cn(
+                                      'h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0',
+                                      isDarkMode ? 'text-green-400' : 'text-green-600'
+                                    )} />
+                                    <span className={cn(
+                                      'break-all',
+                                      isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                    )}>
+                                      +91 {phoneSearchModalOpen.phoneNumber}
+                                    </span>
+                                  </div>
+                                  {record.email && (
+                                    <>
+                                      <span className={cn(
+                                        'hidden sm:inline',
+                                        isDarkMode ? 'text-slate-500' : 'text-slate-400'
+                                      )}>
+                                        •
+                                      </span>
+                                      <div className="flex items-center gap-1 sm:gap-1.5">
+                                        <Mail className={cn(
+                                          'h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0',
+                                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                        )} />
+                                        <span className={cn(
+                                          'break-all',
+                                          isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                                        )}>
+                                          {record.email}
+                                        </span>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                                
+                                {/* Additional Info */}
+                                {(record.gstNumber || record.website || record.alternateNumbers?.filter((n: string) => n.trim()).length > 0) && (
+                                  <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs pt-1">
+                                    {record.gstNumber && (
+                                      <span className={cn(
+                                        'break-words',
+                                        isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                                      )}>
+                                        GST: <span className={cn(isDarkMode ? 'text-slate-300' : 'text-slate-700')}>{record.gstNumber}</span>
+                                      </span>
+                                    )}
+                                    {record.website && (
+                                      <>
+                                        {record.gstNumber && <span className={cn('hidden sm:inline', isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
+                                        <a 
+                                          href={record.website.startsWith('http') ? record.website : `https://${record.website}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className={cn(
+                                            'underline hover:opacity-80 break-all',
+                                            isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                                          )}
+                                        >
+                                          {record.website}
+                                        </a>
+                                      </>
+                                    )}
+                                    {record.alternateNumbers && record.alternateNumbers.filter((n: string) => n.trim()).length > 0 && (
+                                      <>
+                                        {(record.gstNumber || record.website) && <span className={cn('hidden sm:inline', isDarkMode ? 'text-slate-500' : 'text-slate-400')}>•</span>}
+                                        <span className={cn(
+                                          'break-words',
+                                          isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                                        )}>
+                                          Alt: {record.alternateNumbers.filter((n: string) => n.trim()).join(', ')}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      /* Single Address Content - Box Design */
+                      <div
+                        className={cn(
+                          'rounded-xl border overflow-hidden transition-all duration-300 p-2.5 sm:p-4',
+                          isDarkMode
+                            ? 'border-slate-800/60 bg-slate-900/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)]'
+                            : 'border-slate-200 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.25)]'
+                        )}
+                      >
                         <div className="flex items-start gap-1.5 sm:gap-3">
                           {/* Radio button */}
                           <div className="mt-0.5 flex-shrink-0">
@@ -5925,14 +7049,114 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                             )}
                           </div>
                         </div>
-                    </div>
+                      </div>
+                    )}
                     
                     {/* Action Buttons - Compact */}
-                    <div className="flex gap-2 pt-1">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                      {/* Show "Add Another Address" button if phone number was found or if form is complete, but not when already showing two addresses */}
+                      {!isAddingAnotherAddress && ((phoneSearchResults.length > 0 && phoneSearchModalOpen.type === formModalOpen.type) || 
+                        (formModalOpen.type && (formModalOpen.type === 'origin' ? isOriginFormComplete : isDestinationFormComplete))) && (
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            const currentType = formModalOpen.type;
+                            if (!currentType) return;
+                            
+                            // Save current address data as previous
+                            const currentData = currentType === 'origin' ? originData : destinationData;
+                            setPreviousAddressData({ ...currentData });
+                            
+                            // Clear the form but keep necessary fields like pincode and location details
+                            const emptyData = {
+                              mobileNumber: currentData.mobileNumber, // Keep phone number
+                              name: '',
+                              companyName: '',
+                              email: '',
+                              locality: '',
+                              flatBuilding: '',
+                              landmark: '',
+                              pincode: currentData.pincode || '', // Keep pincode
+                              area: currentData.area || '', // Keep area
+                              city: currentData.city || '', // Keep city
+                              district: currentData.district || '', // Keep district
+                              state: currentData.state || '', // Keep state
+                              gstNumber: '',
+                              alternateNumbers: [''],
+                              addressType: 'Home',
+                              birthday: '',
+                              anniversary: '',
+                              website: '',
+                              otherAlternateNumber: '',
+                            };
+                            
+                            if (currentType === 'origin') {
+                              setOriginData(emptyData);
+                              // Keep pincode if it exists
+                              if (currentData.pincode) {
+                                setOriginPincode(currentData.pincode);
+                              }
+                            } else {
+                              setDestinationData(emptyData);
+                              // Keep pincode if it exists
+                              if (currentData.pincode) {
+                                setDestinationPincode(currentData.pincode);
+                              }
+                            }
+                            
+                            // Set add another address mode
+                            setIsAddingAnotherAddress(true);
+                            setNewAddressData(null);
+                            setSelectedAddressIndex(0);
+                            
+                            // Clear search results and show blank form
+                            setPhoneSearchResults([]);
+                            setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
+                            setShowPreviewInModal(false);
+                          }}
+                          variant="outline"
+                          className={cn(
+                            "h-9 sm:h-10 rounded-md text-xs sm:text-sm font-medium",
+                            isDarkMode
+                              ? "border-blue-500 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400"
+                              : "border-blue-500 bg-blue-50 hover:bg-blue-100 text-blue-600"
+                          )}
+                        >
+                          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" />
+                          Add Another Address
+                        </Button>
+                      )}
                       <Button
                         type="button"
                         onClick={() => {
                           const currentType = formModalOpen.type;
+                          
+                          // If in "add another address" mode, apply the selected address
+                          if (isAddingAnotherAddress && previousAddressData && newAddressData) {
+                            const selectedData = selectedAddressIndex === 0 ? previousAddressData : newAddressData;
+                            
+                            if (currentType === 'origin') {
+                              setOriginData({ ...selectedData });
+                              if (selectedData.pincode) {
+                                setOriginPincode(selectedData.pincode);
+                              }
+                            } else {
+                              setDestinationData({ ...selectedData });
+                              if (selectedData.pincode) {
+                                setDestinationPincode(selectedData.pincode);
+                              }
+                            }
+                            
+                            // Reset add another address mode
+                            setIsAddingAnotherAddress(false);
+                            setPreviousAddressData(null);
+                            setNewAddressData(null);
+                            setSelectedAddressIndex(0);
+                          }
+                          
+                          // Clear phone search results when continuing
+                          setPhoneSearchResults([]);
+                          setPhoneSearchModalOpen({ type: null, phoneNumber: '' });
                           setFormModalOpen({ type: null });
                           setShowPreviewInModal(false);
                           
@@ -6332,8 +7556,65 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                       </div>
                     </div>
                   </div>
+                ) : !showPaymentOptions ? (
+                  /* Pay Now / Pay Later Choice */
+                  <div className="max-w-2xl mx-auto">
+                    <div className={cn(
+                      'rounded-lg border p-8 text-center',
+                      isDarkMode ? 'border-slate-700 bg-slate-800/30' : 'border-slate-200 bg-white'
+                    )}>
+                      <h3 className={cn('text-xl font-semibold mb-2', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
+                        Booking Confirmed!
+                      </h3>
+                      <p className={cn('text-sm mb-6', isDarkMode ? 'text-slate-400' : 'text-slate-600')}>
+                        Your booking has been created successfully. Choose your payment option:
+                      </p>
+                      
+                      <div className="space-y-4">
+                        <Button
+                          onClick={handleRazorpayPayment}
+                          disabled={processingPayment}
+                          className={cn(
+                            'w-full py-6 text-base font-semibold',
+                            isDarkMode
+                              ? 'bg-green-500 hover:bg-green-600 text-white disabled:bg-green-500/50'
+                              : 'bg-green-500 hover:bg-green-600 text-white disabled:bg-green-500/50'
+                          )}
+                        >
+                          {processingPayment ? (
+                            <>
+                              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="mr-2 h-5 w-5" />
+                              Pay Now - ₹{calculatedPrice ? (calculatedPrice * 1.18).toFixed(2) : '0.00'}
+                            </>
+                          )}
+                        </Button>
+                        
+                        <Button
+                          onClick={handlePayLater}
+                          className={cn(
+                            'w-full py-6 text-base font-semibold',
+                            isDarkMode
+                              ? 'bg-slate-700 hover:bg-slate-600 text-white'
+                              : 'bg-slate-200 hover:bg-slate-300 text-slate-900'
+                          )}
+                        >
+                          <Clock className="mr-2 h-5 w-5" />
+                          Pay Later
+                        </Button>
+                      </div>
+                      
+                      <p className={cn('text-xs mt-6', isDarkMode ? 'text-slate-500' : 'text-slate-500')}>
+                        Secure payment powered by Razorpay
+                      </p>
+                    </div>
+                  </div>
                 ) : (
-                  /* Payment Options */
+                  /* Payment Options - Old UI (keeping for reference, but will be replaced by Razorpay) */
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Left Column - Payment Methods */}
                   <div className="space-y-6">
@@ -6776,6 +8057,25 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
               </div>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Login Dialog */}
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="max-w-md p-0 border-0 bg-transparent">
+          <UserLogin
+            isDarkMode={isDarkMode}
+            onLoginSuccess={() => {
+              setShowLoginDialog(false);
+              // Proceed to next step after login
+              const newCompleted = [...completedSteps];
+              newCompleted[0] = true;
+              setCompletedSteps(newCompleted);
+              setCurrentStep(1);
+              setCurrentSection('origin');
+            }}
+            onCancel={() => setShowLoginDialog(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>
