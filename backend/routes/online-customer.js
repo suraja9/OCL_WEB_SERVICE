@@ -30,8 +30,9 @@ router.post('/send-otp', async (req, res) => {
       });
     }
 
-    // Forward to OTP service
-    const otpResponse = await axios.post(`${req.protocol}://${req.get('host')}/api/otp/send`, {
+    // Forward to OTP service (use localhost for internal calls)
+    const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const otpResponse = await axios.post(`${backendUrl}/api/otp/send`, {
       phoneNumber: cleanPhone
     });
 
@@ -76,8 +77,9 @@ router.post('/verify-otp', async (req, res) => {
       });
     }
 
-    // Verify OTP
-    const verifyResponse = await axios.post(`${req.protocol}://${req.get('host')}/api/otp/verify`, {
+    // Verify OTP (use localhost for internal calls)
+    const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const verifyResponse = await axios.post(`${backendUrl}/api/otp/verify`, {
       phoneNumber: cleanPhone,
       otp: otp
     });
