@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Pencil } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
+import flagIcon from '@/Icon-images/flag.png';
 
 const API_BASE: string = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -26,6 +27,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
   const [isNewUser, setIsNewUser] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
+  const [resendTimer, setResendTimer] = useState(0);
 
   // Refs for inputs
   const phoneInputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -43,6 +45,16 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
       }, 100);
     }
   }, [step]);
+
+  // Countdown timer for OTP resend
+  useEffect(() => {
+    if (resendTimer > 0) {
+      const timer = setTimeout(() => {
+        setResendTimer(resendTimer - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendTimer]);
 
   // Handle phone number input
   const handlePhoneInput = (index: number, value: string) => {
@@ -206,6 +218,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
       if (data.success) {
         setPhoneNumber(phone);
         setStep('otp');
+        setResendTimer(60); // Start 60 second countdown
         toast({
           title: 'OTP Sent',
           description: 'Please check your phone for the OTP'
@@ -329,14 +342,28 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
   };
 
   const handleResendOTP = () => {
+    if (resendTimer > 0) return; // Don't allow resend if timer is active
     setOtpDigits(Array(6).fill(''));
     setOtpError(null);
     sendOTP();
   };
 
+  const formatPhoneNumber = (phone: string) => {
+    if (phone.length === 10) {
+      return `XXXXXX${phone.slice(-4)}`;
+    }
+    return phone;
+  };
+
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className={cn(
-      "relative overflow-hidden w-full max-w-md mx-auto rounded-3xl border p-8 shadow-xl transition",
+      "relative overflow-hidden w-full max-w-lg mx-auto rounded-2xl border p-6 sm:p-8 shadow-lg transition",
       isDarkMode
         ? "border-slate-700/50 bg-slate-900/95 backdrop-blur-sm"
         : "border-slate-200/40 bg-white"
@@ -348,31 +375,63 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
             "text-2xl font-bold leading-tight",
             isDarkMode ? "text-white" : "text-slate-900"
           )}>
-            {step === 'phone' && 'Welcome Back!'}
+            {step === 'phone' && 'Sign In'}
             {step === 'otp' && 'Enter OTP'}
             {step === 'details' && 'Complete Your Profile'}
           </h2>
-          <p className={cn(
-            "text-sm leading-relaxed",
-            isDarkMode ? "text-slate-400" : "text-slate-600"
-          )}>
-            {step === 'phone' && 'We missed you! Please enter your details.'}
-            {step === 'otp' && `OTP sent to ${phoneNumber}`}
-            {step === 'details' && 'Please provide your details to continue'}
-          </p>
         </div>
 
         {/* Phone Number Step */}
         {step === 'phone' && (
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <label className={cn(
-                "text-sm font-medium block",
-                isDarkMode ? "text-slate-300" : "text-slate-700"
-              )}>
-                Enter Email / Phone No
-              </label>
-              <div className="flex gap-2">
+          <div className="space-y-6">
+            {/* Phone Number Info Banner */}
+            <div className={cn(
+              "rounded-xl px-4 py-3 flex items-center",
+              isDarkMode 
+                ? "bg-slate-800/60 border border-slate-700/50" 
+                : "bg-slate-50 border border-slate-200/60"
+            )}>
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  isDarkMode ? "bg-blue-400" : "bg-blue-500"
+                )} />
+                <span className={cn(
+                  "text-sm font-medium",
+                  isDarkMode ? "text-slate-300" : "text-slate-700"
+                )}>
+                  Enter your 10-digit phone number to continue
+                </span>
+              </div>
+            </div>
+
+            {/* Phone Number Input Fields */}
+            <div className="space-y-3">
+              <div className="flex gap-1 justify-center items-center">
+                {/* Country Code with Flag */}
+                <div className={cn(
+                  "flex items-center gap-1.5 px-3 h-11 border-2 rounded-lg min-w-[60px]",
+                  isDarkMode
+                    ? "bg-slate-800/50 border-slate-600/50"
+                    : "bg-white border-slate-200"
+                )}>
+                  <img 
+                    src={flagIcon} 
+                    alt="India flag" 
+                    className="w-4 h-3 object-cover rounded-sm"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  <span className={cn(
+                    "text-xs font-semibold whitespace-nowrap",
+                    isDarkMode ? "text-white" : "text-slate-900"
+                  )}>
+                    +91
+                  </span>
+                </div>
+                
+                {/* Phone Number Digits */}
                 {phoneDigits.map((digit, index) => (
                   <input
                     key={index}
@@ -388,67 +447,86 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                     onPaste={index === 0 ? handlePhonePaste : undefined}
                     autoComplete="off"
                     className={cn(
-                      "w-full h-12 text-center text-lg font-semibold border rounded-lg transition-all duration-200",
-                      "focus:outline-none focus:ring-1 focus:ring-offset-0",
+                      "w-8 h-11 text-center text-sm font-semibold border-2 rounded-lg transition-all duration-200",
+                      "focus:outline-none focus:ring-2 focus:ring-offset-0",
                       isDarkMode
                         ? "bg-slate-800/50 border-slate-600/50 text-white focus:border-blue-500 focus:ring-blue-500/30"
                         : "bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-blue-500/30",
-                      digit && isDarkMode && "border-blue-500/50 bg-blue-500/10",
-                      digit && !isDarkMode && "border-blue-500/50 bg-blue-50/50"
+                      digit && isDarkMode && "border-blue-500 bg-blue-500/10",
+                      digit && !isDarkMode && "border-blue-500 bg-blue-50"
                     )}
                   />
                 ))}
               </div>
             </div>
-            <div className="space-y-4">
-              <Button
-                onClick={sendOTP}
-                disabled={phoneDigits.join('').length !== 10 || isLoading}
-                className={cn(
-                  "w-full h-12 text-base font-semibold rounded-lg transition-all duration-200",
-                  isDarkMode
-                    ? "bg-blue-500 hover:bg-blue-600 text-white"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                )}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  'Sign in'
-                )}
-              </Button>
-              {onCancel && (
-                <Button
-                  variant="ghost"
-                  onClick={onCancel}
-                  className={cn(
-                    "w-full h-11 text-sm font-medium transition",
-                    isDarkMode
-                      ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                  )}
-                >
-                  Cancel
-                </Button>
+
+            {/* Continue Button */}
+            <Button
+              onClick={sendOTP}
+              disabled={phoneDigits.join('').length !== 10 || isLoading}
+              className={cn(
+                "w-full h-12 text-base font-semibold rounded-xl transition-all duration-200 shadow-sm",
+                isDarkMode
+                  ? "bg-blue-500 hover:bg-blue-600 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
               )}
-            </div>
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Continue'
+              )}
+            </Button>
           </div>
         )}
 
         {/* OTP Step */}
         {step === 'otp' && (
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <label className={cn(
-                "text-sm font-medium block",
-                isDarkMode ? "text-slate-300" : "text-slate-700"
-              )}>
-                Enter OTP
-              </label>
-              <div className="flex gap-2">
+          <div className="space-y-6">
+            {/* OTP Sent Banner */}
+            <div className={cn(
+              "rounded-xl px-4 py-3 flex items-center justify-between",
+              isDarkMode 
+                ? "bg-slate-800/60 border border-slate-700/50" 
+                : "bg-slate-50 border border-slate-200/60"
+            )}>
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  isDarkMode ? "bg-blue-400" : "bg-blue-500"
+                )} />
+                <span className={cn(
+                  "text-sm font-medium",
+                  isDarkMode ? "text-slate-300" : "text-slate-700"
+                )}>
+                  An OTP had been sent: {formatPhoneNumber(phoneNumber)}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setStep('phone');
+                  setOtpDigits(Array(6).fill(''));
+                  setOtpError(null);
+                  setResendTimer(0);
+                }}
+                className={cn(
+                  "p-1.5 rounded-lg transition-colors",
+                  isDarkMode
+                    ? "hover:bg-slate-700/50 text-slate-400 hover:text-slate-200"
+                    : "hover:bg-slate-200/60 text-slate-500 hover:text-slate-700"
+                )}
+                aria-label="Change phone number"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* OTP Input Fields */}
+            <div className="space-y-3">
+              <div className="flex gap-1 justify-center items-center">
                 {otpDigits.map((digit, index) => (
                   <input
                     key={index}
@@ -464,83 +542,123 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                     onPaste={index === 0 ? handleOtpPaste : undefined}
                     autoComplete="off"
                     className={cn(
-                      "w-full h-12 text-center text-lg font-semibold border rounded-lg transition-all duration-200",
-                      "focus:outline-none focus:ring-1 focus:ring-offset-0",
+                      "w-9 h-11 text-center text-sm font-semibold border-2 rounded-lg transition-all duration-200",
+                      "focus:outline-none focus:ring-2 focus:ring-offset-0",
                       isDarkMode
                         ? "bg-slate-800/50 border-slate-600/50 text-white focus:border-blue-500 focus:ring-blue-500/30"
                         : "bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-blue-500/30",
-                      digit && isDarkMode && "border-blue-500/50 bg-blue-500/10",
-                      digit && !isDarkMode && "border-blue-500/50 bg-blue-50/50",
-                      otpError && "border-red-500 ring-1 ring-red-500/30"
+                      digit && isDarkMode && "border-blue-500 bg-blue-500/10",
+                      digit && !isDarkMode && "border-blue-500 bg-blue-50",
+                      otpError && "border-red-500 ring-2 ring-red-500/30"
                     )}
                   />
                 ))}
               </div>
               {otpError && (
                 <p className={cn(
-                  "text-sm font-medium px-2",
+                  "text-sm font-medium text-center",
                   isDarkMode ? "text-red-400" : "text-red-600"
                 )}>
                   {otpError}
                 </p>
               )}
             </div>
-            <div className="space-y-4">
-              <Button
-                onClick={() => verifyOTP()}
-                disabled={otpDigits.join('').length !== 6 || isLoading}
-                className={cn(
-                  "w-full h-12 text-base font-semibold rounded-lg transition-all duration-200",
-                  isDarkMode
-                    ? "bg-blue-500 hover:bg-blue-600 text-white"
-                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                )}
-              >
-                {isLoading ? (
+
+            {/* Resend OTP Banner */}
+            <div className={cn(
+              "rounded-xl px-4 py-3 flex items-center justify-between",
+              isDarkMode 
+                ? "bg-slate-800/60 border border-slate-700/50" 
+                : "bg-slate-50 border border-slate-200/60"
+            )}>
+              <span className={cn(
+                "text-sm font-medium",
+                isDarkMode ? "text-slate-300" : "text-slate-700"
+              )}>
+                Didn't receive?
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleResendOTP}
+                  disabled={resendTimer > 0 || isLoading}
+                  className={cn(
+                    "text-sm font-medium transition-colors",
+                    resendTimer > 0 || isLoading
+                      ? isDarkMode
+                        ? "text-slate-500 cursor-not-allowed"
+                        : "text-slate-400 cursor-not-allowed"
+                      : isDarkMode
+                        ? "text-blue-400 hover:text-blue-300"
+                        : "text-blue-600 hover:text-blue-700"
+                  )}
+                >
+                  Resend OTP
+                </button>
+                {resendTimer > 0 && (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verifying...
+                    <div className={cn(
+                      "w-2 h-2 rounded-full",
+                      isDarkMode ? "bg-orange-400" : "bg-orange-500"
+                    )} />
+                    <span className={cn(
+                      "text-sm font-medium tabular-nums",
+                      isDarkMode ? "text-slate-300" : "text-slate-700"
+                    )}>
+                      {formatTimer(resendTimer)}
+                    </span>
                   </>
-                ) : (
-                  'Verify OTP'
                 )}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={handleResendOTP}
-                disabled={isLoading}
-                className={cn(
-                  "w-full h-11 text-sm font-medium transition",
-                  isDarkMode
-                    ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                )}
-              >
-                Resend OTP
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setStep('phone');
-                  setOtpDigits(Array(6).fill(''));
-                  setOtpError(null);
-                }}
-                className={cn(
-                  "w-full h-11 text-sm font-medium transition",
-                  isDarkMode
-                    ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                )}
-              >
-                Change Phone Number
-              </Button>
+              </div>
             </div>
+
+            {/* Verify Button */}
+            <Button
+              onClick={() => verifyOTP()}
+              disabled={otpDigits.join('').length !== 6 || isLoading}
+              className={cn(
+                "w-full h-12 text-base font-semibold rounded-xl transition-all duration-200 shadow-sm",
+                isDarkMode
+                  ? "bg-blue-500 hover:bg-blue-600 text-white"
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
+              )}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Verifying...
+                </>
+              ) : (
+                'Verify OTP'
+              )}
+            </Button>
           </div>
         )}
 
         {/* Details Step */}
         {step === 'details' && (
-          <div className="space-y-5">
+          <div className="space-y-6">
+            {/* Profile Info Banner */}
+            <div className={cn(
+              "rounded-xl px-4 py-3 flex items-center",
+              isDarkMode 
+                ? "bg-slate-800/60 border border-slate-700/50" 
+                : "bg-slate-50 border border-slate-200/60"
+            )}>
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  isDarkMode ? "bg-blue-400" : "bg-blue-500"
+                )} />
+                <span className={cn(
+                  "text-sm font-medium",
+                  isDarkMode ? "text-slate-300" : "text-slate-700"
+                )}>
+                  Please provide your details to complete registration
+                </span>
+              </div>
+            </div>
+
+            {/* Form Fields */}
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className={cn(
@@ -555,8 +673,8 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your name"
                   className={cn(
-                    "w-full h-12 px-4 border rounded-lg transition-all duration-200",
-                    "focus:outline-none focus:ring-1 focus:ring-offset-0",
+                    "w-full h-12 px-4 border-2 rounded-xl transition-all duration-200",
+                    "focus:outline-none focus:ring-2 focus:ring-offset-0",
                     isDarkMode
                       ? "bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/30"
                       : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/30"
@@ -576,8 +694,8 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   className={cn(
-                    "w-full h-12 px-4 border rounded-lg transition-all duration-200",
-                    "focus:outline-none focus:ring-1 focus:ring-offset-0",
+                    "w-full h-12 px-4 border-2 rounded-xl transition-all duration-200",
+                    "focus:outline-none focus:ring-2 focus:ring-offset-0",
                     isDarkMode
                       ? "bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/30"
                       : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/30"
@@ -585,11 +703,13 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                 />
               </div>
             </div>
+
+            {/* Continue Button */}
             <Button
               onClick={registerUser}
               disabled={!name.trim() || isLoading}
               className={cn(
-                "w-full h-12 text-base font-semibold rounded-lg transition-all duration-200",
+                "w-full h-12 text-base font-semibold rounded-xl transition-all duration-200 shadow-sm",
                 isDarkMode
                   ? "bg-blue-500 hover:bg-blue-600 text-white"
                   : "bg-blue-500 hover:bg-blue-600 text-white"
