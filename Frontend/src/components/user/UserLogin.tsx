@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { Phone, Loader2, ArrowRight, User, Mail, Lock } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const API_BASE: string = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
@@ -336,69 +336,41 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
 
   return (
     <div className={cn(
-      "relative overflow-hidden w-full max-w-md mx-auto rounded-2xl border p-6 shadow-[0_25px_80px_rgba(15,23,42,0.15)] transition sm:rounded-3xl sm:p-8",
+      "relative overflow-hidden w-full max-w-md mx-auto rounded-3xl border p-8 shadow-xl transition",
       isDarkMode
-        ? "border-slate-800/60 bg-gradient-to-br from-slate-900/90 via-slate-900/60 to-slate-950/90"
-        : "border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-blue-50/20"
+        ? "border-slate-700/50 bg-slate-900/95 backdrop-blur-sm"
+        : "border-slate-200/40 bg-white"
     )}>
-      {/* Background gradient effects */}
-      <div
-        className={cn(
-          "pointer-events-none absolute -right-24 top-10 h-48 w-48 rounded-full blur-3xl",
-          isDarkMode
-            ? "bg-blue-500/20"
-            : "bg-blue-400/20"
-        )}
-      />
-      <div
-        className={cn(
-          "pointer-events-none absolute -bottom-20 left-0 h-48 w-48 rounded-full blur-3xl",
-          isDarkMode
-            ? "bg-purple-500/10"
-            : "bg-purple-400/15"
-        )}
-      />
-
-      <div className="relative z-10 space-y-6">
+      <div className="space-y-6">
         {/* Header */}
-        <div className="text-center space-y-3">
-          <div className={cn(
-            "inline-flex h-14 w-14 items-center justify-center rounded-full transition",
-            isDarkMode
-              ? "bg-blue-500/20 text-blue-400 shadow-[0_8px_30px_rgba(59,130,246,0.2)]"
-              : "bg-blue-100 text-blue-600 shadow-[0_8px_30px_rgba(59,130,246,0.15)]"
+        <div className="space-y-1">
+          <h2 className={cn(
+            "text-2xl font-bold leading-tight",
+            isDarkMode ? "text-white" : "text-slate-900"
           )}>
-            <Lock size={28} />
-          </div>
-          <div className="space-y-1">
-            <h2 className={cn(
-              "text-2xl font-semibold leading-tight",
-              isDarkMode ? "text-white" : "text-slate-900"
-            )}>
-              {step === 'phone' && 'Login with Phone'}
-              {step === 'otp' && 'Enter OTP'}
-              {step === 'details' && 'Complete Your Profile'}
-            </h2>
-            <p className={cn(
-              "text-sm",
-              isDarkMode ? "text-slate-400" : "text-slate-600"
-            )}>
-              {step === 'phone' && 'We\'ll send you a verification code'}
-              {step === 'otp' && `OTP sent to ${phoneNumber}`}
-              {step === 'details' && 'Please provide your details to continue'}
-            </p>
-          </div>
+            {step === 'phone' && 'Welcome Back!'}
+            {step === 'otp' && 'Enter OTP'}
+            {step === 'details' && 'Complete Your Profile'}
+          </h2>
+          <p className={cn(
+            "text-sm leading-relaxed",
+            isDarkMode ? "text-slate-400" : "text-slate-600"
+          )}>
+            {step === 'phone' && 'We missed you! Please enter your details.'}
+            {step === 'otp' && `OTP sent to ${phoneNumber}`}
+            {step === 'details' && 'Please provide your details to continue'}
+          </p>
         </div>
 
         {/* Phone Number Step */}
         {step === 'phone' && (
           <div className="space-y-5">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className={cn(
                 "text-sm font-medium block",
                 isDarkMode ? "text-slate-300" : "text-slate-700"
               )}>
-                Phone Number
+                Enter Email / Phone No
               </label>
               <div className="flex gap-2">
                 {phoneDigits.map((digit, index) => (
@@ -416,25 +388,24 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                     onPaste={index === 0 ? handlePhonePaste : undefined}
                     autoComplete="off"
                     className={cn(
-                      "w-full h-14 text-center text-xl font-semibold border rounded-xl transition-all duration-200",
-                      "focus:outline-none focus:ring-2 focus:ring-offset-0",
+                      "w-full h-12 text-center text-lg font-semibold border rounded-lg transition-all duration-200",
+                      "focus:outline-none focus:ring-1 focus:ring-offset-0",
                       isDarkMode
-                        ? "bg-slate-800/60 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/30 shadow-lg"
-                        : "bg-white/90 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 shadow-md hover:shadow-lg",
-                      digit && isDarkMode && "border-blue-500/40 bg-blue-500/10",
-                      digit && !isDarkMode && "border-blue-400/40 bg-blue-50"
+                        ? "bg-slate-800/50 border-slate-600/50 text-white focus:border-blue-500 focus:ring-blue-500/30"
+                        : "bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-blue-500/30",
+                      digit && isDarkMode && "border-blue-500/50 bg-blue-500/10",
+                      digit && !isDarkMode && "border-blue-500/50 bg-blue-50/50"
                     )}
                   />
                 ))}
               </div>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Button
                 onClick={sendOTP}
                 disabled={phoneDigits.join('').length !== 10 || isLoading}
                 className={cn(
-                  "w-full rounded-full h-11 text-sm font-semibold transition-all duration-200",
-                  "shadow-lg hover:shadow-xl",
+                  "w-full h-12 text-base font-semibold rounded-lg transition-all duration-200",
                   isDarkMode
                     ? "bg-blue-500 hover:bg-blue-600 text-white"
                     : "bg-blue-500 hover:bg-blue-600 text-white"
@@ -446,21 +417,18 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                     Sending...
                   </>
                 ) : (
-                  <>
-                    Send OTP
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </>
+                  'Sign in'
                 )}
               </Button>
               {onCancel && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   onClick={onCancel}
                   className={cn(
-                    "w-full rounded-full h-11 text-sm font-medium transition",
+                    "w-full h-11 text-sm font-medium transition",
                     isDarkMode
-                      ? "border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800/70"
-                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                   )}
                 >
                   Cancel
@@ -473,7 +441,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
         {/* OTP Step */}
         {step === 'otp' && (
           <div className="space-y-5">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className={cn(
                 "text-sm font-medium block",
                 isDarkMode ? "text-slate-300" : "text-slate-700"
@@ -496,14 +464,14 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                     onPaste={index === 0 ? handleOtpPaste : undefined}
                     autoComplete="off"
                     className={cn(
-                      "w-full h-14 text-center text-xl font-semibold border rounded-xl transition-all duration-200",
-                      "focus:outline-none focus:ring-2 focus:ring-offset-0",
+                      "w-full h-12 text-center text-lg font-semibold border rounded-lg transition-all duration-200",
+                      "focus:outline-none focus:ring-1 focus:ring-offset-0",
                       isDarkMode
-                        ? "bg-slate-800/60 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/30 shadow-lg"
-                        : "bg-white/90 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 shadow-md hover:shadow-lg",
-                      digit && isDarkMode && "border-blue-500/40 bg-blue-500/10",
-                      digit && !isDarkMode && "border-blue-400/40 bg-blue-50",
-                      otpError && "border-red-500 ring-2 ring-red-500/20"
+                        ? "bg-slate-800/50 border-slate-600/50 text-white focus:border-blue-500 focus:ring-blue-500/30"
+                        : "bg-white border-slate-200 text-slate-900 focus:border-blue-500 focus:ring-blue-500/30",
+                      digit && isDarkMode && "border-blue-500/50 bg-blue-500/10",
+                      digit && !isDarkMode && "border-blue-500/50 bg-blue-50/50",
+                      otpError && "border-red-500 ring-1 ring-red-500/30"
                     )}
                   />
                 ))}
@@ -517,13 +485,12 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                 </p>
               )}
             </div>
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Button
                 onClick={() => verifyOTP()}
                 disabled={otpDigits.join('').length !== 6 || isLoading}
                 className={cn(
-                  "w-full rounded-full h-11 text-sm font-semibold transition-all duration-200",
-                  "shadow-lg hover:shadow-xl",
+                  "w-full h-12 text-base font-semibold rounded-lg transition-all duration-200",
                   isDarkMode
                     ? "bg-blue-500 hover:bg-blue-600 text-white"
                     : "bg-blue-500 hover:bg-blue-600 text-white"
@@ -539,14 +506,14 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                 )}
               </Button>
               <Button
-                variant="outline"
+                variant="ghost"
                 onClick={handleResendOTP}
                 disabled={isLoading}
                 className={cn(
-                  "w-full rounded-full h-11 text-sm font-medium transition",
+                  "w-full h-11 text-sm font-medium transition",
                   isDarkMode
-                    ? "border-slate-700 bg-transparent text-slate-200 hover:bg-slate-800/70"
-                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                    ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                    : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                 )}
               >
                 Resend OTP
@@ -559,7 +526,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                   setOtpError(null);
                 }}
                 className={cn(
-                  "w-full rounded-full h-11 text-sm font-medium transition",
+                  "w-full h-11 text-sm font-medium transition",
                   isDarkMode
                     ? "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                     : "text-slate-500 hover:text-slate-700 hover:bg-slate-100"
@@ -577,10 +544,9 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className={cn(
-                  "text-sm font-medium flex items-center gap-2",
+                  "text-sm font-medium block",
                   isDarkMode ? "text-slate-300" : "text-slate-700"
                 )}>
-                  <User size={16} />
                   Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -589,20 +555,19 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your name"
                   className={cn(
-                    "w-full h-12 px-4 border rounded-xl transition-all duration-200",
-                    "focus:outline-none focus:ring-2 focus:ring-offset-0",
+                    "w-full h-12 px-4 border rounded-lg transition-all duration-200",
+                    "focus:outline-none focus:ring-1 focus:ring-offset-0",
                     isDarkMode
-                      ? "bg-slate-800/60 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/30 shadow-md"
-                      : "bg-white/90 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 shadow-sm hover:shadow-md"
+                      ? "bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/30"
+                      : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/30"
                   )}
                 />
               </div>
               <div className="space-y-2">
                 <label className={cn(
-                  "text-sm font-medium flex items-center gap-2",
+                  "text-sm font-medium block",
                   isDarkMode ? "text-slate-300" : "text-slate-700"
                 )}>
-                  <Mail size={16} />
                   Email (Optional)
                 </label>
                 <input
@@ -611,11 +576,11 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   className={cn(
-                    "w-full h-12 px-4 border rounded-xl transition-all duration-200",
-                    "focus:outline-none focus:ring-2 focus:ring-offset-0",
+                    "w-full h-12 px-4 border rounded-lg transition-all duration-200",
+                    "focus:outline-none focus:ring-1 focus:ring-offset-0",
                     isDarkMode
-                      ? "bg-slate-800/60 border-slate-700 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/30 shadow-md"
-                      : "bg-white/90 border-slate-300 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 shadow-sm hover:shadow-md"
+                      ? "bg-slate-800/50 border-slate-600/50 text-white placeholder:text-slate-500 focus:border-blue-500 focus:ring-blue-500/30"
+                      : "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/30"
                   )}
                 />
               </div>
@@ -624,8 +589,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
               onClick={registerUser}
               disabled={!name.trim() || isLoading}
               className={cn(
-                "w-full rounded-full h-11 text-sm font-semibold transition-all duration-200",
-                "shadow-lg hover:shadow-xl",
+                "w-full h-12 text-base font-semibold rounded-lg transition-all duration-200",
                 isDarkMode
                   ? "bg-blue-500 hover:bg-blue-600 text-white"
                   : "bg-blue-500 hover:bg-blue-600 text-white"
@@ -637,10 +601,7 @@ const UserLogin: React.FC<UserLoginProps> = ({ isDarkMode, onLoginSuccess, onCan
                   Registering...
                 </>
               ) : (
-                <>
-                  Continue
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </>
+                'Continue'
               )}
             </Button>
           </div>
