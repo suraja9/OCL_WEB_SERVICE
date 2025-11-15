@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { api } from '@/utils/api';
 import {
   BarChart3,
   DollarSign,
@@ -73,7 +74,7 @@ const CorporateSidebar: React.FC<CorporateSidebarProps> = ({
           <div className="p-3 rounded-xl bg-white shadow-inner">
             {corporate?.logo ? (
               <img 
-                src={`http://localhost:5000${corporate.logo}`} 
+                src={api(corporate.logo)} 
                 alt={`${corporate.companyName} Logo`}
                 className="h-6 w-6 object-contain"
                 onError={(e) => {

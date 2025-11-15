@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import axios from "axios";
+import { api } from "@/utils/api";
 
 const AddressForm = ({ title, formType, senderEmail, onFormSubmit }) => {
   const [formData, setFormData] = useState({
@@ -43,7 +44,7 @@ const AddressForm = ({ title, formType, senderEmail, onFormSubmit }) => {
 
   const checkExistingForm = async (email) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/form/check/${email}`);
+      const response = await axios.get(api(`/api/form/check/${email}`));
       if (response.data.exists) {
         setExistingFormData(response.data.data);
         
@@ -122,7 +123,7 @@ const AddressForm = ({ title, formType, senderEmail, onFormSubmit }) => {
       const startTime = performance.now();
       
       try {
-        const res = await axios.get(`http://localhost:5000/api/pincode/${pin}`, {
+        const res = await axios.get(api(`/api/pincode/${pin}`), {
           timeout: 10000
         });
         
@@ -255,7 +256,7 @@ const AddressForm = ({ title, formType, senderEmail, onFormSubmit }) => {
     setError("");
     
     try {
-      const response = await axios.post('http://localhost:5000/api/form', {
+      const response = await axios.post(api('/api/form'), {
         ...formData,
         formType: formType,
         // Add sender email for receiver form submissions

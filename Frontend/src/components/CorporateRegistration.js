@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import LogoUpload from "./LogoUpload";
+import { api } from "@/utils/api";
 
 const CorporateRegistration = () => {
   const [formData, setFormData] = useState({
@@ -102,7 +103,7 @@ const CorporateRegistration = () => {
       const startTime = performance.now();
       
       try {
-        const res = await axios.get(`http://localhost:5000/api/pincode/${pin}`, {
+        const res = await axios.get(api(`/api/pincode/${pin}`), {
           timeout: 10000
         });
         
@@ -249,7 +250,7 @@ const CorporateRegistration = () => {
         formDataToSend.append('logo', logoFile);
       }
       
-      const response = await axios.post('http://localhost:5000/api/corporate/register', formDataToSend, {
+      const response = await axios.post(api('/api/corporate/register'), formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

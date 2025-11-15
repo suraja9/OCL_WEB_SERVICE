@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from '@/utils/api';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,8 +82,7 @@ const CreditAccount = () => {
 
     setIsLoadingPincode(true);
     try {
-      const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_BASE}/api/pincode/${pincode}/simple`);
+      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
       
       if (response.ok) {
         const data = await response.json();

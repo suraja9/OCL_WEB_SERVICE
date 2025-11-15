@@ -23,8 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+import { api } from '@/utils/api';
 
 interface MedicineUserInfo {
   id: string;
@@ -134,7 +133,7 @@ const MedicineManifest: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const token = localStorage.getItem('medicineToken');
-      const response = await axios.get(`${API_BASE}/api/medicine/manifests`, {
+      const response = await axios.get(api('/api/medicine/manifests'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -156,7 +155,7 @@ const MedicineManifest: React.FC = () => {
   const fetchColoaders = async () => {
     try {
       const token = localStorage.getItem('medicineToken');
-      const response = await axios.get(`${API_BASE}/api/medicine/coloaders`, {
+      const response = await axios.get(api('/api/medicine/coloaders'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -238,7 +237,7 @@ const MedicineManifest: React.FC = () => {
       // Dispatch all manifests
       const dispatchPromises = manifests.map(manifest =>
         axios.post(
-          `${API_BASE}/api/medicine/manifests/${manifest._id}/dispatch`,
+          api(`/api/medicine/manifests/${manifest._id}/dispatch`),
           {
             coloaderId: dispatchFormData.coloaderId,
             contentDescription: dispatchFormData.contentDescription,
@@ -318,7 +317,7 @@ const MedicineManifest: React.FC = () => {
     try {
       const token = localStorage.getItem('medicineToken');
       const response = await axios.post(
-        `${API_BASE}/api/medicine/coloaders`,
+        api('/api/medicine/coloaders'),
         {
           phoneNumber: newColoaderData.phoneNumber.trim(),
           busNumber: newColoaderData.busNumber.trim(),

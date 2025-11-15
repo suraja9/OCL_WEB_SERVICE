@@ -51,6 +51,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { api } from '@/utils/api';
 
 interface Coloader {
   _id: string;
@@ -346,7 +347,7 @@ const ColoaderManagement = () => {
 
     setIsLoadingPincode(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/pincode/${pincode}/simple`);
+      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
       if (response.ok) {
         const data = await response.json();
         setEditFormData(prev => ({
@@ -398,7 +399,7 @@ const ColoaderManagement = () => {
 
     setIsLoadingFromPincode(prev => ({ ...prev, [locationIndex]: true }));
     try {
-      const response = await fetch(`http://localhost:5000/api/pincode/${pincode}/simple`);
+      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
       if (response.ok) {
         const data = await response.json();
         setEditFormData(prev => ({
@@ -456,7 +457,7 @@ const ColoaderManagement = () => {
 
     setIsLoadingToPincode(prev => ({ ...prev, [locationIndex]: true }));
     try {
-      const response = await fetch(`http://localhost:5000/api/pincode/${pincode}/simple`);
+      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
       if (response.ok) {
         const data = await response.json();
         setEditFormData(prev => ({

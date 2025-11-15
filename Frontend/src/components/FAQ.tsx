@@ -130,12 +130,6 @@ const FAQ = () => {
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-6 md:mb-8">
-          <div 
-            className="text-xs tracking-[0.2em] uppercase font-semibold mb-1.5"
-            style={{ color: "#0D1B2A" }}
-          >
-            MOST ASKED QUESTIONS
-          </div>
           <h2 
             className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight"
             style={{ color: "#0D1B2A", fontFamily: 'Poppins, ui-sans-serif' }}

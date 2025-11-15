@@ -42,8 +42,7 @@ import imageCompression from 'browser-image-compression';
 import ImageUploadWithPreview from './ImageUploadWithPreview';
 import InvoicePopup from './InvoicePopup';
 import BookingConfirmation from './BookingConfirmation';
-
-const API_BASE: string = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
+import { api } from '@/utils/api';
 
 // Floating Label Input Component
 interface FloatingInputProps {
@@ -2215,7 +2214,7 @@ const BookingPanel: React.FC = () => {
         throw new Error('Invalid pincode format');
       }
       
-      const { data } = await axios.get(`${API_BASE}/api/pincode/${pincode}`);
+      const { data } = await axios.get(api(`/api/pincode/${pincode}`));
       if (!data) throw new Error('Invalid pincode');
       
       const parsed = parsePincodeResponse(data);
@@ -2253,7 +2252,7 @@ const BookingPanel: React.FC = () => {
   const autoFillOtherPartyFromPincode = async (pincode: string) => {
     try {
       setOtherPartyPinError(null);
-      const { data } = await axios.get(`${API_BASE}/api/pincode/${pincode}`);
+      const { data } = await axios.get(api(`/api/pincode/${pincode}`));
       if (!data) throw new Error('Invalid pincode');
       const parsed = parsePincodeResponse(data);
       const updateData = {
@@ -2329,7 +2328,7 @@ const BookingPanel: React.FC = () => {
   const checkPincodeServiceability = async (pincode: string, type: 'origin' | 'destination') => {
     if (pincode.length === 6) {
       try {
-        const { data } = await axios.get(`${API_BASE}/api/pincode/${pincode}`);
+        const { data } = await axios.get(api(`/api/pincode/${pincode}`));
         const isServiceable = !!data;
         const parsed = isServiceable ? parsePincodeResponse(data) : { state: '', city: '', district: '', areas: [] as string[] };
         if (type === 'origin') {
@@ -2406,7 +2405,7 @@ const BookingPanel: React.FC = () => {
         if (!officeToken) {
           throw new Error('Not authenticated as office user');
         }
-        const nextRes = await axios.get(`${API_BASE}/api/office/consignment/next`, {
+        const nextRes = await axios.get(api('/api/office/consignment/next'), {
           headers: { Authorization: `Bearer ${officeToken}` }
         });
         nextConsignmentNumber = nextRes?.data?.consignmentNumber ?? null;
@@ -2477,7 +2476,7 @@ const BookingPanel: React.FC = () => {
 
         try {
           console.log(`Uploading ${unuploadedFiles.length} files to ${endpoint}...`);
-          const response = await fetch(`${API_BASE}${endpoint}`, {
+          const response = await fetch(api(endpoint), {
             method: 'POST',
             body: formData,
           });
@@ -2610,7 +2609,7 @@ const BookingPanel: React.FC = () => {
       console.log('🚀 Starting booking submission...');
       console.log('Submitting booking with payload:', fullPayload);
       
-      const fullRes = await axios.post(`${API_BASE}/api/form`, fullPayload);
+      const fullRes = await axios.post(api('/api/form'), fullPayload);
 
       console.log('Booking submission response:', fullRes.data);
 
@@ -2632,7 +2631,7 @@ const BookingPanel: React.FC = () => {
       try {
         const officeToken = localStorage.getItem('officeToken');
         if (officeToken && nextConsignmentNumber) {
-          await axios.post(`${API_BASE}/api/office/consignment/use`, {
+          await axios.post(api('/api/office/consignment/use'), {
             consignmentNumber: nextConsignmentNumber,
             bookingReference: backendId || fallbackId,
             bookingData: fullPayload
@@ -2714,7 +2713,7 @@ const BookingPanel: React.FC = () => {
       
       // Check if phone number exists in address form data
       try {
-        const response = await fetch(`${API_BASE}/api/form/check-phone/${mobileNumber}`);
+        const response = await fetch(api(`/api/form/check-phone/${mobileNumber}`));
         const data = await response.json();
         
         if (data.success && data.exists) {
@@ -2814,7 +2813,7 @@ const BookingPanel: React.FC = () => {
       console.log('Mobile number length:', mobileNumber.length);
       
       // Verify OTP via backend API
-      const response = await fetch(`${API_BASE}/api/otp/verify`, {
+      const response = await fetch(api('/api/otp/verify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2906,7 +2905,7 @@ const BookingPanel: React.FC = () => {
       console.log('Full phone number being sent:', fullPhoneNumber);
       console.log('==========================');
       
-      const response = await fetch(`${API_BASE}/api/otp/send`, {
+      const response = await fetch(api('/api/otp/send'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2950,7 +2949,7 @@ const BookingPanel: React.FC = () => {
       }
       
       // Make API call to lookup user by phone number
-      const response = await fetch(`${API_BASE}/api/office/user-lookup/${mobileNumber}`, {
+      const response = await fetch(api(`/api/office/user-lookup/${mobileNumber}`), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -3070,7 +3069,7 @@ const BookingPanel: React.FC = () => {
       }
       
       // Make API call to lookup user by phone number
-      const response = await fetch(`${API_BASE}/api/office/user-lookup/${mobileNumber}`, {
+      const response = await fetch(api(`/api/office/user-lookup/${mobileNumber}`), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

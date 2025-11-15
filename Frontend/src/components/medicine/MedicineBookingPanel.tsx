@@ -36,8 +36,7 @@ import {
   Eye,
   Loader2
 } from 'lucide-react';
-
-const API_BASE: string = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
+import { api } from '@/utils/api';
 
 const BookingSuccessAnimation: React.FC<{ consignmentNumber?: string | number | null }> = ({ consignmentNumber }) => {
   return (
@@ -910,7 +909,7 @@ const MedicineBookingPanel: React.FC = () => {
         throw new Error('Invalid pincode format');
       }
       
-      const { data } = await axios.get(`${API_BASE}/api/pincode/${pincode}`);
+      const { data } = await axios.get(api(`/api/pincode/${pincode}`));
       if (!data) throw new Error('Invalid pincode');
       
       const parsed = parsePincodeResponse(data);

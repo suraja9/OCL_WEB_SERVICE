@@ -28,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { api } from '@/utils/api';
 
 interface PricingData {
   _id: string;
@@ -70,7 +71,7 @@ const PricingApproval = () => {
   const fetchPricingData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/admin/public/pricing-approval/${token}`);
+      const response = await fetch(api(`/api/admin/public/pricing-approval/${token}`));
       const result = await response.json();
 
       if (result.success) {
@@ -94,7 +95,7 @@ const PricingApproval = () => {
 
     setProcessing(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/public/pricing-approval/${token}/approve`, {
+      const response = await fetch(api(`/api/admin/public/pricing-approval/${token}/approve`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,7 +132,7 @@ const PricingApproval = () => {
 
     setProcessing(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/public/pricing-approval/${token}/reject`, {
+      const response = await fetch(api(`/api/admin/public/pricing-approval/${token}/reject`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

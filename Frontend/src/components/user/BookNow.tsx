@@ -69,8 +69,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { api } from '@/utils/api';
 
-const API_BASE: string = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
 const VOLUMETRIC_DIVISOR = 5000; // Standard volumetric conversion factor (cm³ to kg)
 
 // Package Type Options with Icons
@@ -1064,6 +1064,21 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     netBankingBank: '',
     walletProvider: ''
   });
+  const [showInvoice, setShowInvoice] = useState(false);
+  
+  // Generate AWB and Order ID
+  const generateAWB = () => {
+    const timestamp = Date.now();
+    return `AWB-${timestamp}`;
+  };
+  
+  const generateOrderID = () => {
+    const timestamp = Date.now();
+    return `Order ID - ${timestamp}`;
+  };
+  
+  const awbNumber = useMemo(() => generateAWB(), [checkoutOpen]);
+  const orderId = useMemo(() => generateOrderID(), [checkoutOpen]);
 
   // Cleanup object URL when component unmounts or preview closes
   useEffect(() => {
@@ -1334,7 +1349,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     }
 
     try {
-      const { data } = await axios.get(`${API_BASE}/api/pincode/${pincode}`);
+      const { data } = await axios.get(api(`/api/pincode/${pincode}`));
       const isServiceable = !!data;
       const parsed = isServiceable ? parsePincodeResponse(data) : { state: '', city: '', district: '', areas: [] };
 
@@ -2135,7 +2150,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       const fetchPincodeData = async () => {
         try {
           setLoadingPricing(true);
-          const { data } = await axios.get(`${API_BASE}/api/pincode/${destinationPincode}`);
+          const { data } = await axios.get(api(`/api/pincode/${destinationPincode}`));
           if (data && data.modes) {
             setAvailableModes(data.modes);
             setAvailableServiceTypes({
@@ -2150,7 +2165,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
 
       const fetchCustomerPricing = async () => {
         try {
-          const { data } = await axios.get(`${API_BASE}/api/admin/customer-pricing/public`);
+          const { data } = await axios.get(api('/api/admin/customer-pricing/public'));
           if (data && data.success) {
             setCustomerPricing(data.data);
           }
@@ -6052,15 +6067,29 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Header */}
               <div className={cn(
-                'flex items-center justify-between p-6 border-b',
+                'flex items-center justify-between p-4 border-b',
                 isDarkMode ? 'border-slate-700' : 'border-slate-200'
               )}>
-                <h2 className={cn('text-xl font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
-                  Payment Options
+                <h2 className={cn('text-lg font-semibold', isDarkMode ? 'text-slate-100' : 'text-slate-900')}>
+                  {showInvoice ? 'Invoice' : 'Payment Options'}
                 </h2>
                 <div className="flex items-center gap-4">
+                  {showInvoice && (
+                    <button
+                      onClick={() => setShowInvoice(false)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
+                        isDarkMode ? 'bg-slate-700 text-slate-300 hover:bg-slate-600' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      )}
+                    >
+                      Back to Payment
+                    </button>
+                  )}
                   <button
-                    onClick={() => setCheckoutOpen(false)}
+                    onClick={() => {
+                      setCheckoutOpen(false);
+                      setShowInvoice(false);
+                    }}
                     className={cn(
                       'p-2 rounded-full hover:bg-slate-100 transition-colors',
                       isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-100'
@@ -6073,7 +6102,239 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
 
               {/* Scrollable Content */}
               <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {showInvoice ? (
+                  /* Invoice Section - Compressed Design */
+                  <div className="max-w-3xl mx-auto print:max-w-full">
+                    <div className={cn(
+                      'bg-white rounded-lg shadow-lg p-4 print:shadow-none print:p-3',
+                      isDarkMode ? 'bg-slate-800 print:bg-white' : 'bg-white'
+                    )}>
+                      {/* Header Section */}
+                      <div className="flex justify-between items-start mb-3 pb-2 border-b border-slate-200">
+                        <div>
+                          <div className="text-[10px] text-slate-500 mb-0.5">CUSTOMER COPY</div>
+                          <div className="text-xs font-semibold text-slate-700 mb-1">PICKUP RECEIPT | OCL CHALLAN</div>
+                          <div className="text-[10px] text-slate-600">
+                            <div className="font-semibold">{awbNumber} / OCL {selectedServiceType === 'priority' ? 'PRIORITY' : 'STANDARD'}</div>
+                            <div className="mt-0.5">{orderId}</div>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <img 
+                            src="/assets/ocl-logo.png" 
+                            alt="OCL Logo" 
+                            className="h-12 w-auto object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/ocl-logo.png';
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Sender and Recipient Section */}
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        {/* From Section */}
+                        <div>
+                          <div className="text-[10px] font-semibold text-slate-700 mb-1">From - Sender Information</div>
+                          <div className="text-[10px] text-slate-600 leading-tight">
+                            <div className="font-medium">{originData.name || 'N/A'}</div>
+                            <div>{originData.flatBuilding || ''} {originData.locality || ''}</div>
+                            <div>{originData.area || ''}, {originData.city || ''}, {originData.state || ''}</div>
+                            <div>PIN: {originData.pincode || 'N/A'}</div>
+                            {originData.mobileNumber && (
+                              <div>Phone: {originData.mobileNumber}</div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* To Section */}
+                        <div>
+                          <div className="text-[10px] font-semibold text-slate-700 mb-1">To - Recipient Information</div>
+                          <div className="text-[10px] text-slate-600 leading-tight">
+                            <div className="font-medium">{destinationData.name || 'N/A'}</div>
+                            <div>{destinationData.flatBuilding || ''} {destinationData.locality || ''}</div>
+                            <div>{destinationData.area || ''}, {destinationData.city || ''}, {destinationData.state || ''}</div>
+                            <div>PIN: {destinationData.pincode || 'N/A'}</div>
+                            {destinationData.mobileNumber && (
+                              <div>Phone: {destinationData.mobileNumber}</div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Shipment Details Section */}
+                      <div className="mb-3 pb-2 border-b border-slate-200">
+                        <div className="grid grid-cols-3 gap-3 mb-2">
+                          <div>
+                            <div className="text-[10px] text-slate-500 mb-0.5">Pickup Executive's (FE) Signature</div>
+                            <div className="h-8 border border-dashed border-slate-300 rounded"></div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-slate-500 mb-0.5">Shipping mode</div>
+                            <div className="text-[10px] font-semibold text-slate-700">
+                              {selectedServiceType === 'priority' ? 'Priority' : 'Standard'} 
+                              {selectedMode && ` - ${selectedMode === 'byAir' ? 'Air' : selectedMode === 'byTrain' ? 'Train' : 'Road'}`}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-slate-500 mb-0.5">Declared Weight</div>
+                            <div className="text-[10px] font-semibold text-slate-700">{shipmentDetails.weight || '0'} kg</div>
+                          </div>
+                        </div>
+                        <div className="mb-1">
+                          <div className="text-[10px] text-slate-500 mb-0.5">Declared Value</div>
+                          <div className="text-[10px] font-semibold text-slate-700">₹{shipmentDetails.insurance === 'With insurance' && shipmentDetails.insurancePremiumAmount ? parseFloat(shipmentDetails.insurancePremiumAmount).toFixed(2) : '0.00'}</div>
+                        </div>
+                        <div className="text-[9px] text-slate-600 leading-tight mt-1.5">
+                          <div>• Invoice will be emailed to registered email id within 7 days.</div>
+                          <div>• Track your shipment on www.ocl.com</div>
+                          <div>• For concerns / queries please write to us on support@ocl.com or call us on +91-XXXXX-XXXXX between 9 AM - 8 PM.</div>
+                        </div>
+                        <div className="mt-1.5 pt-1.5 border-t border-dashed border-slate-300">
+                          <div className="text-[9px] text-slate-500">Please cut and paste the below slip on the courier.</div>
+                        </div>
+                      </div>
+
+                      {/* Barcode Section */}
+                      <div className="mb-3 pb-2 border-b border-slate-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="bg-slate-100 p-2 rounded flex items-center justify-center mb-1" style={{ minHeight: '80px' }}>
+                              <div className="text-center">
+                                <div className="text-[9px] text-slate-500 mb-1">Barcode</div>
+                                <div className="bg-white p-1 rounded inline-block">
+                                  <div className="flex gap-0.5">
+                                    {(() => {
+                                      // Generate stable barcode pattern based on AWB number
+                                      const awbNum = awbNumber.replace('AWB-', '');
+                                      const seed = awbNum.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                                      return Array.from({ length: 40 }).map((_, i) => {
+                                        const shouldShow = (seed + i) % 3 !== 0;
+                                        return (
+                                          <div 
+                                            key={i} 
+                                            className={cn(
+                                              'w-0.5',
+                                              shouldShow ? 'bg-black h-8' : 'bg-transparent h-8'
+                                            )}
+                                          />
+                                        );
+                                      });
+                                    })()}
+                                  </div>
+                                </div>
+                                <div className="text-[9px] font-mono text-slate-700 mt-1">{awbNumber.replace('AWB-', '')}</div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-[10px] font-semibold text-slate-700">OCL</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Shipping Address and Return Address */}
+                      <div className="grid grid-cols-2 gap-4 mb-3">
+                        {/* Shipping/Consignee Address */}
+                        <div>
+                          <div className="text-[10px] font-semibold text-slate-700 mb-1">Shipping / Consignee Address</div>
+                          <div className="text-[10px] text-slate-600 leading-tight">
+                            <div className="font-medium">{destinationData.name || 'N/A'}</div>
+                            <div>Phone: {destinationData.mobileNumber || 'N/A'}</div>
+                            <div>{destinationData.flatBuilding || ''} {destinationData.locality || ''}</div>
+                            <div>{destinationData.area || ''}, {destinationData.city || ''}, {destinationData.state || ''}</div>
+                            <div>PIN: {destinationData.pincode || 'N/A'}</div>
+                          </div>
+                        </div>
+
+                        {/* Return Address */}
+                        <div>
+                          <div className="text-[10px] font-semibold text-slate-700 mb-1">Return Address</div>
+                          <div className="text-[10px] text-slate-600 leading-tight">
+                            <div className="font-medium">{originData.name || 'N/A'}</div>
+                            <div>{originData.flatBuilding || ''} {originData.locality || ''}</div>
+                            <div>{originData.area || ''}, {originData.city || ''}, {originData.state || ''}</div>
+                            <div>PIN: {originData.pincode || 'N/A'}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payment Status */}
+                      <div className="mb-3 flex justify-end">
+                        <div className="text-sm font-bold text-slate-900">
+                          {selectedPaymentMethod === 'cod' ? 'CASH ON DELIVERY' : 'PRE-PAID'}
+                        </div>
+                      </div>
+
+                      {/* Shipment Details (Bottom) */}
+                      <div className="mb-3 pb-2 border-b border-slate-200">
+                        <div className="grid grid-cols-3 gap-3">
+                          <div>
+                            <div className="text-[10px] text-slate-500 mb-0.5">Shipping mode</div>
+                            <div className="text-[10px] font-semibold text-slate-700">
+                              {selectedServiceType === 'priority' ? 'Priority' : 'Standard'}
+                              {selectedMode && ` - ${selectedMode === 'byAir' ? 'Air' : selectedMode === 'byTrain' ? 'Train' : 'Road'}`}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-slate-500 mb-0.5">Declared Weight</div>
+                            <div className="text-[10px] font-semibold text-slate-700">{shipmentDetails.weight || '0'} kg</div>
+                          </div>
+                          <div>
+                            <div className="text-[10px] text-slate-500 mb-0.5">Declared Value</div>
+                            <div className="text-[10px] font-semibold text-slate-700">₹{shipmentDetails.insurance === 'With insurance' && shipmentDetails.insurancePremiumAmount ? parseFloat(shipmentDetails.insurancePremiumAmount).toFixed(2) : '0.00'}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Item Description */}
+                      <div className="mb-3">
+                        <div className="text-[10px] font-semibold text-slate-700 mb-1">Item Description:</div>
+                        <div className="text-[10px] text-slate-600">
+                          {shipmentDetails.description || shipmentDetails.materials || 'Documents: Forms, Catalogues, Papers'}
+                        </div>
+                      </div>
+
+                      {/* Disclaimers */}
+                      <div className="mb-3 space-y-1">
+                        <div className="text-[9px] text-slate-600 leading-tight">
+                          Personal/Used goods, Not for Sale No Commercial Value.
+                        </div>
+                        <div className="text-[9px] text-slate-600 leading-tight">
+                          Please note that if the parcel weight is found to be different from declared weight, the package may be ceased. For updating the declared weight, please contact us on support@ocl.com
+                        </div>
+                        <div className="text-[9px] text-slate-600 leading-tight">
+                          Movement of content is subject to our list of Dangerous Goods and Prohibited Items.
+                        </div>
+                      </div>
+
+                      {/* Shipper's Signature */}
+                      <div className="flex justify-end mb-3">
+                        <div className="text-[10px] text-slate-600">
+                          Shipper's Signature: ___________________
+                        </div>
+                      </div>
+
+                      {/* Print Button */}
+                      <div className="mt-4 flex justify-center print:hidden">
+                        <Button
+                          onClick={() => window.print()}
+                          className={cn(
+                            'px-4 py-2 text-sm',
+                            isDarkMode
+                              ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                              : 'bg-blue-500 hover:bg-blue-600 text-white'
+                          )}
+                        >
+                          <FileText className="mr-2 h-3 w-3" />
+                          Print Invoice
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Payment Options */
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Left Column - Payment Methods */}
                   <div className="space-y-6">
                     <div>
@@ -6375,7 +6636,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                                 amount: totalAmount
                               });
                               setTimeout(() => {
-                                setCheckoutOpen(false);
+                                setShowInvoice(true);
                               }, 1000);
                             }}
                             className={cn(
@@ -6414,7 +6675,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           onClick={() => {
                             alert('Payment processing... (This is a test checkout page)');
                             setTimeout(() => {
-                              setCheckoutOpen(false);
+                              setShowInvoice(true);
                             }, 1000);
                           }}
                           className={cn(
@@ -6452,7 +6713,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           onClick={() => {
                             alert('Payment processing... (This is a test checkout page)');
                             setTimeout(() => {
-                              setCheckoutOpen(false);
+                              setShowInvoice(true);
                             }, 1000);
                           }}
                           className={cn(
@@ -6486,7 +6747,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                           onClick={() => {
                             alert('Order confirmed! (This is a test checkout page)');
                             setTimeout(() => {
-                              setCheckoutOpen(false);
+                              setShowInvoice(true);
                             }, 1000);
                           }}
                           className={cn(
@@ -6503,6 +6764,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
                     )}
                   </div>
                 </div>
+                )}
               </div>
 
               {/* Footer */}

@@ -18,8 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+import { api } from '@/utils/api';
 
 interface MedicineUserInfo {
   id: string;
@@ -202,7 +201,7 @@ const MedicineViewManifest: React.FC = () => {
       const token = localStorage.getItem('medicineToken');
       const monthParam = selectedMonth ? `&month=${selectedMonth}` : '';
       const response = await axios.get(
-        `${API_BASE}/api/medicine/manifests/all?year=${selectedYear}${monthParam}`,
+        api(`/api/medicine/manifests/all?year=${selectedYear}${monthParam}`),
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -282,7 +281,7 @@ const MedicineViewManifest: React.FC = () => {
       const token = localStorage.getItem('medicineToken');
       const monthParam = selectedMonth ? `&month=${selectedMonth}` : '';
       const response = await axios.get(
-        `${API_BASE}/api/medicine/manifests/all?year=${selectedYear}${monthParam}&startDate=${startDate}&endDate=${endDate}`,
+        api(`/api/medicine/manifests/all?year=${selectedYear}${monthParam}&startDate=${startDate}&endDate=${endDate}`),
         {
           headers: {
             'Authorization': `Bearer ${token}`

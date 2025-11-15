@@ -21,6 +21,7 @@ import {
   ,ChevronsUpDown
 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/utils/api';
 
 // Floating Label Input Component
 interface FloatingLabelInputProps {
@@ -490,7 +491,7 @@ const ColoaderRegistration = () => {
 
     setIsLoadingPincode(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/pincode/${pincode}/simple`);
+      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
       if (response.ok) {
         const data = await response.json();
         setFormData(prev => ({
@@ -585,7 +586,7 @@ const ColoaderRegistration = () => {
 
     setIsLoadingFromPincode(prev => ({ ...prev, [locationId]: true }));
     try {
-      const response = await fetch(`http://localhost:5000/api/pincode/${pincode}/simple`);
+      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
       if (response.ok) {
         const data = await response.json();
         setFormData(prev => ({
@@ -634,7 +635,7 @@ const ColoaderRegistration = () => {
 
     setIsLoadingToPincode(prev => ({ ...prev, [locationId]: true }));
     try {
-      const response = await fetch(`http://localhost:5000/api/pincode/${pincode}/simple`);
+      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
       if (response.ok) {
         const data = await response.json();
         setFormData(prev => ({
@@ -1264,7 +1265,7 @@ const ColoaderRegistration = () => {
         vehicleDetails: sanitizeVehicleDetails(formData.vehicleDetails)
       };
 
-      const response = await fetch('http://localhost:5000/api/coloader/register', {
+      const response = await fetch(api('/api/coloader/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
