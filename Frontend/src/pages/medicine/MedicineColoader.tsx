@@ -13,7 +13,8 @@ import {
   Trash2
 } from 'lucide-react';
 import axios from 'axios';
-import { api } from '@/utils/api';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 interface MedicineUserInfo {
   id: string;
@@ -76,7 +77,7 @@ const MedicineColoader: React.FC = () => {
       setIsLoading(true);
       setError(null);
       const token = localStorage.getItem('medicineToken');
-      const response = await axios.get(api('/api/medicine/coloaders'), {
+      const response = await axios.get(`${API_BASE}/api/medicine/coloaders`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -143,7 +144,7 @@ const MedicineColoader: React.FC = () => {
       setIsSubmitting(true);
       const token = localStorage.getItem('medicineToken');
       const response = await axios.post(
-        api('/api/medicine/coloaders'),
+        `${API_BASE}/api/medicine/coloaders`,
         {
           name: formData.name.trim(),
           phoneNumber: formData.phoneNumber.trim(),
@@ -179,7 +180,7 @@ const MedicineColoader: React.FC = () => {
 
     try {
       const token = localStorage.getItem('medicineToken');
-      await axios.delete(api(`/api/medicine/coloaders/${id}`), {
+      await axios.delete(`${API_BASE}/api/medicine/coloaders/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

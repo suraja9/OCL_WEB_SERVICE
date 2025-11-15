@@ -26,7 +26,8 @@ import {
   DollarSign
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { api } from '@/utils/api';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 // Floating Label Input Component (copied from coloader registration)
 interface FloatingLabelInputProps {
@@ -334,7 +335,7 @@ const CorporateRegistration = () => {
 
     setIsLoadingPincode(true);
     try {
-      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
+      const response = await fetch(`${API_BASE}/api/pincode/${pincode}/simple`);
       if (response.ok) {
         const data = await response.json();
         setFormData(prev => ({

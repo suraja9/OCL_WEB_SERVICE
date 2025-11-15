@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +54,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { api } from '@/utils/api';
 
 interface Coloader {
   _id: string;
@@ -347,7 +349,7 @@ const ColoaderManagement = () => {
 
     setIsLoadingPincode(true);
     try {
-      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
+      const response = await fetch(`${API_BASE}/api/pincode/${pincode}/simple`);
       if (response.ok) {
         const data = await response.json();
         setEditFormData(prev => ({
@@ -399,7 +401,7 @@ const ColoaderManagement = () => {
 
     setIsLoadingFromPincode(prev => ({ ...prev, [locationIndex]: true }));
     try {
-      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
+      const response = await fetch(`${API_BASE}/api/pincode/${pincode}/simple`);
       if (response.ok) {
         const data = await response.json();
         setEditFormData(prev => ({
@@ -457,7 +459,7 @@ const ColoaderManagement = () => {
 
     setIsLoadingToPincode(prev => ({ ...prev, [locationIndex]: true }));
     try {
-      const response = await fetch(api(`/api/pincode/${pincode}/simple`));
+      const response = await fetch(`${API_BASE}/api/pincode/${pincode}/simple`);
       if (response.ok) {
         const data = await response.json();
         setEditFormData(prev => ({

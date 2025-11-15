@@ -69,8 +69,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { api } from '@/utils/api';
 
+const API_BASE: string = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:5000';
 const VOLUMETRIC_DIVISOR = 5000; // Standard volumetric conversion factor (cm³ to kg)
 
 // Package Type Options with Icons
@@ -1349,7 +1349,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
     }
 
     try {
-      const { data } = await axios.get(api(`/api/pincode/${pincode}`));
+      const { data } = await axios.get(`${API_BASE}/api/pincode/${pincode}`);
       const isServiceable = !!data;
       const parsed = isServiceable ? parsePincodeResponse(data) : { state: '', city: '', district: '', areas: [] };
 
@@ -2150,7 +2150,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
       const fetchPincodeData = async () => {
         try {
           setLoadingPricing(true);
-          const { data } = await axios.get(api(`/api/pincode/${destinationPincode}`));
+          const { data } = await axios.get(`${API_BASE}/api/pincode/${destinationPincode}`);
           if (data && data.modes) {
             setAvailableModes(data.modes);
             setAvailableServiceTypes({
@@ -2165,7 +2165,7 @@ const BookNow: React.FC<BookNowProps> = ({ isDarkMode = false }) => {
 
       const fetchCustomerPricing = async () => {
         try {
-          const { data } = await axios.get(api('/api/admin/customer-pricing/public'));
+          const { data } = await axios.get(`${API_BASE}/api/admin/customer-pricing/public`);
           if (data && data.success) {
             setCustomerPricing(data.data);
           }

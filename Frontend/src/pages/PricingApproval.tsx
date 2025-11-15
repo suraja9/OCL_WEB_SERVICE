@@ -28,7 +28,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { api } from '@/utils/api';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 interface PricingData {
   _id: string;
@@ -71,7 +72,7 @@ const PricingApproval = () => {
   const fetchPricingData = async () => {
     try {
       setLoading(true);
-      const response = await fetch(api(`/api/admin/public/pricing-approval/${token}`));
+      const response = await fetch(`${API_BASE}/api/admin/public/pricing-approval/${token}`);
       const result = await response.json();
 
       if (result.success) {
@@ -95,7 +96,7 @@ const PricingApproval = () => {
 
     setProcessing(true);
     try {
-      const response = await fetch(api(`/api/admin/public/pricing-approval/${token}/approve`), {
+      const response = await fetch(`${API_BASE}/api/admin/public/pricing-approval/${token}/approve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ const PricingApproval = () => {
 
     setProcessing(true);
     try {
-      const response = await fetch(api(`/api/admin/public/pricing-approval/${token}/reject`), {
+      const response = await fetch(`${API_BASE}/api/admin/public/pricing-approval/${token}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
